@@ -13,10 +13,13 @@
     <PackageReference Include="Dapper" Version="2.1.72" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PosTechChallenge.Application\PosTechChallenge.Dominio.csproj" />
+    <ProjectReference Include="..\PosTechChallenge.Infraestrutura\PosTechChallenge.Infraestrutura.csproj" />
   </ItemGroup>
   
 </Project>
