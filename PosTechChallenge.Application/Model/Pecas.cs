@@ -1,4 +1,4 @@
-﻿namespace PosTechChallenge.Domain.Model;
+﻿namespace PosTechChallenge.Dominio.Model;
 public sealed class Pecas
 {
     public int Id { get; set; }

@@ -1,4 +1,4 @@
-﻿namespace PosTechChallenge.Domain.Utils;
+﻿namespace PosTechChallenge.Dominio.Utils;
 public class Enums
 {
     public enum StatusServico

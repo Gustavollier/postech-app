@@ -1,6 +1,6 @@
-﻿using static PosTechChallenge.Domain.Utils.Enums;
+﻿using static PosTechChallenge.Dominio.Utils.Enums;
 
-namespace PosTechChallenge.Domain.Model;
+namespace PosTechChallenge.Dominio.Model;
 public sealed class OrdemServico
 {
     public int Id { get; set; }

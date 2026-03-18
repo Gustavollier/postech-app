@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="PosTechChallenge.Application/PosTechChallenge.Domain.csproj" Id="cb987bb4-1c9d-4e2a-8946-6bec3d17a09a" />
+  <Project Path="PosTechChallenge.Application/PosTechChallenge.Dominio.csproj" Id="cb987bb4-1c9d-4e2a-8946-6bec3d17a09a" />
   <Project Path="PosTechChallenge/PosTechChallenge.csproj" />
 </Solution>
