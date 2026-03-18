@@ -1,4 +1,4 @@
-﻿namespace PosTechChallenge.Model
+﻿namespace PosTechChallenge.Domain.Model
 {
     public class Veiculo
     {

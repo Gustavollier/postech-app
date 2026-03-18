@@ -14,5 +14,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PosTechChallenge.Application\PosTechChallenge.Domain.csproj" />
+  </ItemGroup>
   
 </Project>
