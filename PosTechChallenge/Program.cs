@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
+using PosTechChallenge.Infraestrutura;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -10,6 +11,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDatabaseConfiguration(connectionString);
 
 var app = builder.Build();
 
