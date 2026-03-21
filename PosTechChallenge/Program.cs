@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
 using PosTechChallenge.Infraestrutura;
+using Dapper;
+using PosTechChallenge.Infraestrutura.Mapeamentos;
+
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -15,6 +18,7 @@ builder.Services.AddOpenApi();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDatabaseConfiguration(connectionString);
+SqlMapper.AddTypeHandler(new PlacaDapper());
 
 var app = builder.Build();
 

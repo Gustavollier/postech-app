@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PosTechChallenge.Infraestrutura.Repositories;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
+using PosTechChallenge.Infraestrutura.Repositorios;
 
 namespace PosTechChallenge.Infraestrutura
 {
@@ -15,6 +16,7 @@ namespace PosTechChallenge.Infraestrutura
 
             services.AddScoped<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
             services.AddScoped<IFuncionarioRepositorio, FuncionariosRepositorio>();
+            services.AddScoped<IVeiculosRepositorio, VeiculosRepositorio>();
 
             return services;
         }
