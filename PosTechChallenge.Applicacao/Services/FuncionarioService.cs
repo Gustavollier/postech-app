@@ -1,6 +1,7 @@
 using PosTechChallenge.Applicacao.Dto.Funcionario;
 using PosTechChallenge.Applicacao.UseCases.Funcionario;
 using PosTechChallenge.Applicacao.Interface.Services;
+using PosTechChallenge.Dominio.Results;
 
 namespace PosTechChallenge.Applicacao.Services;
 
@@ -23,21 +24,21 @@ public sealed class FuncionarioService : IFuncionarioService
         _deletarFuncionarioUseCase = deletarFuncionarioUseCase;
     }
 
-    public async Task CriarAsync(CriarFuncionarioDto funcionarioDto) 
+    public async Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto) 
         => await _criarFuncionarioUseCase.CriarAsync(funcionarioDto);
 
-    public async Task<ObterFuncionarioDto?> ObterPorCpfAsync(string cpf) 
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf) 
         => await _obterFuncionarioUseCase.ObterPorCpfAsync(cpf);
 
-    public async Task<ObterFuncionarioDto?> ObterPorNomeAsync(string nome) 
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome) 
         => await _obterFuncionarioUseCase.ObterPorNomeAsync(nome);
 
-    public async Task<IEnumerable<ObterFuncionarioDto>> ObterTodosAsync() 
+    public async Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync() 
         => await _obterFuncionarioUseCase.ObterTodosAsync();
 
-    public async Task<bool> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto) 
+    public async Task<Resultado> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto) 
         => await _atualizarFuncionarioUseCase.AtualizarAsync(cpf, funcionarioDto);
 
-    public async Task<bool> DeletarAsync(string cpf) 
+    public async Task<Resultado> DeletarAsync(string cpf) 
         => await _deletarFuncionarioUseCase.DeletarPorCpfAsync(cpf);
 }

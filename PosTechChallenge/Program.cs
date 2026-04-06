@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
 using PosTechChallenge.Infraestrutura;
@@ -5,55 +6,50 @@ using PosTechChallenge.Applicacao;
 using Dapper;
 using PosTechChallenge.Infraestrutura.Mapeamentos;
 
-
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
-});
+builder.Services.AddControllers();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Adiciona e configura o Swagger (OpenAPI)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    {
+        Title = "PosTechChallenge API",
+        Version = "v1",
+        Description = "API para gerenciamento de funcionários, clientes, ordens de serviço e peças.",
+        Contact = new Microsoft.OpenApi.OpenApiContact
+        {
+            Name = "Equipe PosTechChallenge",
+            Email = "contato@postech.com"
+        }
+    });
+    // Adicione filtros ou configurações extras aqui se necessário
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDatabaseConfiguration(connectionString);
+
 builder.Services.AddApplicationServices();
+
 SqlMapper.AddTypeHandler(new PlacaDapper());
 
 var app = builder.Build();
 
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "PosTechChallenge API v1");
+        options.RoutePrefix = "swagger"; // abre em http://localhost:xxxx/swagger/index.html
+    });
 }
 
-Todo[] sampleTodos =
-[
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-];
-
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos)
-        .WithName("GetTodos");
-
-todosApi.MapGet("/{id}", Results<Ok<Todo>, NotFound> (int id) =>
-    sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-        ? TypedResults.Ok(todo)
-        : TypedResults.NotFound())
-    .WithName("GetTodoById");
+app.MapControllers();
 
 app.Run();
-
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
-
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext
-{
-
-}

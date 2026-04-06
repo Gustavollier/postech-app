@@ -1,4 +1,5 @@
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
+using PosTechChallenge.Dominio.Results;
 
 namespace PosTechChallenge.Applicacao.UseCases.Funcionario;
 
@@ -11,14 +12,22 @@ public class DeletarFuncionarioUseCase
         _funcionarioRepositorio = funcionarioRepositorio;
     }
 
-    public async Task<bool> DeletarPorCpfAsync(string cpf)
+    public async Task<Resultado> DeletarPorCpfAsync(string cpf)
     {
-        var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-        var funcionario = funcionarios.FirstOrDefault(f => f.CPF == cpf);
+        try
+        {
+            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
+            var funcionario = funcionarios.FirstOrDefault(f => f.CPF == cpf);
 
-        if (funcionario == null)
-            return false;
+            if (funcionario == null)
+                return Resultado.Falha($"Funcionário com CPF {cpf} não encontrado.");
 
-        return await _funcionarioRepositorio.DeletarAsync(funcionario.Id);
+            await _funcionarioRepositorio.DeletarAsync(funcionario.Id);
+            return Resultado.Sucesso("Funcionário deletado com sucesso.");
+        }
+        catch (Exception ex)
+        {
+            return Resultado.Falha(ex.Message);
+        }
     }
 }

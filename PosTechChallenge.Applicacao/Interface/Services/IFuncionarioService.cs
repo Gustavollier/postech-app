@@ -1,13 +1,14 @@
 ﻿using PosTechChallenge.Applicacao.Dto.Funcionario;
+using PosTechChallenge.Dominio.Results;
 
 namespace PosTechChallenge.Applicacao.Interface.Services;
 
 public interface IFuncionarioService
 {
-    Task CriarAsync(CriarFuncionarioDto funcionarioDto);
-    Task<ObterFuncionarioDto?> ObterPorCpfAsync(string cpf);
-    Task<ObterFuncionarioDto?> ObterPorNomeAsync(string nome);
-    Task<IEnumerable<ObterFuncionarioDto>> ObterTodosAsync();
-    Task<bool> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto);
-    Task<bool> DeletarAsync(string cpf);
+    Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto);
+    Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf);
+    Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome);
+    Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync();
+    Task<Resultado> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto);
+    Task<Resultado> DeletarAsync(string cpf);
 }

@@ -1,6 +1,6 @@
 <Solution>
   <Project Path="PosTechChallenge.Applicacao/PosTechChallenge.Applicacao.csproj" Id="d436e9ab-3ee5-45bc-8e24-8b13e023a1b6" />
-  <Project Path="PosTechChallenge.Application/PosTechChallenge.Dominio.csproj" Id="cb987bb4-1c9d-4e2a-8946-6bec3d17a09a" />
+  <Project Path="PosTechChallenge.Dominio/PosTechChallenge.Dominio.csproj" />
   <Project Path="PosTechChallenge.Infraestrutura/PosTechChallenge.Infraestrutura.csproj" Id="24fe3e26-1680-4a63-8208-eeae06b301c3" />
   <Project Path="PosTechChallenge/PosTechChallenge.csproj" />
 </Solution>

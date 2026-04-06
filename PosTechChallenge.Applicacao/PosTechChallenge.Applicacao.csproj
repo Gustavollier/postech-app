@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PosTechChallenge.Application\PosTechChallenge.Dominio.csproj" />
+    <ProjectReference Include="..\PosTechChallenge.Dominio\PosTechChallenge.Dominio.csproj" />
   </ItemGroup>
 
 </Project>

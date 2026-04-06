@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PosTechChallenge.Applicacao": {
+      "commandName": "Project",
+      "sqlDebugging": true
+    }
+  }
+}

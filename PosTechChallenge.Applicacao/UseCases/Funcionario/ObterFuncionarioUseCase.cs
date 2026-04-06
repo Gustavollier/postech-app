@@ -1,5 +1,6 @@
 using PosTechChallenge.Applicacao.Dto.Funcionario;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
+using PosTechChallenge.Dominio.Results;
 
 namespace PosTechChallenge.Applicacao.UseCases.Funcionario;
 
@@ -12,32 +13,58 @@ public class ObterFuncionarioUseCase
         _funcionarioRepositorio = funcionarioRepositorio;
     }
 
-    public async Task<ObterFuncionarioDto?> ObterPorCpfAsync(string cpf)
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf)
     {
-        var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-        var funcionario = funcionarios.FirstOrDefault(f => f.CPF == cpf);
+        try
+        {
+            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
+            var funcionario = funcionarios.FirstOrDefault(f => f.CPF == cpf);
 
-        if (funcionario == null)
-            return null;
+            if (funcionario == null)
+                return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com CPF {cpf} não encontrado.");
 
-        return MapearParaDto(funcionario);
+            return Resultado<ObterFuncionarioDto>.Sucesso(MapearParaDto(funcionario));
+        }
+        catch (Exception ex)
+        {
+            return Resultado<ObterFuncionarioDto>.Falha(ex.Message);
+        }
     }
 
-    public async Task<ObterFuncionarioDto?> ObterPorNomeAsync(string nome)
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome)
     {
-        var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-        var funcionario = funcionarios.FirstOrDefault(f => f.Nome == nome);
+        try
+        {
+            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
+            var funcionario = funcionarios.FirstOrDefault(f => f.Nome == nome);
 
-        if (funcionario == null)
-            return null;
+            if (funcionario == null)
+                return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com nome '{nome}' não encontrado.");
 
-        return MapearParaDto(funcionario);
+            return Resultado<ObterFuncionarioDto>.Sucesso(MapearParaDto(funcionario));
+        }
+        catch (Exception ex)
+        {
+            return Resultado<ObterFuncionarioDto>.Falha(ex.Message);
+        }
     }
 
-    public async Task<IEnumerable<ObterFuncionarioDto>> ObterTodosAsync()
+    public async Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync()
     {
-        var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-        return funcionarios.Select(MapearParaDto);
+        try
+        {
+            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
+
+            if (funcionarios == null || !funcionarios.Any())
+                return Resultado<IEnumerable<ObterFuncionarioDto>>.Falha("Nenhum funcionário encontrado.");
+
+            var dtos = funcionarios.Select(MapearParaDto).ToList();
+            return Resultado<IEnumerable<ObterFuncionarioDto>>.Sucesso(dtos);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<ObterFuncionarioDto>>.Falha(ex.Message);
+        }
     }
 
     private static ObterFuncionarioDto MapearParaDto(Dominio.Model.Funcionario funcionario)
