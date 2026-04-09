@@ -57,4 +57,5 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             var result = await connection.ExecuteAsync(PecasQuerys.DELETAR, new { Id = id });
             return result > 0;
         }
+    }
 }
