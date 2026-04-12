@@ -17,6 +17,7 @@ namespace PosTechChallenge.Infraestrutura
             services.AddScoped<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
             services.AddScoped<IFuncionarioRepositorio, FuncionariosRepositorio>();
             services.AddScoped<IVeiculosRepositorio, VeiculosRepositorio>();
+            services.AddScoped<IItemsRepositorio, ItemsRepositorio>();
 
             return services;
         }
