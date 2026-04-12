@@ -18,6 +18,7 @@ namespace PosTechChallenge.Infraestrutura
             services.AddScoped<IFuncionarioRepositorio, FuncionariosRepositorio>();
             services.AddScoped<IVeiculosRepositorio, VeiculosRepositorio>();
             services.AddScoped<IItemsRepositorio, ItemsRepositorio>();
+            services.AddScoped<IStatusRepositorio, StatusRepositorio>();
 
             return services;
         }

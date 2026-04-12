@@ -1,4 +1,6 @@
-﻿namespace PosTechChallenge.Dominio.Model
+﻿using static PosTechChallenge.Dominio.Utils.Enums;
+
+namespace PosTechChallenge.Dominio.Model
 {
     public class Status
     {
@@ -6,6 +8,6 @@
         public int IdOS { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int IdFuncionario { get; set; }
-        public int StatusAtual { get; set; }
+        public StatusServico StatusAtual { get; set; }
     }   
 }
