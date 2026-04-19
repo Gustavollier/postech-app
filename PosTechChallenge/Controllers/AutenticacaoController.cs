@@ -8,6 +8,7 @@ using PosTechChallenge.Aplicacao.Interface.Services;
 namespace PosTechChallenge.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/v1/[controller]")]
 public class AutenticacaoController : ControllerBase
 {
@@ -18,7 +19,6 @@ public class AutenticacaoController : ControllerBase
         _autenticacaoService = autenticacaoService;
     }
 
-    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody][Required] LoginBodyRequest bodyRequest)
     {
@@ -40,7 +40,6 @@ public class AutenticacaoController : ControllerBase
         return Ok(response);
     }
 
-    [AllowAnonymous]
     [HttpPost("criar-senha")]
     public async Task<IActionResult> CriarSenha([FromBody] CriarSenhaBodyRequest bodyRequest)
     {

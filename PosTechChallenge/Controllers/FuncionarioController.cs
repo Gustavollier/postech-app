@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Funcionario;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Funcionario;
 using PosTechChallenge.Dtos.Responses.Funcionario;
+using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Controllers;
 
@@ -105,6 +107,7 @@ public class FuncionarioController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Roles = "Gerente")]
     [HttpPut]
     public async Task<IActionResult> Atualizar([FromQuery] string cpf, [FromBody] AtualizarFuncionarioBodyRequest bodyRequest)
     {
@@ -127,6 +130,7 @@ public class FuncionarioController : ControllerBase
         return Ok(new { message = resultado.Message });
     }
 
+    [Authorize(Roles = "Gerente")]
     [HttpDelete]
     public async Task<IActionResult> Deletar([FromQuery] string cpf)
     {

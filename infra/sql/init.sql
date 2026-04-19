@@ -1,4 +1,8 @@
 -- Script de criação das tabelas principais para o ambiente da oficina
+CREATE DATABASE PosTechChallenge;
+GO
+USE PosTechChallenge;
+GO
 
 CREATE TABLE Funcionario (
     Id INT PRIMARY KEY IDENTITY(1,1),

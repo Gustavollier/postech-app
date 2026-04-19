@@ -34,7 +34,7 @@ public class FuncionariosRepositorio : IFuncionarioRepositorio
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
 
-        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_CPF, new { Id = CPF });
+        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_CPF, new { CPF = CPF });
     }
 
     public async Task<int> CriarAsync(Funcionario funcionario)

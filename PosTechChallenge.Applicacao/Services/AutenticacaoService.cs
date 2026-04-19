@@ -8,14 +8,15 @@ namespace PosTechChallenge.Aplicacao.Services;
 public sealed class AutenticacaoService : IAutenticacaoService
 {
     private readonly LoginUseCase _loginUseCase;
-
-    public AutenticacaoService(LoginUseCase loginUseCase)
+    private readonly CriarSenhaUseCase _criarSenhaUseCase;
+    public AutenticacaoService(LoginUseCase loginUseCase, CriarSenhaUseCase criarSenhaUseCase)
     {
-        _loginUseCase = loginUseCase ?? throw new ArgumentNullException(nameof(loginUseCase));
+        _loginUseCase = loginUseCase;
+        _criarSenhaUseCase = criarSenhaUseCase;
     }
 
     public async Task<Resultado<TokenResponseDto>> LoginAsync(string cpf, string senha) 
         => await _loginUseCase.LoginAsync(cpf, senha);
     public async Task<Resultado> CriarSenhaAsync(string cpf, string senha, string confirmacaoSenha) 
-            => await _loginUseCase.CriarSenhaAsync(cpf, senha, confirmacaoSenha);
+            => await _criarSenhaUseCase.CriarSenhaAsync(cpf, senha, confirmacaoSenha);
 }

@@ -1,4 +1,6 @@
-﻿namespace PosTechChallenge.Dominio.Model
+﻿using static PosTechChallenge.Dominio.Utils.Enums;
+
+namespace PosTechChallenge.Dominio.Model
 {
     public class Funcionario
     {
@@ -10,7 +12,7 @@
 
         public string? CPF { get; set; }
 
-        public int Cargo { get; set; }
+        public ECargoFuncionario Cargo { get; set; }
 
         public int ValorHora { get; set; }
     }

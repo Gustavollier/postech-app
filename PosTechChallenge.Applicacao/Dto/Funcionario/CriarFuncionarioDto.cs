@@ -1,3 +1,5 @@
-﻿namespace PosTechChallenge.Aplicacao.Dto.Funcionario;
+﻿using static PosTechChallenge.Dominio.Utils.Enums;
 
-public sealed record CriarFuncionarioDto(string Nome, string Contato, string CPF, int Cargo, int ValorHora);
+namespace PosTechChallenge.Aplicacao.Dto.Funcionario;
+
+public sealed record CriarFuncionarioDto(string Nome, string Contato, string CPF, ECargoFuncionario Cargo, int ValorHora);

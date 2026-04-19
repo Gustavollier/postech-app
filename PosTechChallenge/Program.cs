@@ -1,45 +1,60 @@
-
+using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Text.Json.Serialization;
-using PosTechChallenge.Infraestrutura;
+using Microsoft.OpenApi.Models; 
 using PosTechChallenge.Aplicacao;
-using Dapper;
+using PosTechChallenge.Infraestrutura;
 using PosTechChallenge.Infraestrutura.Mapeamentos;
+using System.Text;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Adiciona e configura o Swagger (OpenAPI)
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.Services.AddOpenApi(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        Title = "PosTechChallenge API",
-        Version = "v1",
-        Description = "API para gerenciamento de funcionários, clientes, ordens de serviço e peças.",
-        Contact = new Microsoft.OpenApi.OpenApiContact
+        // 1. Adiciona a definição do esquema de segurança
+        document.Components ??= new();
+        document.Components.SecuritySchemes.Add("Bearer", new OpenApiSecurityScheme
         {
-            Name = "Equipe PosTechChallenge",
-            Email = "contato@postech.com"
-        }
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "Insira apenas o token JWT (sem a palavra Bearer)"
+        });
+
+        // 2. Torna a segurança global para todos os endpoints
+        document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
+
+        return Task.CompletedTask;
     });
-    // Adicione filtros ou configurações extras aqui se necessário
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+// --- RESTO DA SUA CONFIGURAÇÃO ---
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDatabaseConfiguration(connectionString);
-
 builder.Services.AddApplicationServices();
 
-// Configurar JWT
-var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
+var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey missing");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -55,26 +70,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-builder.Services.AddAuthorization();
 
+builder.Services.AddAuthorization();
 SqlMapper.AddTypeHandler(new PlacaDapper());
 
 var app = builder.Build();
 
-
+// --- MIDDLEWARES ---
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    // Gera o endpoint do documento: /openapi/v1.json
+    app.MapOpenApi();
+
+    // Habilita a interface visual do Swagger UI apontando para o arquivo nativo
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "PosTechChallenge API v1");
-        options.RoutePrefix = "swagger"; // abre em http://localhost:xxxx/swagger/index.html
+        options.SwaggerEndpoint("/openapi/v1.json", "Minha API Nativa v1");
+        options.RoutePrefix = "swagger";
     });
 }
 
-app.MapControllers();
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();
