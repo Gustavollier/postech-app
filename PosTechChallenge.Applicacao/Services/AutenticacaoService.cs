@@ -1,10 +1,9 @@
 using PosTechChallenge.Aplicacao.Dto.Autenticacao;
-using PosTechChallenge.Applicacao.Dto.Autenticacao;
-using PosTechChallenge.Applicacao.Interface.Services;
-using PosTechChallenge.Applicacao.UseCases.Autenticacao;
+using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.UseCases.Autenticacao;
 using PosTechChallenge.Dominio.Results;
 
-namespace PosTechChallenge.Applicacao.Services;
+namespace PosTechChallenge.Aplicacao.Services;
 
 public sealed class AutenticacaoService : IAutenticacaoService
 {
@@ -15,9 +14,8 @@ public sealed class AutenticacaoService : IAutenticacaoService
         _loginUseCase = loginUseCase ?? throw new ArgumentNullException(nameof(loginUseCase));
     }
 
-    public async Task<Resultado<TokenResponseDto>> LoginAsync(string cpf, string senha)
-    {
-        var dto = new LoginDto(cpf, senha);
-        return await _loginUseCase.LoginAsync(dto);
-    }
+    public async Task<Resultado<TokenResponseDto>> LoginAsync(string cpf, string senha) 
+        => await _loginUseCase.LoginAsync(cpf, senha);
+    public async Task<Resultado> CriarSenhaAsync(string cpf, string senha, string confirmacaoSenha) 
+            => await _loginUseCase.CriarSenhaAsync(cpf, senha, confirmacaoSenha);
 }

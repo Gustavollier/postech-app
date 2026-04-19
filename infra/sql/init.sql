@@ -9,6 +9,14 @@ CREATE TABLE Funcionario (
     ValorHora INT NOT NULL
 );
 
+CREATE TABLE Seguranca (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    FuncionarioId INT NOT NULL,
+    SenhaHash NVARCHAR(255) NOT NULL,
+    CriadoEm DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    FOREIGN KEY (FuncionarioId) REFERENCES Funcionario(Id)
+);
+
 CREATE TABLE Cliente (
     Id INT PRIMARY KEY IDENTITY(1,1),
     CreatedAt DATETIME NOT NULL,

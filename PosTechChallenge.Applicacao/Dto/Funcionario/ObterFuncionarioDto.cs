@@ -1,4 +1,4 @@
-namespace PosTechChallenge.Applicacao.Dto.Funcionario
+namespace PosTechChallenge.Aplicacao.Dto.Funcionario
 {
     public sealed record ObterFuncionarioDto
     {

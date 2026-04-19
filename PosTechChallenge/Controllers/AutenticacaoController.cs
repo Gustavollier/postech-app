@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PosTechChallenge.Applicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Autenticacao;
 using PosTechChallenge.Dtos.Responses.Autenticacao;
 using System.ComponentModel.DataAnnotations;
+using PosTechChallenge.Aplicacao.Interface.Services;
 
 namespace PosTechChallenge.Controllers;
 
@@ -15,7 +15,7 @@ public class AutenticacaoController : ControllerBase
 
     public AutenticacaoController(IAutenticacaoService autenticacaoService)
     {
-        _autenticacaoService = autenticacaoService ?? throw new ArgumentNullException(nameof(autenticacaoService));
+        _autenticacaoService = autenticacaoService;
     }
 
     [AllowAnonymous]
@@ -38,5 +38,20 @@ public class AutenticacaoController : ControllerBase
             Cargo: resultado.Output.Cargo);
 
         return Ok(response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("criar-senha")]
+    public async Task<IActionResult> CriarSenha([FromBody] CriarSenhaBodyRequest bodyRequest)
+    {
+        if (string.IsNullOrWhiteSpace(bodyRequest.CPF) || string.IsNullOrWhiteSpace(bodyRequest.Senha) || string.IsNullOrWhiteSpace(bodyRequest.ConfirmacaoSenha))
+            return BadRequest(new { message = "CPF, Senha e Confirmação de Senha são obrigatórios." });
+
+        var result = await _autenticacaoService.CriarSenhaAsync(bodyRequest.CPF, bodyRequest.Senha, bodyRequest.ConfirmacaoSenha);
+        
+        if (result.IsValid)
+            return Ok(new { message = result.Message });
+        
+        return BadRequest(new { message = result.Message }); 
     }
 }

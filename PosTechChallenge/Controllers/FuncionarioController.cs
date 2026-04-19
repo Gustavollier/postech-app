@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using PosTechChallenge.Applicacao.Dto.Funcionario;
-using PosTechChallenge.Applicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Dto.Funcionario;
+using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Funcionario;
 using PosTechChallenge.Dtos.Responses.Funcionario;
 

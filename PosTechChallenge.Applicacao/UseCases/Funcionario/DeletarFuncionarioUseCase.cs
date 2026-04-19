@@ -1,7 +1,7 @@
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Results;
 
-namespace PosTechChallenge.Applicacao.UseCases.Funcionario;
+namespace PosTechChallenge.Aplicacao.UseCases.Funcionario;
 
 public class DeletarFuncionarioUseCase
 {

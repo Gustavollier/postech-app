@@ -1,7 +1,7 @@
-﻿using PosTechChallenge.Applicacao.Dto.Funcionario;
+﻿using PosTechChallenge.Aplicacao.Dto.Funcionario;
 using PosTechChallenge.Dominio.Results;
 
-namespace PosTechChallenge.Applicacao.Interface.Services;
+namespace PosTechChallenge.Aplicacao.Interface.Services;
 
 public interface IFuncionarioService
 {

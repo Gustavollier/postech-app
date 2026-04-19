@@ -19,7 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PosTechChallenge.Applicacao\PosTechChallenge.Applicacao.csproj" />
+	  
+    <ProjectReference Include="..\PosTechChallenge.Applicacao\PosTechChallenge.Aplicacao.csproj" />
     <ProjectReference Include="..\PosTechChallenge.Infraestrutura\PosTechChallenge.Infraestrutura.csproj" />
   </ItemGroup>
   

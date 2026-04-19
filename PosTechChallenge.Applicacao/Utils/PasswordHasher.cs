@@ -1,6 +1,6 @@
 using BCrypt.Net;
 
-namespace PosTechChallenge.Applicacao.Utils;
+namespace PosTechChallenge.Aplicacao.Utils;
 
 public static class PasswordHasher
 {

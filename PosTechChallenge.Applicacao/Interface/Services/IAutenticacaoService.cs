@@ -1,9 +1,10 @@
-using PosTechChallenge.Applicacao.Dto.Autenticacao;
+using PosTechChallenge.Aplicacao.Dto.Autenticacao;
 using PosTechChallenge.Dominio.Results;
 
-namespace PosTechChallenge.Applicacao.Interface.Services;
+namespace PosTechChallenge.Aplicacao.Interface.Services;
 
 public interface IAutenticacaoService
 {
     Task<Resultado<TokenResponseDto>> LoginAsync(string cpf, string senha);
+    Task<Resultado> CriarSenhaAsync(string cpf, string senha, string confirmacaoSenha);
 }

@@ -1,9 +1,9 @@
-using PosTechChallenge.Applicacao.Dto.Funcionario;
-using PosTechChallenge.Applicacao.UseCases.Funcionario;
-using PosTechChallenge.Applicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Dto.Funcionario;
+using PosTechChallenge.Aplicacao.UseCases.Funcionario;
+using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dominio.Results;
 
-namespace PosTechChallenge.Applicacao.Services;
+namespace PosTechChallenge.Aplicacao.Services;
 
 public sealed class FuncionarioService : IFuncionarioService
 {

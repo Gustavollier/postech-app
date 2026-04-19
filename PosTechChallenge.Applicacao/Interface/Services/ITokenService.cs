@@ -1,6 +1,6 @@
-using PosTechChallenge.Applicacao.Dto.Autenticacao;
+using PosTechChallenge.Aplicacao.Dto.Autenticacao;
 
-namespace PosTechChallenge.Applicacao.Interface.Services;
+namespace PosTechChallenge.Aplicacao.Interface.Services;
 
 public interface ITokenService
 {

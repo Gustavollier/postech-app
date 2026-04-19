@@ -1,4 +1,4 @@
-namespace PosTechChallenge.Applicacao.Dto.Autenticacao;
+namespace PosTechChallenge.Aplicacao.Dto.Autenticacao;
 
 public sealed record TokenResponseDto(
     string AccessToken, 

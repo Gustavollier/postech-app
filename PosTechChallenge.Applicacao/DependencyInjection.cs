@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
-using PosTechChallenge.Applicacao.Interface.Services;
-using PosTechChallenge.Applicacao.Services;
-using PosTechChallenge.Applicacao.UseCases.Funcionario;
-using PosTechChallenge.Applicacao.UseCases.Autenticacao;
+using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Services;
+using PosTechChallenge.Aplicacao.UseCases.Funcionario;
+using PosTechChallenge.Aplicacao.UseCases.Autenticacao;
 
-namespace PosTechChallenge.Applicacao;
+namespace PosTechChallenge.Aplicacao;
 
 public static class DependencyInjection
 {

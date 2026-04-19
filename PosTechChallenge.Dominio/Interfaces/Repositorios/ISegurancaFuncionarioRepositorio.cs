@@ -1,10 +1,11 @@
 using PosTechChallenge.Dominio.Model;
+using System.Threading.Tasks;
 
-namespace PosTechChallenge.Dominio.Interfaces.Repositorios;
-
-public interface ISegurancaFuncionarioRepositorio
+namespace PosTechChallenge.Dominio.Interfaces.Repositorios
 {
-    Task<SegurancaFuncionario?> ObterPorFuncionarioIdAsync(int funcionarioId);
-    Task<int> CriarAsync(SegurancaFuncionario seguranca);
-    Task<bool> AtualizarAsync(SegurancaFuncionario seguranca);
+    public interface ISegurancaRepositorio
+    {
+        Task<Seguranca?> ObterPorFuncionarioIdAsync(int funcionarioId);
+        Task CriarSenhaAsync(int funcionarioId, string senhaHash);
+    }
 }

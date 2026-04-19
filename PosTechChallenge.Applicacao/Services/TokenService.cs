@@ -3,10 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using PosTechChallenge.Applicacao.Dto.Autenticacao;
-using PosTechChallenge.Applicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Dto.Autenticacao;
+using PosTechChallenge.Aplicacao.Interface.Services;
 
-namespace PosTechChallenge.Applicacao.Services;
+namespace PosTechChallenge.Aplicacao.Services;
 
 public class TokenService : ITokenService
 {

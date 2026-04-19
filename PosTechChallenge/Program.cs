@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
 using PosTechChallenge.Infraestrutura;
-using PosTechChallenge.Applicacao;
+using PosTechChallenge.Aplicacao;
 using Dapper;
 using PosTechChallenge.Infraestrutura.Mapeamentos;
 

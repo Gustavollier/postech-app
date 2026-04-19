@@ -1,6 +1,6 @@
 namespace PosTechChallenge.Dominio.Model
 {
-    public class SegurancaFuncionario
+    public class Seguranca
     {
         public int Id { get; set; }
         public int FuncionarioId { get; set; }

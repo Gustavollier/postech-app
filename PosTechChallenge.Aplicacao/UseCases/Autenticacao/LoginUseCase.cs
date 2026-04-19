@@ -9,12 +9,12 @@ namespace PosTechChallenge.Aplicacao.UseCases.Autenticacao;
 public class LoginUseCase
 {
     private readonly IFuncionarioRepositorio _funcionarioRepositorio;
-    private readonly ISegurancaFuncionarioRepositorio _segurancaRepositorio;
+    private readonly ISegurancaRepositorio _segurancaRepositorio;
     private readonly ITokenService _tokenService;
 
     public LoginUseCase(
         IFuncionarioRepositorio funcionarioRepositorio,
-        ISegurancaFuncionarioRepositorio segurancaRepositorio,
+        ISegurancaRepositorio segurancaRepositorio,
         ITokenService tokenService)
     {
         _funcionarioRepositorio = funcionarioRepositorio;
