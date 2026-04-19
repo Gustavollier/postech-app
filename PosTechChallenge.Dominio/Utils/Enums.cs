@@ -1,6 +1,17 @@
 ﻿namespace PosTechChallenge.Dominio.Utils;
 public class Enums
 {
+    public enum CargoFuncionario
+    {
+        Mecanico = 0,
+        Recepcionista = 1,
+        Gerente = 2,
+        Estoquista = 3,
+        Eletricista = 4,
+        Lavador = 5,
+        Supervisor = 6
+    }
+
     public enum StatusServico
     {
         Recebida = 0,

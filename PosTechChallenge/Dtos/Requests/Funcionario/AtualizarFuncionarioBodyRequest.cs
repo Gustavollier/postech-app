@@ -8,7 +8,7 @@ public sealed record AtualizarFuncionarioBodyRequest
     public string Nome { get; init; }
 
     [Required]
-    public string Contato { get; init; }
+    public string Contato { get; init; }  
 
     [Required]
     public int Cargo { get; init; }
