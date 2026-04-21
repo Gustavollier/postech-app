@@ -4,32 +4,16 @@ namespace PosTechChallenge.Dominio.Model
 {
     public class Veiculo
     {
-        public int Id { get; private set; }
-        public string Marca { get; private set; }
-        public string Modelo { get; private set; }
-        public Placa Placa { get; private set; }
-        public string Cor { get; private set; }
-        public int AnoModelo { get; private set; }
-        public int AnoFabricacao { get; private set; }
-        public int KmEntrada { get; private set; }
-
-        private Veiculo() { }
-
-        public Veiculo(string marca, string modelo, string placa, string cor, int anoModelo, int anoFabricacao, int kmEntrada)
-        {
-            if (string.IsNullOrWhiteSpace(marca)) throw new ArgumentException("Marca é obrigatória.");
-            if (string.IsNullOrWhiteSpace(modelo)) throw new ArgumentException("Modelo é obrigatório.");
-            if (anoModelo < 1900) throw new ArgumentException("Ano do modelo inválido.");
-            if (kmEntrada < 0) throw new ArgumentException("KM de entrada não pode ser negativa.");
-
-            Marca = marca;
-            Modelo = modelo;
-            Placa = new Placa(placa);
-            Cor = cor;
-            AnoModelo = anoModelo;
-            AnoFabricacao = anoFabricacao;
-            KmEntrada = kmEntrada;
-        }
+        public int Id { get; set; }
+        public int ClienteId { get; set; }
+        public string Marca { get; set; } = string.Empty;
+        public string Modelo { get; set; } = string.Empty;
+        public string Placa { get; set; } = string.Empty;
+        public string? Cor { get; set; }
+        public int AnoModelo { get; set; }
+        public int AnoFabricacao { get; set; }
+        public int KmEntrada { get; set; }
+        public bool Ativo { get; set; } = true;
     }
 
     public sealed class Placa

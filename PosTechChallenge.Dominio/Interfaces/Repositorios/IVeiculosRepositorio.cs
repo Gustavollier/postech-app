@@ -9,8 +9,10 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios
     {
         Task<IEnumerable<Veiculo>> ObterTodosAsync();
         Task<Veiculo?> ObterPorIdAsync(int id);
-        Task<int> CriarAsync(Veiculo funcionario);
-        Task<bool> AtualizarAsync(Veiculo funcionario);
+        Task<Veiculo?> ObterPorPlacaAsync(string placa);
+        Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId);
+        Task<int> CriarAsync(Veiculo veiculo);
+        Task<bool> AtualizarAsync(Veiculo veiculo);
         Task<bool> DeletarAsync(int id);
     }
 }

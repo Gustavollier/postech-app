@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Aplicacao.Interface.Services;

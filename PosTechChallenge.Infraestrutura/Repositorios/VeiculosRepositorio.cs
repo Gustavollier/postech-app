@@ -30,6 +30,22 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             return await connection.QueryFirstOrDefaultAsync<Veiculo>(VeiculoQuerys.OBTER_POR_ID, new { Id = id});
         }
 
+        public async Task<Veiculo?> ObterPorPlacaAsync(string placa)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+
+            return await connection.QueryFirstOrDefaultAsync<Veiculo>(VeiculoQuerys.OBTER_POR_PLACA, new { Placa = placa });
+        }
+
+        public async Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+
+            return await connection.QueryAsync<Veiculo>(VeiculoQuerys.OBTER_POR_CLIENTE_ID, new { ClienteId = clienteId });
+        }
+
         public async Task<int> CriarAsync(Veiculo veiculo)
         {
             if (veiculo == null)

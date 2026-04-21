@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<DeletarFuncionarioUseCase>();
         services.AddScoped<IFuncionarioService, FuncionarioService>();
         services.AddScoped<IClienteService, ClienteService>();
+        services.AddScoped<IVeiculoService, VeiculoService>();
         
         // Token Service
         services.AddScoped<ITokenService, TokenService>();

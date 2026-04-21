@@ -46,11 +46,14 @@ CREATE TABLE Pecas (
 
 CREATE TABLE Veiculo (
     Id INT PRIMARY KEY IDENTITY(1,1),
+    ClienteId INT NOT NULL,
     Marca NVARCHAR(50) NOT NULL,
     Modelo NVARCHAR(50) NOT NULL,
     Placa NVARCHAR(10) NOT NULL,
     Cor NVARCHAR(30),
     AnoModelo INT NOT NULL,
     AnoFabricacao INT NOT NULL,
-    KmEntrada INT NOT NULL
+    KmEntrada INT NOT NULL,
+    Ativo BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (ClienteId) REFERENCES Cliente(Id)
 );
