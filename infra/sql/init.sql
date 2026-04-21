@@ -29,7 +29,8 @@ CREATE TABLE Cliente (
     CNPJ NVARCHAR(18),
     NomeCompleto NVARCHAR(100) NOT NULL,
     Telefone NVARCHAR(20),
-    Email NVARCHAR(100)
+    Email NVARCHAR(100),
+    Ativo BIT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE Pecas (

@@ -23,6 +23,7 @@ namespace PosTechChallenge.Infraestrutura
             services.AddScoped<IOrdemServicoRepositorio, OrdemServicoRepositorio>();
             services.AddScoped<IPecasRepositorio, PecasRepositorio>();
             services.AddScoped<ISegurancaRepositorio, SegurancaRepositorio>();
+            services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 
             return services;
         }
