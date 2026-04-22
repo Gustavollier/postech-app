@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IFuncionarioService, FuncionarioService>();
         services.AddScoped<IClienteService, ClienteService>();
         services.AddScoped<IVeiculoService, VeiculoService>();
+        services.AddScoped<IPecaService, PecaService>();
         
         // Token Service
         services.AddScoped<ITokenService, TokenService>();

@@ -8,9 +8,10 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios
     public interface IPecasRepositorio
     {
         Task<IEnumerable<Pecas>> ObterTodosAsync();
-        Task<Pecas> ObterPorIdAsync(int id);
+        Task<Pecas?> ObterPorIdAsync(int id);
         Task<int> CriarAsync(Pecas peca);
         Task<bool> AtualizarAsync(Pecas peca);
-        Task<bool> DeletarAsync(int id);
+        Task<bool> AjustarEstoqueAsync(int id, int quantidadeEstoque, DateTime atualizadoEm);
+        Task<bool> DeletarAsync(int id, DateTime atualizadoEm);
     }
 }

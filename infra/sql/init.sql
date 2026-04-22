@@ -40,8 +40,10 @@ CREATE TABLE Pecas (
     Codigo NVARCHAR(50),
     Preco NVARCHAR(20),
     UnidadeMedida INT NOT NULL,
+    QuantidadeEstoque INT NOT NULL DEFAULT 0,
     CriadoEm DATETIME NOT NULL,
-    AtualizadoEm DATETIME NOT NULL
+    AtualizadoEm DATETIME NOT NULL,
+    Ativo BIT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE Veiculo (

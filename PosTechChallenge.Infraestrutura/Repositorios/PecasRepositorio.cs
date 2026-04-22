@@ -50,11 +50,19 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             return result > 0;
         }
 
-        public async Task<bool> DeletarAsync(int id)
+        public async Task<bool> AjustarEstoqueAsync(int id, int quantidadeEstoque, DateTime atualizadoEm)
         {
             using var connection = _connectionFactory.CreateConnection();
             connection.Open();
-            var result = await connection.ExecuteAsync(PecasQuerys.DELETAR, new { Id = id });
+            var result = await connection.ExecuteAsync(PecasQuerys.AJUSTAR_ESTOQUE, new { Id = id, QuantidadeEstoque = quantidadeEstoque, AtualizadoEm = atualizadoEm });
+            return result > 0;
+        }
+
+        public async Task<bool> DeletarAsync(int id, DateTime atualizadoEm)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            var result = await connection.ExecuteAsync(PecasQuerys.DELETAR, new { Id = id, AtualizadoEm = atualizadoEm });
             return result > 0;
         }
     }
