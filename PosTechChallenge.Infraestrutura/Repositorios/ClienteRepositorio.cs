@@ -14,12 +14,20 @@ public sealed class ClienteRepositorio : IClienteRepositorio
         _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
     }
 
-    public async Task<IEnumerable<Cliente>> ObterTodosAsync()
+    public async Task<IEnumerable<Cliente>> ObterTodosAsync(int page, int pageSize)
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
 
-        return await connection.QueryAsync<Cliente>(ClienteQuerys.OBTER_TODOS);
+        return await connection.QueryAsync<Cliente>(ClienteQuerys.OBTER_TODOS, new { Page = page, PageSize = pageSize });
+    }
+
+    public async Task<int> ObterQuantidadeClientesAsync()
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+
+        return await connection.ExecuteScalarAsync<int>(ClienteQuerys.OBTER_QUANTIDADE_CLIENTES);
     }
 
     public async Task<Cliente?> ObterPorIdAsync(int id)

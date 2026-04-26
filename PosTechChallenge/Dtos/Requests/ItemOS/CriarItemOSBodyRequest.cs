@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Dtos.Requests.ItemOS;
 
 public sealed record CriarItemOSBodyRequest
 {
     [Required]
-    public int TipoItem { get; init; }
+    public ETipoItemOrdemServico TipoItem { get; init; }
 
     [Required]
     public int QuantidadeItem { get; init; }

@@ -12,7 +12,7 @@ public sealed record AtualizarPecaBodyRequest
     public string? Codigo { get; init; }
 
     [Required]
-    public string Preco { get; init; } = string.Empty;
+    public decimal Preco { get; init; }
 
     [Required]
     public int UnidadeMedida { get; init; }

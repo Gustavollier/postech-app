@@ -6,7 +6,9 @@ public static class ClienteQuerys
         SELECT Id, CreatedAt, UpdatedAt, CPF, CNPJ, NomeCompleto, Telefone, Email, Ativo
         FROM Cliente
         WHERE Ativo = 1
-        ORDER BY Id DESC";
+        ORDER BY Id DESC
+        OFFSET (@Page - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY";
 
     public const string OBTER_POR_ID = @"
         SELECT Id, CreatedAt, UpdatedAt, CPF, CNPJ, NomeCompleto, Telefone, Email, Ativo
@@ -39,4 +41,6 @@ public static class ClienteQuerys
         SET UpdatedAt = @UpdatedAt,
             Ativo = 0
         WHERE Id = @Id";
+
+    public const string OBTER_QUANTIDADE_CLIENTES = @"SELECT COUNT(*) FROM Cliente";
 }

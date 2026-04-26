@@ -28,7 +28,7 @@ namespace PosTechChallenge.Infraestrutura.Querys
         LEFT JOIN Itens IOS ON OS.Id = IOS.IdOs
         LEFT JOIN Pecas PE ON IOS.IdPeca = PE.Id
         LEFT JOIN Funcionario FU ON IOS.IdFuncionario = FU.Id
-        WHERE OS.Id = 
+        WHERE OS.Id = @Id
         GROUP BY 
             OS.Id, 
             OS.IdCliente, 

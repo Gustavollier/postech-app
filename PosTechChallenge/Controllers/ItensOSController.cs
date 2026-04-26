@@ -101,7 +101,7 @@ public sealed class ItensOSController : ControllerBase
         {
             Id = dto.Id,
             IdOS = dto.IdOS,
-            TipoItem = dto.TipoItem,
+            TipoItem = dto.TipoItem.ToString(),
             QuantidadeItem = dto.QuantidadeItem,
             IdFuncionario = dto.IdFuncionario,
             IdPeca = dto.IdPeca

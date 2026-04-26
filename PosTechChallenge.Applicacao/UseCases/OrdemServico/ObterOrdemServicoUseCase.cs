@@ -19,7 +19,7 @@ public sealed class ObterOrdemServicoUseCase
         _statusRepositorio = statusRepositorio;
     }
 
-    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize = 10, int page = 1)
+    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int page, int pageSize)
     {
         try
         {

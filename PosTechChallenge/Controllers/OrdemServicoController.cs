@@ -38,9 +38,9 @@ public sealed class OrdemServicoController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> ObterTodos([FromQuery] EStatusOrdemServico? status = null)
+    public async Task<IActionResult> ObterTodosAsync([FromQuery] EStatusOrdemServico? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        Resultado<IEnumerable<ObterOrdemServicoDto>> resultado = await _ordemServicoService.ObterTodosAsync(status);
+        Resultado<IEnumerable<ObterOrdemServicoDto>> resultado = await _ordemServicoService.ObterTodosAsync(status, pageSize ,page);
 
         if (resultado.IsValid is false)
             return NotFound(new { message = resultado.Message });
@@ -48,6 +48,17 @@ public sealed class OrdemServicoController : ControllerBase
         var response = resultado.Output?.Select(MapearParaResponse).ToList() ?? [];
 
         return Ok(response);
+    }
+
+    [HttpGet("valor/{id:int}")]
+    public async Task<IActionResult> ObterValorPorIdAsync([FromRoute] int id)
+    {
+        Resultado<decimal> resultado = await _ordemServicoService.ObterValorPorIdAsync(id);
+
+        if (resultado.IsValid is false)
+            return NotFound(new { message = resultado.Message });
+
+        return Ok(new { valor = resultado.Output });
     }
 
     [HttpGet("{id:int}")]

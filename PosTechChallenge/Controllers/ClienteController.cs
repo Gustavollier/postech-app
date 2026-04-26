@@ -41,36 +41,17 @@ public class ClienteController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> ObterTodos([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> ObterTodos(CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         if (page <= 0 || pageSize <= 0)
             return BadRequest(new { message = "Page e PageSize devem ser maiores que zero." });
 
-        var resultado = await _clienteService.ObterTodosAsync();
+        var resultado = await _clienteService.ObterTodosAsync(page, pageSize, cancellationToken);
 
-        if (!resultado.IsValid)
+        if (resultado.IsValid is false)
             return NotFound(new { message = resultado.Message });
 
-        var clientes = resultado.Output?.ToList() ?? [];
-        var totalItems = clientes.Count;
-        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-
-        var itens = clientes
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(MapearParaResponse)
-            .ToList();
-
-        var response = new ClientesPaginadoResponse
-        {
-            Items = itens,
-            Page = page,
-            PageSize = pageSize,
-            TotalItems = totalItems,
-            TotalPages = totalPages
-        };
-
-        return Ok(response);
+        return Ok(resultado.Output);
     }
 
     [HttpGet("{id:int}")]
@@ -147,7 +128,7 @@ public class ClienteController : ControllerBase
         return null;
     }
 
-    private static ClienteResponse MapearParaResponse(ObterClienteDto cliente)
+    private static ClienteResponse MapearParaResponse(ClienteDto cliente)
     {
         return new ClienteResponse
         {

@@ -1,7 +1,9 @@
+using static PosTechChallenge.Dominio.Utils.Enums;
+
 namespace PosTechChallenge.Aplicacao.Dto.ItemOS;
 
 public sealed record AtualizarItemOSDto(
-    int TipoItem,
+    ETipoItemOrdemServico TipoItem,
     int QuantidadeItem,
     int? IdFuncionario,
     int? IdPeca);

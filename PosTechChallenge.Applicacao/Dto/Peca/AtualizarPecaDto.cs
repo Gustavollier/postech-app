@@ -4,6 +4,6 @@ public sealed record AtualizarPecaDto(
     string Nome,
     string? Marca,
     string? Codigo,
-    string Preco,
+    decimal Preco,
     int UnidadeMedida,
     int QuantidadeEstoque);

@@ -40,55 +40,67 @@ public sealed class ClienteService : IClienteService
         }
     }
 
-    public async Task<Resultado<ObterClienteDto>> ObterPorIdAsync(int id)
+    public async Task<Resultado<ClienteDto>> ObterPorIdAsync(int id)
     {
         try
         {
             var cliente = await _clienteRepositorio.ObterPorIdAsync(id);
 
             if (cliente == null)
-                return Resultado<ObterClienteDto>.Falha($"Cliente com ID {id} não encontrado.");
+                return Resultado<ClienteDto>.Falha($"Cliente com ID {id} não encontrado.");
 
-            return Resultado<ObterClienteDto>.Sucesso(MapearParaDto(cliente));
+            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
         }
         catch (Exception ex)
         {
-            return Resultado<ObterClienteDto>.Falha(ex.Message);
+            return Resultado<ClienteDto>.Falha(ex.Message);
         }
     }
 
-    public async Task<Resultado<ObterClienteDto>> ObterPorCpfCnpjAsync(string cpfCnpj)
+    public async Task<Resultado<ClienteDto>> ObterPorCpfCnpjAsync(string cpfCnpj)
     {
         try
         {
             var cliente = await _clienteRepositorio.ObterPorCpfCnpjAsync(cpfCnpj);
 
             if (cliente == null)
-                return Resultado<ObterClienteDto>.Falha($"Cliente com CPF/CNPJ {cpfCnpj} não encontrado.");
+                return Resultado<ClienteDto>.Falha($"Cliente com CPF/CNPJ {cpfCnpj} não encontrado.");
 
-            return Resultado<ObterClienteDto>.Sucesso(MapearParaDto(cliente));
+            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
+        }
+        catch (Exception ex)
+        {
+            return Resultado<ClienteDto>.Falha(ex.Message);
+        }
+    }
+
+    public async Task<Resultado<ObterClienteDto>> ObterTodosAsync(int page, int pageSize, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var clientes = await _clienteRepositorio.ObterTodosAsync(page, pageSize);
+            
+            int quantidadeClientes = await _clienteRepositorio.ObterQuantidadeClientesAsync();
+
+            if (quantidadeClientes is 0 || clientes == null || clientes.Any() is false)
+                return Resultado<ObterClienteDto>.Falha("Nenhum cliente encontrado.");
+
+            IEnumerable<ClienteDto> dtos = clientes.Select(MapearParaClienteDto).ToList();
+
+            var response = new ObterClienteDto
+            {
+                Items = dtos,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = clientes.Count(),
+                TotalPages = quantidadeClientes / 10
+            };
+
+            return Resultado<ObterClienteDto>.Sucesso(response);
         }
         catch (Exception ex)
         {
             return Resultado<ObterClienteDto>.Falha(ex.Message);
-        }
-    }
-
-    public async Task<Resultado<IEnumerable<ObterClienteDto>>> ObterTodosAsync()
-    {
-        try
-        {
-            var clientes = await _clienteRepositorio.ObterTodosAsync();
-
-            if (clientes == null || !clientes.Any())
-                return Resultado<IEnumerable<ObterClienteDto>>.Falha("Nenhum cliente encontrado.");
-
-            var dtos = clientes.Select(MapearParaDto).ToList();
-            return Resultado<IEnumerable<ObterClienteDto>>.Sucesso(dtos);
-        }
-        catch (Exception ex)
-        {
-            return Resultado<IEnumerable<ObterClienteDto>>.Falha(ex.Message);
         }
     }
 
@@ -142,9 +154,9 @@ public sealed class ClienteService : IClienteService
         }
     }
 
-    private static ObterClienteDto MapearParaDto(Cliente cliente)
+    private static ClienteDto MapearParaClienteDto(Cliente cliente)
     {
-        return new ObterClienteDto
+        return new ClienteDto
         {
             Id = cliente.Id,
             CreatedAt = cliente.CreatedAt,

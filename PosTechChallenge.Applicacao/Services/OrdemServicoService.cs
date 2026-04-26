@@ -34,8 +34,8 @@ public sealed class OrdemServicoService : IOrdemServicoService
     public async Task<Resultado> CriarAsync(CriarOrdemServicoDto dto)
         => await _criarOrdemServicoUseCase.CriarAsync(dto);
 
-    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize = 10, int page = 1)
-        => await _obterOrdemServicoUseCase.ObterTodosAsync(status, pageSize, page);
+    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize, int page)
+        => await _obterOrdemServicoUseCase.ObterTodosAsync(status, page, pageSize);
 
     public async Task<Resultado<decimal>> ObterValorPorIdAsync(int id)
     => await _obterValorPorIdUseCase.ObterValorPorIdAsync(id);

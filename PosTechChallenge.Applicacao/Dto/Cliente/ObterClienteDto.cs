@@ -1,14 +1,15 @@
-namespace PosTechChallenge.Aplicacao.Dto.Cliente;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-public sealed record ObterClienteDto
+namespace PosTechChallenge.Aplicacao.Dto.Cliente
 {
-    public int Id { get; init; }
-    public DateTime CreatedAt { get; init; }
-    public DateTime UpdatedAt { get; init; }
-    public string? CPF { get; init; }
-    public string? CNPJ { get; init; }
-    public string? NomeCompleto { get; init; }
-    public string? Telefone { get; init; }
-    public string? Email { get; init; }
-    public bool Ativo { get; init; }
+    public class ObterClienteDto
+    {
+        public IEnumerable<ClienteDto> Items { get; init; } = [];
+        public int Page { get; init; }
+        public int PageSize { get; init; }
+        public int TotalItems { get; init; }
+        public int TotalPages { get; init; }
+    }
 }
