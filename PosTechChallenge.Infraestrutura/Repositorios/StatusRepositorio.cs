@@ -21,6 +21,13 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             return await connection.QueryAsync<Status>(StatusQuerys.OBTER_TODOS);
         }
 
+        public async Task<IEnumerable<Status>> ObterPorOrdemServicoIdAsync(int ordemServicoId)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            return await connection.QueryAsync<Status>(StatusQuerys.OBTER_POR_ORDEM_SERVICO_ID, new { IdOS = ordemServicoId });
+        }
+
         public async Task<Status?> ObterPorIdAsync(int id)
         {
             using var connection = _connectionFactory.CreateConnection();

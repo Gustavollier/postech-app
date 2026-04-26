@@ -12,7 +12,7 @@ public class Enums
         Supervisor = 6
     }
 
-    public enum StatusServico
+    public enum EStatusOrdemServico
     {
         Recebida = 0,
         EmDiagnostico = 1,
@@ -22,9 +22,9 @@ public class Enums
         Entregue = 5
     }
 
-    public enum EServico
+    public enum ETipoItemOrdemServico
     {
-        MaoDeObra,
-        Peca
+        MaoDeObra = 0,
+        Peca = 1
     }
 }

@@ -8,6 +8,6 @@ namespace PosTechChallenge.Dominio.Model
         public int IdOS { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int IdFuncionario { get; set; }
-        public StatusServico StatusAtual { get; set; }
+        public EStatusOrdemServico StatusAtual { get; set; }
     }   
 }

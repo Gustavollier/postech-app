@@ -12,7 +12,8 @@ public sealed record CriarPecaBodyRequest
     public string? Codigo { get; init; }
 
     [Required]
-    public string Preco { get; init; } = string.Empty;
+    [Range(0, int.MaxValue, ErrorMessage = "Preço deve ser um número positivo.")]
+    public int Preco { get; init; }
 
     [Required]
     public int UnidadeMedida { get; init; }

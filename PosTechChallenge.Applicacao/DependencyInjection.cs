@@ -3,6 +3,9 @@ using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Aplicacao.Services;
 using PosTechChallenge.Aplicacao.UseCases.Funcionario;
 using PosTechChallenge.Aplicacao.UseCases.Autenticacao;
+using PosTechChallenge.Aplicacao.UseCases.ItemOS;
+using PosTechChallenge.Aplicacao.UseCases.OrdemServico;
+using PosTechChallenge.Dominio.Services;
 
 namespace PosTechChallenge.Aplicacao;
 
@@ -14,10 +17,23 @@ public static class DependencyInjection
         services.AddScoped<ObterFuncionarioUseCase>();
         services.AddScoped<AtualizarFuncionarioUseCase>();
         services.AddScoped<DeletarFuncionarioUseCase>();
+        services.AddScoped<CriarItemOSUseCase>();
+        services.AddScoped<ObterItemOSUseCase>();
+        services.AddScoped<AtualizarItemOSUseCase>();
+        services.AddScoped<DeletarItemOSUseCase>();
+        services.AddScoped<CriarOrdemServicoUseCase>();
+        services.AddScoped<ObterOrdemServicoUseCase>();
+        services.AddScoped<AtualizarOrdemServicoUseCase>();
+        services.AddScoped<AtualizarStatusOrdemServicoUseCase>();
+        services.AddScoped<DeletarOrdemServicoUseCase>();
+        services.AddScoped<ItemOSDomainService>();
+        services.AddScoped<OrdemServicoDomainService>();
         services.AddScoped<IFuncionarioService, FuncionarioService>();
         services.AddScoped<IClienteService, ClienteService>();
         services.AddScoped<IVeiculoService, VeiculoService>();
         services.AddScoped<IPecaService, PecaService>();
+        services.AddScoped<IItemOSService, ItemOSService>();
+        services.AddScoped<IOrdemServicoService, OrdemServicoService>();
         
         // Token Service
         services.AddScoped<ITokenService, TokenService>();

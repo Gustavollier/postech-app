@@ -14,11 +14,18 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public async Task<IEnumerable<OrdemServico>> ObterTodosAsync()
+        public async Task<IEnumerable<OrdemServico>> ObterTodosAsync(int pageSize, int page)
         {
             using var connection = _connectionFactory.CreateConnection();
             connection.Open();
-            return await connection.QueryAsync<OrdemServico>(OrdemServicoQuerys.OBTER_TODOS);
+            return await connection.QueryAsync<OrdemServico>(OrdemServicoQuerys.OBTER_TODOS, new { PageSize = pageSize, Page = page });
+        }
+
+        public async Task<decimal> ObterValorPorIdAsync(int id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            return await connection.QuerySingleAsync<decimal>(OrdemServicoQuerys.OBTER_VALOR_POR_ID, new { Id = id });
         }
 
         public async Task<OrdemServico?> ObterPorIdAsync(int id)
