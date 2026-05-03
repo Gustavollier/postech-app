@@ -1,10 +1,12 @@
 using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; 
+using Microsoft.OpenApi.Models;
 using PosTechChallenge.Aplicacao;
 using PosTechChallenge.Infraestrutura;
 using PosTechChallenge.Infraestrutura.Mapeamentos;
+using PosTechChallenge.Middleware;
+using PosTechChallenge.Monitoring;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +54,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDatabaseConfiguration(connectionString);
 builder.Services.AddApplicationServices();
+builder.Services.AddSingleton<IExecutionTimeMonitor, ExecutionTimeMonitor>();
 
 var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey missing");
 
@@ -90,6 +93,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseRouting();
+app.UseMiddleware<RequestExecutionTimingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
