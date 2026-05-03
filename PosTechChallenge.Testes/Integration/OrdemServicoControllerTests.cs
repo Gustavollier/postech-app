@@ -4,6 +4,7 @@ using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Xunit;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Testes.Integration;
@@ -17,6 +18,8 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
     {
         _factory = factory;
         _client  = factory.CreateClient();
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", CustomWebApplicationFactory.GerarToken());
     }
 
     // ── POST /api/v1/ordens-servico ──────────────────────────────────────────
@@ -118,6 +121,7 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
     [Fact]
     public async Task ObterStatus_SemToken_OSExistente_DeveRetornar200()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var statusDto = new ObterStatusOrdemServicoDto
         {
             OrdemServicoId = 1,
@@ -167,6 +171,7 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
     [Fact]
     public async Task AtualizarStatus_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var body = new { IdFuncionario = 1, Status = 1 };
 
         var response = await _client.PatchAsJsonAsync("/api/v1/ordens-servico/1/status", body);
@@ -219,6 +224,7 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
     [Fact]
     public async Task Deletar_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var response = await _client.DeleteAsync("/api/v1/ordens-servico/1");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

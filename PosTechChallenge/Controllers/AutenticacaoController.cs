@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Dominio.ValueObjects;
 using PosTechChallenge.Dtos.Requests.Autenticacao;
 using PosTechChallenge.Dtos.Responses.Autenticacao;
 using System.ComponentModel.DataAnnotations;
-using PosTechChallenge.Aplicacao.Interface.Services;
-using PosTechChallenge.Dominio.ValueObjects;
+using System.Security.Claims;
 
 namespace PosTechChallenge.Controllers;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/v1/[controller]")]
 public class AutenticacaoController : ControllerBase
 {
@@ -20,6 +20,7 @@ public class AutenticacaoController : ControllerBase
         _autenticacaoService = autenticacaoService;
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody][Required] LoginBodyRequest bodyRequest)
     {
@@ -45,22 +46,32 @@ public class AutenticacaoController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPost("criar-senha")]
-    public async Task<IActionResult> CriarSenha([FromBody] CriarSenhaBodyRequest bodyRequest)
+    [Authorize]
+    [HttpPatch("alterar-senha")]
+    public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaBodyRequest bodyRequest)
     {
-        if (string.IsNullOrWhiteSpace(bodyRequest.CPF) || string.IsNullOrWhiteSpace(bodyRequest.Senha) || string.IsNullOrWhiteSpace(bodyRequest.ConfirmacaoSenha))
-            return BadRequest(new { message = "CPF, Senha e Confirmação de Senha são obrigatórios." });
+        if (string.IsNullOrWhiteSpace(bodyRequest.SenhaAtual) ||
+            string.IsNullOrWhiteSpace(bodyRequest.NovaSenha) ||
+            string.IsNullOrWhiteSpace(bodyRequest.ConfirmacaoSenha))
+            return BadRequest(new { message = "Senha atual, nova senha e confirmação de senha são obrigatórios." });
 
-        var validacaoCpf = ValidarCpf(bodyRequest.CPF);
-        if (validacaoCpf != null)
-            return BadRequest(new { message = validacaoCpf });
+        var funcionarioIdClaim =
+            User.FindFirstValue("FuncionarioId") ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var result = await _autenticacaoService.CriarSenhaAsync(bodyRequest.CPF, bodyRequest.Senha, bodyRequest.ConfirmacaoSenha);
-        
+        if (int.TryParse(funcionarioIdClaim, out var funcionarioId) is false)
+            return Unauthorized(new { message = "Token inválido." });
+
+        var result = await _autenticacaoService.AlterarSenhaAsync(
+            funcionarioId,
+            bodyRequest.SenhaAtual,
+            bodyRequest.NovaSenha,
+            bodyRequest.ConfirmacaoSenha);
+
         if (result.IsValid)
             return Ok(new { message = result.Message });
-        
-        return BadRequest(new { message = result.Message }); 
+
+        return BadRequest(new { message = result.Message });
     }
 
     private static string? ValidarCpf(string? cpf)

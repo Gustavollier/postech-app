@@ -20,6 +20,7 @@ public class FuncionarioController : ControllerBase
         _funcionarioService = funcionarioService;
     }
 
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest)
     {
@@ -32,7 +33,9 @@ public class FuncionarioController : ControllerBase
             Contato: bodyRequest.Contato,
             CPF: bodyRequest.CPF,
             Cargo: bodyRequest.Cargo,
-            ValorHora: bodyRequest.ValorHora
+            ValorHora: bodyRequest.ValorHora,
+            Senha: bodyRequest.Senha,
+            ConfirmacaoSenha: bodyRequest.ConfirmacaoSenha
         );
 
         var resultado = await _funcionarioService.CriarAsync(criarFuncionarioDto);

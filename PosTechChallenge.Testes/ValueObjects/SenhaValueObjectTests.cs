@@ -1,4 +1,5 @@
 using PosTechChallenge.Dominio.ValueObjects;
+using Xunit;
 
 namespace PosTechChallenge.Testes.ValueObjects;
 
@@ -36,6 +37,20 @@ public class SenhaValueObjectTests
     {
         var ex = Assert.Throws<ArgumentException>(() => new SenhaValueObject("senha@123"));
         Assert.Contains("maiúscula", ex.Message);
+    }
+
+    [Fact]
+    public void Construtor_SenhaSemNumero_DeveLancarArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new SenhaValueObject("Senha@abc"));
+        Assert.Contains("número", ex.Message);
+    }
+
+    [Fact]
+    public void Construtor_SenhaSemCaractereEspecial_DeveLancarArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new SenhaValueObject("Senha123"));
+        Assert.Contains("caractere especial", ex.Message);
     }
 
     [Fact]

@@ -2,4 +2,11 @@
 
 namespace PosTechChallenge.Aplicacao.Dto.Funcionario;
 
-public sealed record CriarFuncionarioDto(string Nome, string Contato, string CPF, ECargoFuncionario Cargo, int ValorHora);
+public sealed record CriarFuncionarioDto(
+    string Nome,
+    string Contato,
+    string CPF,
+    ECargoFuncionario Cargo,
+    int ValorHora,
+    string Senha,
+    string ConfirmacaoSenha);

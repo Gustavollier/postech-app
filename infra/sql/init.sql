@@ -9,13 +9,25 @@ BEGIN
 END
 GO
 
+IF SUSER_ID('appchat') IS NOT NULL
+BEGIN
+    DROP LOGIN appchat;
+END
+GO
+
 CREATE DATABASE PosTechChallenge;
+GO
+
+CREATE LOGIN appchat WITH PASSWORD = '$(APP_DB_PASSWORD)', CHECK_POLICY = ON, CHECK_EXPIRATION = OFF;
 GO
 
 USE PosTechChallenge;
 GO
 
 SET NOCOUNT ON;
+GO
+
+CREATE USER appchat FOR LOGIN appchat;
 GO
 
 CREATE TABLE Funcionario (
@@ -32,6 +44,7 @@ CREATE TABLE Seguranca (
     FuncionarioId INT NOT NULL,
     SenhaHash NVARCHAR(255) NOT NULL,
     CriadoEm DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT UQ_Seguranca_FuncionarioId UNIQUE (FuncionarioId),
     FOREIGN KEY (FuncionarioId) REFERENCES Funcionario(Id)
 );
 
@@ -189,4 +202,7 @@ VALUES
     (2, DATEADD(HOUR, -20, @Agora), 2, 1),
     (2, DATEADD(HOUR, -1, @Agora), 2, 3),
     (3, DATEADD(HOUR, -3, @Agora), 3, 0);
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO appchat;
 GO

@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 PosTechChallenge/Properties/launchSettings.json
+.env
+.env.*
+!.env.example
+.dotnet_home/

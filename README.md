@@ -72,6 +72,12 @@ cd PosTechChallenge
 
 ### 2. Suba o ambiente completo
 
+Crie um arquivo `.env` a partir do exemplo e troque os valores antes de subir os containers:
+
+```bash
+cp .env.example .env
+```
+
 ```bash
 docker compose up -d --build
 ```
@@ -101,15 +107,21 @@ dotnet test PosTechChallenge.Testes/PosTechChallenge.Testes.csproj
 
 A API utiliza **JWT Bearer Token**. Antes de acessar endpoints protegidos:
 
-### 1. Crie a senha de um funcionário
+O login continua publico. Para facilitar testes, o cadastro de funcionario tambem e publico e ja recebe a senha inicial no mesmo request.
+
+### 1. Cadastre um funcionário com senha inicial
 
 ```
-POST /api/v1/autenticacao/criar-senha
+POST /api/v1/Funcionario
 ```
 
 ```json
 {
+  "nome": "Funcionario Teste",
+  "contato": "11999990000",
   "cpf": "CPF_DO_FUNCIONARIO",
+  "cargo": 0,
+  "valorHora": 100,
   "senha": "MinhaS3nha@",
   "confirmacaoSenha": "MinhaS3nha@"
 }

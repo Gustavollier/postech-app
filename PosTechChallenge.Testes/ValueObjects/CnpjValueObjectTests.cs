@@ -1,5 +1,5 @@
 using PosTechChallenge.Dominio.ValueObjects;
-
+using Xunit;
 namespace PosTechChallenge.Testes.ValueObjects;
 
 public class CnpjValueObjectTests

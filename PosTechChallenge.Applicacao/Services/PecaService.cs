@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PosTechChallenge.Aplicacao.Dto.Peca;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
@@ -8,11 +9,17 @@ namespace PosTechChallenge.Aplicacao.Services;
 
 public sealed class PecaService : IPecaService
 {
-    private readonly IPecasRepositorio _pecasRepositorio;
+    private const string MensagemErroInterno = "Erro interno ao processar peça.";
 
-    public PecaService(IPecasRepositorio pecasRepositorio)
+    private readonly IPecasRepositorio _pecasRepositorio;
+    private readonly ILogger<PecaService> _logger;
+
+    public PecaService(
+        IPecasRepositorio pecasRepositorio,
+        ILogger<PecaService> logger)
     {
         _pecasRepositorio = pecasRepositorio;
+        _logger = logger;
     }
 
     public async Task<Resultado> CriarAsync(CriarPecaDto dto)
@@ -39,7 +46,8 @@ public sealed class PecaService : IPecaService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao criar peca.");
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 
@@ -61,7 +69,8 @@ public sealed class PecaService : IPecaService
         }
         catch (Exception ex)
         {
-            return Resultado<IEnumerable<ObterPecaDto>>.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao obter pecas. Estoque baixo: {EstoqueBaixo}, limite: {LimiteEstoqueBaixo}.", estoqueBaixo, limiteEstoqueBaixo);
+            return Resultado<IEnumerable<ObterPecaDto>>.Falha(MensagemErroInterno);
         }
     }
 
@@ -90,7 +99,8 @@ public sealed class PecaService : IPecaService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao atualizar peca {PecaId}.", id);
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 
@@ -115,7 +125,8 @@ public sealed class PecaService : IPecaService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao ajustar estoque da peca {PecaId}.", id);
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 
@@ -135,7 +146,8 @@ public sealed class PecaService : IPecaService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao desativar peca {PecaId}.", id);
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 

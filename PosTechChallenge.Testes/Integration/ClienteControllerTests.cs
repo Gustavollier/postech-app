@@ -2,6 +2,7 @@ using Moq;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Dominio.Results;
 using System.Net;
+using Xunit;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
@@ -19,6 +20,8 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     {
         _factory = factory;
         _client  = factory.CreateClient();
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", CustomWebApplicationFactory.GerarToken());
     }
 
     // ── POST /api/v1/clientes ────────────────────────────────────────────────
@@ -182,6 +185,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Atualizar_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var body = new { NomeCompleto = "João Atualizado", CPF = CpfValido };
 
         var response = await _client.PutAsJsonAsync("/api/v1/clientes/1", body);
@@ -230,6 +234,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Desativar_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var response = await _client.DeleteAsync("/api/v1/clientes/1");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

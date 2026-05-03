@@ -3,7 +3,7 @@ using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
 using PosTechChallenge.Infraestrutura.Querys;
 
-namespace PosTechChallenge.Infraestrutura.Repositories;
+namespace PosTechChallenge.Infraestrutura.Repositorios;
 public class FuncionariosRepositorio : IFuncionarioRepositorio
 {
     private readonly IDbConnectionFactory _connectionFactory;

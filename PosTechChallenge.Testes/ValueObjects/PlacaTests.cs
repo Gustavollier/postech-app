@@ -1,4 +1,5 @@
 using PosTechChallenge.Dominio.Model;
+using Xunit;
 
 namespace PosTechChallenge.Testes.ValueObjects;
 
