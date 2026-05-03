@@ -2,6 +2,7 @@ using Moq;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Dominio.Results;
 using System.Net;
+using Xunit;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 

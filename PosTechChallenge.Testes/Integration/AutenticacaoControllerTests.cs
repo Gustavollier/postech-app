@@ -2,6 +2,7 @@ using Moq;
 using PosTechChallenge.Aplicacao.Dto.Autenticacao;
 using PosTechChallenge.Dominio.Results;
 using System.Net;
+using Xunit;
 using System.Net.Http.Json;
 
 namespace PosTechChallenge.Testes.Integration;

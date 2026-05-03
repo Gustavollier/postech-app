@@ -4,6 +4,7 @@ using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Xunit;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Testes.Integration;

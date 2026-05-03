@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using PosTechChallenge.Infraestrutura.Repositories;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Infraestrutura.Repositorios;
 

@@ -2,6 +2,7 @@ using Moq;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
 using PosTechChallenge.Dominio.Services;
+using Xunit;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Testes.DomainServices;
