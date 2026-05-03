@@ -16,7 +16,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -26,8 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\PosTechChallenge.Dominio\PosTechChallenge.Dominio.csproj" />
     <ProjectReference Include="..\PosTechChallenge.Applicacao\PosTechChallenge.Aplicacao.csproj" />
-    <!-- Referência ao projeto principal necessária para acessar a classe Program -->
-    <ProjectReference Include="..\PosTechChallenge\PosTechChallenge.csproj" />
   </ItemGroup>
 
 </Project>
