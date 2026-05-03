@@ -72,6 +72,7 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:int}/status")]
     public async Task<IActionResult> ObterStatus([FromRoute] int id)
     {

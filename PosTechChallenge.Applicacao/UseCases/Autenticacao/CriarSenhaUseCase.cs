@@ -45,9 +45,9 @@ public class CriarSenhaUseCase
 
             return Resultado.Sucesso("Senha criada com sucesso.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Resultado.Falha($"Erro ao criar senha: {ex.Message}");
+            return Resultado.Falha("Erro ao criar senha.");
         }
     }
 }

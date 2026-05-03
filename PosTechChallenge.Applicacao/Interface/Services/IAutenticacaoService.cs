@@ -7,4 +7,5 @@ public interface IAutenticacaoService
 {
     Task<Resultado<TokenResponseDto>> LoginAsync(string cpf, string senha);
     Task<Resultado> CriarSenhaAsync(string cpf, string senha, string confirmacaoSenha);
+    Task<Resultado> AlterarSenhaAsync(int funcionarioId, string senhaAtual, string novaSenha, string confirmacaoSenha);
 }

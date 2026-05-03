@@ -72,6 +72,12 @@ cd PosTechChallenge
 
 ### 2. Suba o ambiente completo
 
+Crie um arquivo `.env` a partir do exemplo e troque os valores antes de subir os containers:
+
+```bash
+cp .env.example .env
+```
+
 ```bash
 docker compose up -d --build
 ```
@@ -100,6 +106,8 @@ dotnet test PosTechChallenge.Testes/PosTechChallenge.Testes.csproj
 ## 🔐 Autenticação
 
 A API utiliza **JWT Bearer Token**. Antes de acessar endpoints protegidos:
+
+Atualizacao de seguranca: o login continua publico, mas `POST /api/v1/autenticacao/criar-senha` agora exige JWT com cargo `Gerente`. Use primeiro um funcionario do seed com a senha `Senha@123`; depois, um gerente pode definir ou redefinir senhas de funcionarios.
 
 ### 1. Crie a senha de um funcionário
 

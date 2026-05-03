@@ -17,6 +17,8 @@ public class PecasControllerTests : IClassFixture<CustomWebApplicationFactory>
     {
         _factory = factory;
         _client  = factory.CreateClient();
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", CustomWebApplicationFactory.GerarToken());
     }
 
     // ── POST /api/v1/pecas ───────────────────────────────────────────────────
@@ -113,6 +115,7 @@ public class PecasControllerTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task AjustarEstoque_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var body = new { Quantidade = 5 };
 
         var response = await _client.PatchAsJsonAsync("/api/v1/pecas/1/estoque", body);
@@ -161,6 +164,7 @@ public class PecasControllerTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Desativar_SemToken_DeveRetornar401()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var response = await _client.DeleteAsync("/api/v1/pecas/1");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

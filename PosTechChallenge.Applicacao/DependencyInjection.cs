@@ -42,6 +42,7 @@ public static class DependencyInjection
         // Autenticação UseCases
         services.AddScoped<LoginUseCase>();
         services.AddScoped<CriarSenhaUseCase>();
+        services.AddScoped<AlterarSenhaUseCase>();
 
         // Autenticação Services
         services.AddScoped<IAutenticacaoService, AutenticacaoService>();

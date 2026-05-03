@@ -53,9 +53,9 @@ public class LoginUseCase
 
             return Resultado<TokenResponseDto>.Sucesso(token, "Login realizado com sucesso.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Resultado<TokenResponseDto>.Falha($"Erro ao fazer login: {ex.Message}");
+            return Resultado<TokenResponseDto>.Falha("Erro ao fazer login.");
         }
     }
 }

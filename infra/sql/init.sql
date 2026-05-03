@@ -32,6 +32,7 @@ CREATE TABLE Seguranca (
     FuncionarioId INT NOT NULL,
     SenhaHash NVARCHAR(255) NOT NULL,
     CriadoEm DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT UQ_Seguranca_FuncionarioId UNIQUE (FuncionarioId),
     FOREIGN KEY (FuncionarioId) REFERENCES Funcionario(Id)
 );
 

@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Dtos.Requests.Autenticacao;
 using PosTechChallenge.Dtos.Responses.Autenticacao;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dominio.ValueObjects;
 
 namespace PosTechChallenge.Controllers;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/v1/[controller]")]
 public class AutenticacaoController : ControllerBase
 {
@@ -20,6 +20,7 @@ public class AutenticacaoController : ControllerBase
         _autenticacaoService = autenticacaoService;
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody][Required] LoginBodyRequest bodyRequest)
     {
@@ -45,6 +46,7 @@ public class AutenticacaoController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Roles = "Gerente")]
     [HttpPost("criar-senha")]
     public async Task<IActionResult> CriarSenha([FromBody] CriarSenhaBodyRequest bodyRequest)
     {
@@ -61,6 +63,34 @@ public class AutenticacaoController : ControllerBase
             return Ok(new { message = result.Message });
         
         return BadRequest(new { message = result.Message }); 
+    }
+
+    [Authorize]
+    [HttpPatch("alterar-senha")]
+    public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaBodyRequest bodyRequest)
+    {
+        if (string.IsNullOrWhiteSpace(bodyRequest.SenhaAtual) ||
+            string.IsNullOrWhiteSpace(bodyRequest.NovaSenha) ||
+            string.IsNullOrWhiteSpace(bodyRequest.ConfirmacaoSenha))
+            return BadRequest(new { message = "Senha atual, nova senha e confirmação de senha são obrigatórios." });
+
+        var funcionarioIdClaim =
+            User.FindFirstValue("FuncionarioId") ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (int.TryParse(funcionarioIdClaim, out var funcionarioId) is false)
+            return Unauthorized(new { message = "Token inválido." });
+
+        var result = await _autenticacaoService.AlterarSenhaAsync(
+            funcionarioId,
+            bodyRequest.SenhaAtual,
+            bodyRequest.NovaSenha,
+            bodyRequest.ConfirmacaoSenha);
+
+        if (result.IsValid)
+            return Ok(new { message = result.Message });
+
+        return BadRequest(new { message = result.Message });
     }
 
     private static string? ValidarCpf(string? cpf)

@@ -14,4 +14,8 @@ public sealed record CriarFuncionarioBodyRequest
     public ECargoFuncionario Cargo { get; init; }
     [Required]
     public int ValorHora { get; init; }
+    [Required]
+    public string Senha { get; init; }
+    [Required]
+    public string ConfirmacaoSenha { get; init; }
 }
