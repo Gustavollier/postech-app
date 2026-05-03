@@ -4,6 +4,7 @@ using PosTechChallenge.Aplicacao.Dto.Funcionario;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Funcionario;
 using PosTechChallenge.Dtos.Responses.Funcionario;
+using PosTechChallenge.Dominio.ValueObjects;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
 namespace PosTechChallenge.Controllers;
@@ -22,6 +23,10 @@ public class FuncionarioController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest)
     {
+        var validacaoCpf = ValidarCpf(bodyRequest.CPF);
+        if (validacaoCpf != null)
+            return BadRequest(new { message = validacaoCpf });
+
         var criarFuncionarioDto = new CriarFuncionarioDto(
             Nome: bodyRequest.Nome,
             Contato: bodyRequest.Contato,
@@ -62,8 +67,9 @@ public class FuncionarioController : ControllerBase
     [HttpGet("cpf")]
     public async Task<IActionResult> ObterPorCpf([FromQuery] string cpf)
     {
-        if (string.IsNullOrWhiteSpace(cpf))
-            return BadRequest(new { message = "CPF é obrigatório." });
+        var validacaoCpf = ValidarCpf(cpf);
+        if (validacaoCpf != null)
+            return BadRequest(new { message = validacaoCpf });
 
         var resultado = await _funcionarioService.ObterPorCpfAsync(cpf);
 
@@ -111,8 +117,9 @@ public class FuncionarioController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> Atualizar([FromQuery] string cpf, [FromBody] AtualizarFuncionarioBodyRequest bodyRequest)
     {
-        if (string.IsNullOrWhiteSpace(cpf))
-            return BadRequest(new { message = "CPF é obrigatório." });
+        var validacaoCpf = ValidarCpf(cpf);
+        if (validacaoCpf != null)
+            return BadRequest(new { message = validacaoCpf });
 
         var atualizarFuncionarioDto = new AtualizarFuncionarioDto(
             Nome: bodyRequest.Nome,
@@ -134,8 +141,9 @@ public class FuncionarioController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> Deletar([FromQuery] string cpf)
     {
-        if (string.IsNullOrWhiteSpace(cpf))
-            return BadRequest(new { message = "CPF é obrigatório." });
+        var validacaoCpf = ValidarCpf(cpf);
+        if (validacaoCpf != null)
+            return BadRequest(new { message = validacaoCpf });
 
         var resultado = await _funcionarioService.DeletarAsync(cpf);
 
@@ -143,5 +151,21 @@ public class FuncionarioController : ControllerBase
             return NotFound(new { message = resultado.Message });
 
         return Ok(new { message = resultado.Message });
+    }
+
+    private static string? ValidarCpf(string? cpf)
+    {
+        if (string.IsNullOrWhiteSpace(cpf))
+            return "CPF é obrigatório.";
+
+        try
+        {
+            _ = new CpfValueObject(cpf);
+            return null;
+        }
+        catch (ArgumentException ex)
+        {
+            return ex.Message;
+        }
     }
 }

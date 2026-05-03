@@ -4,6 +4,7 @@ using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Cliente;
 using PosTechChallenge.Dtos.Responses.Cliente;
+using PosTechChallenge.Dominio.ValueObjects;
 
 namespace PosTechChallenge.Controllers;
 
@@ -124,6 +125,18 @@ public class ClienteController : ControllerBase
 
         if (possuiCpf && possuiCnpj)
             return "Informe apenas CPF ou CNPJ.";
+
+        try
+        {
+            if (possuiCpf)
+                _ = new CpfValueObject(cpf!);
+            else
+                _ = new CnpjValueObject(cnpj!);
+        }
+        catch (ArgumentException ex)
+        {
+            return ex.Message;
+        }
 
         return null;
     }
