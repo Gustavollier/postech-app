@@ -33,23 +33,23 @@ Foram corrigidos os riscos mais relevantes para o MVP:
 - Autenticacao JWT passou a ser obrigatoria por padrao.
 - `POST /api/v1/autenticacao/login` permanece publico.
 - `GET /api/v1/ordens-servico/{id}/status` permanece publico por requisito de acompanhamento pelo cliente.
-- `POST /api/v1/autenticacao/criar-senha` deixou de ser publico e agora exige role `Gerente`.
+- O endpoint legado `POST /api/v1/autenticacao/criar-senha` foi removido; senha inicial e criada no cadastro de funcionario.
 - Segredos foram removidos de arquivos versionados e movidos para variaveis de ambiente.
 - A imagem final Docker passou a executar com usuario nao-root.
 - Headers basicos de seguranca foram adicionados nas respostas HTTP.
-- O cadastro/redefinicao de senha passou a atualizar senha existente em vez de permitir multiplos registros de seguranca para o mesmo funcionario.
+- A alteracao de senha exige JWT, senha atual, nova senha e confirmacao.
 
 ## Mapeamento OWASP Top 10
 
 | Categoria | Analise | Status |
 |---|---|---|
-| A01 Broken Access Control | Havia varios endpoints sem `[Authorize]` e o endpoint de criar senha estava publico por heranca de `[AllowAnonymous]` no controller. Foi criada politica global que exige usuario autenticado e excecoes publicas explicitas. | Corrigido |
+| A01 Broken Access Control | Havia varios endpoints sem `[Authorize]`. Foi criada politica global que exige usuario autenticado e excecoes publicas explicitas. Por decisao de testes do MVP, o cadastro de funcionario ficou publico. | Parcial |
 | A02 Cryptographic Failures | Senhas usam BCrypt, ponto positivo. A chave JWT estava em arquivos versionados/compose. Foi movida para `JWT_SECRET_KEY` e validada com minimo de 32 bytes. | Corrigido |
 | A03 Injection | Repositorios Dapper usam parametros nomeados (`@Id`, `@CPF`, etc.), sem concatenacao direta de SQL observada. | Sem achado critico |
-| A04 Insecure Design | Fluxo de criacao de senha permitia redefinir senha publicamente sabendo o CPF. Agora exige Gerente autenticado e mantem seed inicial para bootstrap. | Corrigido |
+| A04 Insecure Design | Fluxo separado de criacao de senha foi removido. A senha inicial nasce no cadastro de funcionario, e alteracao posterior exige senha atual. | Corrigido |
 | A05 Security Misconfiguration | `docker-compose` subia API como `Development`, expondo Swagger por padrao. Agora o default e `Production`, com override por `.env` quando necessario. Headers basicos foram adicionados. | Corrigido |
 | A06 Vulnerable and Outdated Components | Scan NuGet nao encontrou pacotes vulneraveis. O scan de outdated encontrou atualizacoes disponiveis; recomenda-se atualizar em sprint propria com teste de regressao. | Monitorado |
-| A07 Identification and Authentication Failures | Login usa JWT com issuer/audience/lifetime e BCrypt. Criar senha publico era falha de autenticacao. Foi restringido a Gerente. | Corrigido |
+| A07 Identification and Authentication Failures | Login usa JWT com issuer/audience/lifetime e BCrypt. O endpoint separado de criacao de senha foi removido; alteracao de senha exige JWT e senha atual. | Corrigido |
 | A08 Software and Data Integrity Failures | Docker agora usa variaveis externas para segredos. Ainda nao ha assinatura/verificacao de imagens ou pipeline com SAST obrigatorio. | Parcial |
 | A09 Security Logging and Monitoring Failures | Existe monitoramento de tempo medio. Mensagens de excecao em autenticacao deixaram de expor detalhes internos ao cliente. Ainda falta trilha de auditoria de login/redefinicao de senha. | Parcial |
 | A10 Server-Side Request Forgery | Nao foram encontrados fluxos que recebam URL remota do usuario e facam requisicoes server-side. | Nao aplicavel no MVP |
@@ -62,7 +62,7 @@ Arquivos alterados:
 - `PosTechChallenge/Controllers/AutenticacaoController.cs`
 - `PosTechChallenge/Controllers/OrdemServicoController.cs`
 - `PosTechChallenge.Applicacao/UseCases/Autenticacao/LoginUseCase.cs`
-- `PosTechChallenge.Applicacao/UseCases/Autenticacao/CriarSenhaUseCase.cs`
+- `PosTechChallenge.Applicacao/UseCases/Autenticacao/AlterarSenhaUseCase.cs`
 - `PosTechChallenge.Infraestrutura/Repositorios/SegurancaRepositorio.cs`
 - `infra/sql/init.sql`
 - `docker-compose.yml`

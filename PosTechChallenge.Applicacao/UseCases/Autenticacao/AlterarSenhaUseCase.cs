@@ -40,7 +40,7 @@ public class AlterarSenhaUseCase
 
             var senhaHash = PasswordHasher.HashPassword(novaSenhaValueObject.Valor);
 
-            await _segurancaRepositorio.CriarSenhaAsync(funcionarioId, senhaHash);
+            await _segurancaRepositorio.SalvarSenhaAsync(funcionarioId, senhaHash);
 
             return Resultado.Sucesso("Senha alterada com sucesso.");
         }

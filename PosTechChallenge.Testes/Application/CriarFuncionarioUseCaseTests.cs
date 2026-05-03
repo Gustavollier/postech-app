@@ -32,7 +32,7 @@ public class CriarFuncionarioUseCaseTests
             .ReturnsAsync(10);
 
         _segurancaRepositorio
-            .Setup(r => r.CriarSenhaAsync(10, It.IsAny<string>()))
+            .Setup(r => r.SalvarSenhaAsync(10, It.IsAny<string>()))
             .Callback<int, string>((_, hash) => senhaHash = hash)
             .Returns(Task.CompletedTask);
 
@@ -52,18 +52,18 @@ public class CriarFuncionarioUseCaseTests
 
         Assert.False(resultado.IsValid);
         _funcionarioRepositorio.Verify(r => r.CriarAsync(It.IsAny<Funcionario>()), Times.Never);
-        _segurancaRepositorio.Verify(r => r.CriarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _segurancaRepositorio.Verify(r => r.SalvarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
-    public async Task CriarAsync_FalhaAoCriarSenha_DeveRemoverFuncionarioCriado()
+    public async Task CriarAsync_FalhaAoSalvarSenha_DeveRemoverFuncionarioCriado()
     {
         _funcionarioRepositorio
             .Setup(r => r.CriarAsync(It.IsAny<Funcionario>()))
             .ReturnsAsync(10);
 
         _segurancaRepositorio
-            .Setup(r => r.CriarSenhaAsync(10, It.IsAny<string>()))
+            .Setup(r => r.SalvarSenhaAsync(10, It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Falha simulada."));
 
         var resultado = await _useCase.CriarAsync(CriarDto());

@@ -28,6 +28,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task Criar_DadosValidos_DeveRetornar201()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         _factory.FuncionarioServiceMock
             .Setup(s => s.CriarAsync(It.IsAny<CriarFuncionarioDto>()))
             .ReturnsAsync(Resultado.Sucesso("Funcionario criado com sucesso."));
@@ -40,6 +41,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task Criar_CpfInvalido_DeveRetornar400()
     {
+        _client.DefaultRequestHeaders.Authorization = null;
         var body = CriarBody() with { CPF = "11111111111" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/Funcionario", body);

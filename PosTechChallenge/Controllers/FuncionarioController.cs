@@ -20,7 +20,7 @@ public class FuncionarioController : ControllerBase
         _funcionarioService = funcionarioService;
     }
 
-    [Authorize(Roles = "Gerente")]
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest)
     {

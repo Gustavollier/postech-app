@@ -375,7 +375,6 @@
       <div class="endpoint-auth-note">🔓 Rotas públicas — não requerem JWT</div>
       <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/v1/auth/login</span><span class="endpoint-desc">Login por CPF + senha — retorna JWT e refreshToken</span></div>
       <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/v1/auth/refresh</span><span class="endpoint-desc">Renovar token JWT com refreshToken</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/v1/auth/criar-senha</span><span class="endpoint-desc">Criar senha inicial (primeiro acesso)</span></div>
     </div>
     <div class="endpoint-group">
       <h4>👨‍🔧 Funcionários — /api/v1/funcionarios</h4>
@@ -384,7 +383,7 @@
         <span class="role-badge role-admin">Gerente</span> = cargo Gerente(2) &nbsp;|&nbsp;
         <span class="role-badge role-any">QUALQUER</span> = qualquer funcionário autenticado
       </div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/v1/funcionarios</span><span class="endpoint-desc">Cadastrar funcionário<span class="role-badge role-admin">Gerente</span></span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/api/v1/funcionarios</span><span class="endpoint-desc">Cadastrar funcionário com senha inicial<span class="role-badge role-admin">Gerente</span></span></div>
       <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/v1/funcionarios</span><span class="endpoint-desc">Listar funcionários<span class="role-badge role-admin">Gerente</span></span></div>
       <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/api/v1/funcionarios/{id}</span><span class="endpoint-desc">Buscar funcionário por ID<span class="role-badge role-any">QUALQUER</span></span></div>
       <div class="endpoint"><span class="method put">PUT</span><span class="endpoint-path">/api/v1/funcionarios/{id}</span><span class="endpoint-desc">Atualizar dados (nome, contato, cargo, valorHora)<span class="role-badge role-admin">Gerente</span></span></div>

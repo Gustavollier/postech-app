@@ -42,7 +42,7 @@ public class CriarFuncionarioUseCase
             funcionarioId = await _funcionarioRepositorio.CriarAsync(funcionario);
             var senhaHash = PasswordHasher.HashPassword(senhaValueObject.Valor);
 
-            await _segurancaRepositorio.CriarSenhaAsync(funcionarioId, senhaHash);
+            await _segurancaRepositorio.SalvarSenhaAsync(funcionarioId, senhaHash);
 
             return Resultado.Sucesso("Funcionário criado com sucesso.");
         }

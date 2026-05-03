@@ -24,7 +24,7 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
                 new { FuncionarioId = funcionarioId });
         }
 
-        public async Task CriarSenhaAsync(int funcionarioId, string senhaHash)
+        public async Task SalvarSenhaAsync(int funcionarioId, string senhaHash)
         {
             using var connection = _connectionFactory.CreateConnection();
             connection.Open();

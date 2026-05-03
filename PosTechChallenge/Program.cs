@@ -93,7 +93,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     // Gera o endpoint do documento: /openapi/v1.json
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 
     // Habilita a interface visual do Swagger UI apontando para o arquivo nativo
     app.UseSwaggerUI(options =>

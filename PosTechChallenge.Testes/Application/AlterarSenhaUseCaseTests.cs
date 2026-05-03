@@ -28,7 +28,7 @@ public class AlterarSenhaUseCaseTests
             .ReturnsAsync(new Seguranca { FuncionarioId = 1, SenhaHash = hashAtual });
 
         _segurancaRepositorio
-            .Setup(r => r.CriarSenhaAsync(1, It.IsAny<string>()))
+            .Setup(r => r.SalvarSenhaAsync(1, It.IsAny<string>()))
             .Callback<int, string>((_, hash) => novoHash = hash)
             .Returns(Task.CompletedTask);
 
@@ -51,7 +51,7 @@ public class AlterarSenhaUseCaseTests
         var resultado = await _useCase.AlterarSenhaAsync(1, "SenhaErrada@123", "NovaSenha@123", "NovaSenha@123");
 
         Assert.False(resultado.IsValid);
-        _segurancaRepositorio.Verify(r => r.CriarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _segurancaRepositorio.Verify(r => r.SalvarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
@@ -66,6 +66,6 @@ public class AlterarSenhaUseCaseTests
         var resultado = await _useCase.AlterarSenhaAsync(1, "Senha@123", "NovaSenha@123", "OutraSenha@123");
 
         Assert.False(resultado.IsValid);
-        _segurancaRepositorio.Verify(r => r.CriarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _segurancaRepositorio.Verify(r => r.SalvarSenhaAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 }
