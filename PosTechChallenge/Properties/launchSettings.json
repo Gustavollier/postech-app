@@ -5,7 +5,8 @@
       "launchBrowser": true,
       "launchUrl": "todos",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Jwt__SecretKey": "estaEhUmaChaveSuper-SeguraComMaisDeTrintaCaracteresAlatorios!@#$%^&*()"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5022"
@@ -15,7 +16,8 @@
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/todos",
       "environmentVariables": {
-        "ASPNETCORE_HTTP_PORTS": "8080"
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "Jwt__SecretKey": "estaEhUmaChaveSuper-SeguraComMaisDeTrintaCaracteresAlatorios!@#$%^&*()"
       },
       "publishAllPorts": true,
       "useSSL": false
