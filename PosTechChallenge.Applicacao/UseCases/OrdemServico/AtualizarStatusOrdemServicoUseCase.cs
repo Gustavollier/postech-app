@@ -45,7 +45,7 @@ public sealed class AtualizarStatusOrdemServicoUseCase
             if (validacao.IsValid is false)
                 return validacao;
 
-            if (novoStatus is EStatusOrdemServico.Finalizada)
+            if (novoStatus is EStatusOrdemServico.Finalizada || EStatusOrdemServico.Cancelada)
             {
                 Resultado baixouEstoque = await BaixarEstoqueAsync(id);
                 

@@ -19,7 +19,8 @@ public class Enums
         AguardandoAprovacao = 2,
         EmExecucao = 3,
         Finalizada = 4,
-        Entregue = 5
+        Entregue = 5,
+        Cancelada = 6
     }
 
     public enum ETipoItemOrdemServico
