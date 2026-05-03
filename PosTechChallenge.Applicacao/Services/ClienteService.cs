@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
@@ -8,11 +9,17 @@ namespace PosTechChallenge.Aplicacao.Services;
 
 public sealed class ClienteService : IClienteService
 {
-    private readonly IClienteRepositorio _clienteRepositorio;
+    private const string MensagemErroInterno = "Erro interno ao processar cliente.";
 
-    public ClienteService(IClienteRepositorio clienteRepositorio)
+    private readonly IClienteRepositorio _clienteRepositorio;
+    private readonly ILogger<ClienteService> _logger;
+
+    public ClienteService(
+        IClienteRepositorio clienteRepositorio,
+        ILogger<ClienteService> logger)
     {
         _clienteRepositorio = clienteRepositorio;
+        _logger = logger;
     }
 
     public async Task<Resultado> CriarAsync(CriarClienteDto clienteDto)
@@ -36,7 +43,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao criar cliente.");
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 
@@ -53,7 +61,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado<ClienteDto>.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao obter cliente por ID {ClienteId}.", id);
+            return Resultado<ClienteDto>.Falha(MensagemErroInterno);
         }
     }
 
@@ -70,7 +79,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado<ClienteDto>.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao obter cliente por CPF/CNPJ.");
+            return Resultado<ClienteDto>.Falha(MensagemErroInterno);
         }
     }
 
@@ -100,7 +110,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado<ObterClienteDto>.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao obter clientes paginados. Page {Page}, PageSize {PageSize}.", page, pageSize);
+            return Resultado<ObterClienteDto>.Falha(MensagemErroInterno);
         }
     }
 
@@ -129,7 +140,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao atualizar cliente {ClienteId}.", id);
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 
@@ -150,7 +162,8 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
-            return Resultado.Falha(ex.Message);
+            _logger.LogError(ex, "Erro ao desativar cliente {ClienteId}.", id);
+            return Resultado.Falha(MensagemErroInterno);
         }
     }
 

@@ -18,6 +18,11 @@ namespace PosTechChallenge.Dominio.ValueObjects
             if (!Regex.IsMatch(senha, "[A-Z]"))
                 throw new ArgumentException("Senha deve conter ao menos uma letra maiúscula.");
             
+            if (!Regex.IsMatch(senha, "[0-9]"))
+                throw new ArgumentException("Senha deve conter ao menos um número.");
+
+            if (!Regex.IsMatch(senha, @"[^a-zA-Z0-9]"))
+                throw new ArgumentException("Senha deve conter ao menos um caractere especial.");
 
             Valor = senha;
         }

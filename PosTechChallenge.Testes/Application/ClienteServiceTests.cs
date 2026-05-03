@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Aplicacao.Services;
@@ -14,7 +15,7 @@ public class ClienteServiceTests
 
     public ClienteServiceTests()
     {
-        _service = new ClienteService(_repositorio.Object);
+        _service = new ClienteService(_repositorio.Object, NullLogger<ClienteService>.Instance);
     }
 
     [Fact]

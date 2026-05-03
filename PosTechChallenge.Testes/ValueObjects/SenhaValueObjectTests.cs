@@ -40,6 +40,20 @@ public class SenhaValueObjectTests
     }
 
     [Fact]
+    public void Construtor_SenhaSemNumero_DeveLancarArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new SenhaValueObject("Senha@abc"));
+        Assert.Contains("número", ex.Message);
+    }
+
+    [Fact]
+    public void Construtor_SenhaSemCaractereEspecial_DeveLancarArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new SenhaValueObject("Senha123"));
+        Assert.Contains("caractere especial", ex.Message);
+    }
+
+    [Fact]
     public void Construtor_SenhaComExatamente8Caracteres_DeveCriarObjeto()
     {
         var senha = new SenhaValueObject("Senha@12");

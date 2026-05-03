@@ -37,6 +37,7 @@ services:
       - ./infra/sql/init.sql:/usr/config/init.sql
     environment:
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Defina MSSQL_SA_PASSWORD no .env}"
+      APP_DB_PASSWORD: "${APP_DB_PASSWORD:?Defina APP_DB_PASSWORD no .env}"
     user: root
     networks:
       - backend
@@ -44,13 +45,13 @@ services:
       /bin/bash -c "
       echo 'Aguardando 10 segundos para estabilização final...';
       sleep 10;
-      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -No -i /usr/config/init.sql;
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -No -v APP_DB_PASSWORD="$$APP_DB_PASSWORD" -i /usr/config/init.sql;
       echo 'Script de criação executado com sucesso!';"
 
   api:
     build:
       context: .
-      dockerfile: PosTechChallenge/Dockerfile
+      dockerfile: Dockerfile
     container_name: postechallenge-api
     restart: unless-stopped
     ports:
@@ -58,7 +59,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Production}"
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PosTechChallenge;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Defina MSSQL_SA_PASSWORD no .env};TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PosTechChallenge;User Id=appchat;Password=${APP_DB_PASSWORD:?Defina APP_DB_PASSWORD no .env};TrustServerCertificate=True;"
       Jwt__SecretKey: "${JWT_SECRET_KEY:?Defina JWT_SECRET_KEY no .env}"
       Jwt__Issuer: "PosTechChallenge"
       Jwt__Audience: "PosTechChallenge-API"

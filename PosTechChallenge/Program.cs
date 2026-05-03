@@ -14,6 +14,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .GetChildren()
+    .Select(origin => origin.Value)
+    .Where(origin => string.IsNullOrWhiteSpace(origin) is false)
+    .Cast<string>()
+    .ToArray();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -56,6 +73,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDatabaseConfiguration(connectionString);
 builder.Services.AddApplicationServices();
 builder.Services.AddSingleton<IExecutionTimeMonitor, ExecutionTimeMonitor>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey missing");
 if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
@@ -90,6 +108,11 @@ SqlMapper.AddTypeHandler(new PlacaDapper());
 var app = builder.Build();
 
 // --- MIDDLEWARES ---
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 if (app.Environment.IsDevelopment())
 {
     // Gera o endpoint do documento: /openapi/v1.json
@@ -103,7 +126,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors();
 app.Use(async (context, next) =>
 {
     context.Response.Headers.XContentTypeOptions = "nosniff";
@@ -113,6 +138,7 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseMiddleware<RequestExecutionTimingMiddleware>();
+app.UseMiddleware<LoginRateLimitingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

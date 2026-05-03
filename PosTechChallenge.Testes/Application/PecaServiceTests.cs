@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using PosTechChallenge.Aplicacao.Dto.Peca;
 using PosTechChallenge.Aplicacao.Services;
@@ -14,7 +15,7 @@ public class PecaServiceTests
 
     public PecaServiceTests()
     {
-        _service = new PecaService(_repositorio.Object);
+        _service = new PecaService(_repositorio.Object, NullLogger<PecaService>.Instance);
     }
 
     [Fact]
