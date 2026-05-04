@@ -40,6 +40,22 @@ namespace PosTechChallenge.Infraestrutura.Querys
 
         public const string OBTER_POR_ID = "SELECT Id, IdCliente, IdVeiculo, IdFuncionario, Status, CriadoEm, AtualizadoEm FROM OrdemServico WHERE Id = @Id";
 
+        public const string OBTER_POR_CLIENTE_ID = @"SELECT 
+        Id, 
+        IdCliente, 
+        IdVeiculo, 
+        IdFuncionario, 
+        Status, 
+        CriadoEm, 
+        AtualizadoEm 
+        FROM OrdemServico
+        WHERE IdCliente = @IdCliente
+        ORDER BY 
+        Id, 
+        CriadoEm DESC
+        OFFSET (@Page - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY";
+
         public const string CRIAR = @"
             INSERT INTO OrdemServico (IdCliente, IdVeiculo, IdFuncionario, Status, CriadoEm, AtualizadoEm)
             VALUES (@IdCliente, @IdVeiculo, @IdFuncionario, @Status, @CriadoEm, @AtualizadoEm);

@@ -10,6 +10,7 @@ public sealed class OrdemServicoService : IOrdemServicoService
 {
     private readonly CriarOrdemServicoUseCase _criarOrdemServicoUseCase;
     private readonly ObterOrdemServicoUseCase _obterOrdemServicoUseCase;
+    private readonly ObterOrdemServicoPorClienteUseCase _obterOrdemServicoPorClienteUseCase;
     private readonly AtualizarOrdemServicoUseCase _atualizarOrdemServicoUseCase;
     private readonly AtualizarStatusOrdemServicoUseCase _atualizarStatusOrdemServicoUseCase;
     private readonly DeletarOrdemServicoUseCase _deletarOrdemServicoUseCase;
@@ -18,6 +19,7 @@ public sealed class OrdemServicoService : IOrdemServicoService
     public OrdemServicoService(
         CriarOrdemServicoUseCase criarOrdemServicoUseCase,
         ObterOrdemServicoUseCase obterOrdemServicoUseCase,
+        ObterOrdemServicoPorClienteUseCase obterOrdemServicoPorClienteUseCase,
         AtualizarOrdemServicoUseCase atualizarOrdemServicoUseCase,
         AtualizarStatusOrdemServicoUseCase atualizarStatusOrdemServicoUseCase,
         DeletarOrdemServicoUseCase deletarOrdemServicoUseCase,
@@ -25,6 +27,7 @@ public sealed class OrdemServicoService : IOrdemServicoService
     {
         _criarOrdemServicoUseCase = criarOrdemServicoUseCase;
         _obterOrdemServicoUseCase = obterOrdemServicoUseCase;
+        _obterOrdemServicoPorClienteUseCase = obterOrdemServicoPorClienteUseCase;
         _atualizarOrdemServicoUseCase = atualizarOrdemServicoUseCase;
         _atualizarStatusOrdemServicoUseCase = atualizarStatusOrdemServicoUseCase;
         _deletarOrdemServicoUseCase = deletarOrdemServicoUseCase;
@@ -37,8 +40,11 @@ public sealed class OrdemServicoService : IOrdemServicoService
     public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize, int page)
         => await _obterOrdemServicoUseCase.ObterTodosAsync(status, page, pageSize);
 
+    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterPorClienteIdAsync(int idCliente, int pageSize = 10, int page = 1)
+        => await _obterOrdemServicoPorClienteUseCase.ExecutarAsync(idCliente, pageSize, page);
+
     public async Task<Resultado<decimal>> ObterValorPorIdAsync(int id)
-    => await _obterValorPorIdUseCase.ObterValorPorIdAsync(id);
+        => await _obterValorPorIdUseCase.ObterValorPorIdAsync(id);
 
     public async Task<Resultado<ObterOrdemServicoDto>> ObterPorIdAsync(int id)
         => await _obterOrdemServicoUseCase.ObterPorIdAsync(id);

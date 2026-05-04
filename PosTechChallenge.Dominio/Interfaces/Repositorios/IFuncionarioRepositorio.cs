@@ -9,6 +9,7 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios
     {
         Task<IEnumerable<Funcionario>> ObterTodosAsync();
         Task<Funcionario?> ObterPorIdAsync(int id);
+        Task<Funcionario?> ObterPorNomeAsync(string nome);
         Task<Funcionario?> ObterPorCPFAsync(string CPF);
         Task<int> CriarAsync(Funcionario funcionario);
         Task<bool> AtualizarAsync(Funcionario funcionario);

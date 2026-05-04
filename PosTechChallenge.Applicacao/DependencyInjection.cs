@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<DeletarItemOSUseCase>();
         services.AddScoped<CriarOrdemServicoUseCase>();
         services.AddScoped<ObterOrdemServicoUseCase>();
+        services.AddScoped<ObterOrdemServicoPorClienteUseCase>();
         services.AddScoped<AtualizarOrdemServicoUseCase>();
         services.AddScoped<AtualizarStatusOrdemServicoUseCase>();
         services.AddScoped<DeletarOrdemServicoUseCase>();

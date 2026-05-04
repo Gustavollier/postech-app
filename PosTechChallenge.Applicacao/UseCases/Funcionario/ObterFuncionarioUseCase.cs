@@ -17,8 +17,7 @@ public class ObterFuncionarioUseCase
     {
         try
         {
-            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-            var funcionario = funcionarios.FirstOrDefault(f => f.CPF == cpf);
+            var funcionario = await _funcionarioRepositorio.ObterPorCPFAsync(cpf);
 
             if (funcionario == null)
                 return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com CPF {cpf} não encontrado.");
@@ -34,9 +33,8 @@ public class ObterFuncionarioUseCase
     public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome)
     {
         try
-        {
-            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
-            var funcionario = funcionarios.FirstOrDefault(f => f.Nome == nome);
+        {                                                       
+            var funcionario = await _funcionarioRepositorio.ObterPorNomeAsync(nome);
 
             if (funcionario == null)
                 return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com nome '{nome}' não encontrado.");

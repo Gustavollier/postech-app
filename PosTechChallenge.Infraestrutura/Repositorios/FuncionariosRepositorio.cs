@@ -29,6 +29,13 @@ public class FuncionariosRepositorio : IFuncionarioRepositorio
         return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_ID, new { Id = id });
     }
 
+    public async Task<Funcionario?> ObterPorNomeAsync(string nome) 
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_NOME, new { Nome = nome });
+    }
+
     public async Task<Funcionario?> ObterPorCPFAsync(string CPF)
     {
         using var connection = _connectionFactory.CreateConnection();

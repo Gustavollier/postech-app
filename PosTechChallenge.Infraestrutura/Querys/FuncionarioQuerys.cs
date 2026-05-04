@@ -3,6 +3,7 @@
     public static class FuncionarioQuerys
     {
         public const string OBTER_TODOS = "SELECT Id, Nome, Contato, CPF, Cargo, ValorHora FROM Funcionario";
+        public const string OBTER_POR_NOME = @"SELECT Id, Nome, Contato, CPF, Cargo, ValorHora  FROM Funcionario WHERE Nome LIKE '%' + @Nome + '%'";
 
         public const string OBTER_POR_ID = "SELECT Id, Nome, Contato, CPF, Cargo, ValorHora FROM Funcionario WHERE Id = @Id";
 
