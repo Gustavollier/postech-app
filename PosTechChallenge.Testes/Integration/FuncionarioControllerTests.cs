@@ -4,6 +4,7 @@ using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Xunit;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
@@ -59,6 +60,8 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
         var response = await _client.GetAsync("/api/v1/Funcionario");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Mecanico", json.RootElement[0].GetProperty("cargo").GetString());
     }
 
     [Fact]

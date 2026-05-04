@@ -60,7 +60,7 @@ public class FuncionarioController : ControllerBase
             Nome = f.Nome,
             Contato = f.Contato,
             CPF = f.CPF,
-            Cargo = f.Cargo,
+            Cargo = f.Cargo.ToString(),
             ValorHora = f.ValorHora
         }).ToList();
 
@@ -85,7 +85,7 @@ public class FuncionarioController : ControllerBase
             Nome = resultado.Output.Nome,
             Contato = resultado.Output.Contato,
             CPF = resultado.Output.CPF,
-            Cargo = resultado.Output.Cargo,
+            Cargo = resultado.Output.Cargo.ToString(),
             ValorHora = resultado.Output.ValorHora
         };
 
@@ -109,7 +109,7 @@ public class FuncionarioController : ControllerBase
             Nome = resultado.Output.Nome,
             Contato = resultado.Output.Contato,
             CPF = resultado.Output.CPF,
-            Cargo = resultado.Output.Cargo,
+            Cargo = resultado.Output.Cargo.ToString(),
             ValorHora = resultado.Output.ValorHora
         };
 

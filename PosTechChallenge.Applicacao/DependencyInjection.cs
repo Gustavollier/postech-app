@@ -4,6 +4,7 @@ using PosTechChallenge.Aplicacao.Services;
 using PosTechChallenge.Aplicacao.UseCases.Funcionario;
 using PosTechChallenge.Aplicacao.UseCases.Autenticacao;
 using PosTechChallenge.Aplicacao.UseCases.ItemOS;
+using PosTechChallenge.Aplicacao.UseCases.Orcamento;
 using PosTechChallenge.Aplicacao.UseCases.OrdemServico;
 using PosTechChallenge.Dominio.Services;
 
@@ -28,6 +29,10 @@ public static class DependencyInjection
         services.AddScoped<AtualizarStatusOrdemServicoUseCase>();
         services.AddScoped<DeletarOrdemServicoUseCase>();
         services.AddScoped<ObterValorPorIdUseCase>();
+        services.AddScoped<ObterOrcamentoUseCase>();
+        services.AddScoped<CalcularOrcamentoUseCase>();
+        services.AddScoped<EnviarOrcamentoUseCase>();
+        services.AddScoped<ResponderOrcamentoUseCase>();
         services.AddScoped<ItemOSDomainService>();
         services.AddScoped<OrdemServicoDomainService>();
         services.AddScoped<IFuncionarioService, FuncionarioService>();
@@ -36,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IPecaService, PecaService>();
         services.AddScoped<IItemOSService, ItemOSService>();
         services.AddScoped<IOrdemServicoService, OrdemServicoService>();
+        services.AddScoped<IOrcamentoService, OrcamentoService>();
         
         // Token Service
         services.AddScoped<ITokenService, TokenService>();

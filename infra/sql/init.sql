@@ -121,6 +121,30 @@ CREATE TABLE Status (
     FOREIGN KEY (IdOS) REFERENCES OrdemServico(Id),
     FOREIGN KEY (IdFuncionario) REFERENCES Funcionario(Id)
 );
+
+CREATE TABLE Orcamento (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    IdOS INT NOT NULL,
+    ValorMaoDeObra DECIMAL(10, 2) NOT NULL,
+    ValorPecas DECIMAL(10, 2) NOT NULL,
+    ValorTotal DECIMAL(10, 2) NOT NULL,
+    Status INT NOT NULL,
+    CriadoEm DATETIME NOT NULL,
+    AtualizadoEm DATETIME NOT NULL,
+    CONSTRAINT UQ_Orcamento_IdOS UNIQUE (IdOS),
+    FOREIGN KEY (IdOS) REFERENCES OrdemServico(Id)
+);
+
+CREATE TABLE EmailOutbox (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Destinatario NVARCHAR(100) NOT NULL,
+    Assunto NVARCHAR(200) NOT NULL,
+    Corpo NVARCHAR(MAX) NOT NULL,
+    Status INT NOT NULL,
+    Tentativas INT NOT NULL DEFAULT 0,
+    CriadoEm DATETIME NOT NULL,
+    ProcessadoEm DATETIME NULL
+);
 GO
 
 DECLARE @Agora DATETIME = GETUTCDATE();

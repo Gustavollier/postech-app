@@ -23,7 +23,12 @@ namespace PosTechChallenge.Infraestrutura.Querys
         FETCH NEXT @PageSize ROWS ONLY";
 
         public const string OBTER_VALOR_POR_ID = @"SELECT  
-            SUM(ISNULL(PE.Preco, 0) + ISNULL(FU.ValorHora, 0)) AS Valor
+            COALESCE(SUM(
+                CASE
+                    WHEN IOS.TipoItem = 0 THEN ISNULL(FU.ValorHora, 0) * IOS.QuantidadeItem
+                    WHEN IOS.TipoItem = 1 THEN ISNULL(PE.Preco, 0) * IOS.QuantidadeItem
+                    ELSE 0
+                END), 0) AS Valor
         FROM OrdemServico OS
         LEFT JOIN Itens IOS ON OS.Id = IOS.IdOs
         LEFT JOIN Pecas PE ON IOS.IdPeca = PE.Id
@@ -67,6 +72,7 @@ namespace PosTechChallenge.Infraestrutura.Querys
             WHERE Id = @Id";
 
         public const string DELETAR = @"
+            DELETE FROM Orcamento WHERE IdOS = @Id;
             DELETE FROM Status WHERE IdOS = @Id;
             DELETE FROM Itens WHERE IdOS = @Id;
             DELETE FROM OrdemServico WHERE Id = @Id";

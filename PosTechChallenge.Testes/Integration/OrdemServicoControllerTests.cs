@@ -4,6 +4,7 @@ using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Xunit;
 using static PosTechChallenge.Dominio.Utils.Enums;
 
@@ -70,6 +71,8 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
         var response = await _client.GetAsync("/api/v1/ordens-servico");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Recebida", json.RootElement[0].GetProperty("status").GetString());
     }
 
     [Fact]
@@ -102,6 +105,8 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
         var response = await _client.GetAsync("/api/v1/ordens-servico/1");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Recebida", json.RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -138,6 +143,8 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
         var response = await _client.GetAsync("/api/v1/ordens-servico/1/status");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Recebida", json.RootElement.GetProperty("statusAtual").GetString());
     }
 
     [Fact]

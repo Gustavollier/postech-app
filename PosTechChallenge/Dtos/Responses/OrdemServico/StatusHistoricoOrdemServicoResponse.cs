@@ -6,5 +6,5 @@ public sealed record StatusHistoricoOrdemServicoResponse
     public int IdOS { get; init; }
     public DateTime UpdatedAt { get; init; }
     public int IdFuncionario { get; init; }
-    public int StatusAtual { get; init; }
+    public string StatusAtual { get; init; } = string.Empty;
 }
