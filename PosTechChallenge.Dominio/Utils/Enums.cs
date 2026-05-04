@@ -28,4 +28,18 @@ public class Enums
         MaoDeObra = 0,
         Peca = 1
     }
+
+    public enum EStatusOrcamento
+    {
+        Pendente = 0,
+        Aprovado = 1,
+        Rejeitado = 2
+    }
+
+    public enum EStatusEmailOutbox
+    {
+        Pendente = 0,
+        Processado = 1,
+        Falha = 2
+    }
 }

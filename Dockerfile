@@ -13,6 +13,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PosTechChallenge/PosTechChallenge.csproj", "PosTechChallenge/"]
+COPY ["PosTechChallenge.Applicacao/PosTechChallenge.Aplicacao.csproj", "PosTechChallenge.Applicacao/"]
+COPY ["PosTechChallenge.Dominio/PosTechChallenge.Dominio.csproj", "PosTechChallenge.Dominio/"]
+COPY ["PosTechChallenge.Infraestrutura/PosTechChallenge.Infraestrutura.csproj", "PosTechChallenge.Infraestrutura/"]
 RUN dotnet restore "./PosTechChallenge/PosTechChallenge.csproj"
 COPY . .
 WORKDIR "/src/PosTechChallenge"

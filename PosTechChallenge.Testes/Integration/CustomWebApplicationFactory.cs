@@ -20,6 +20,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public Mock<IAutenticacaoService> AutenticacaoServiceMock { get; } = new();
     public Mock<IClienteService> ClienteServiceMock { get; } = new();
     public Mock<IOrdemServicoService> OrdemServicoServiceMock { get; } = new();
+    public Mock<IOrcamentoService> OrcamentoServiceMock { get; } = new();
     public Mock<IPecaService> PecaServiceMock { get; } = new();
     public Mock<IVeiculoService> VeiculoServiceMock { get; } = new();
     public Mock<IFuncionarioService> FuncionarioServiceMock { get; } = new();
@@ -48,6 +49,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IOrdemServicoService>();
             services.AddScoped(_ => OrdemServicoServiceMock.Object);
+
+            services.RemoveAll<IOrcamentoService>();
+            services.AddScoped(_ => OrcamentoServiceMock.Object);
 
             services.RemoveAll<IPecaService>();
             services.AddScoped(_ => PecaServiceMock.Object);

@@ -150,7 +150,7 @@ public sealed class OrdemServicoController : ControllerBase
             IdCliente = dto.IdCliente,
             IdVeiculo = dto.IdVeiculo,
             IdFuncionario = dto.IdFuncionario,
-            Status = dto.Status,
+            Status = ((EStatusOrdemServico)dto.Status).ToString(),
             CriadoEm = dto.CriadoEm,
             AtualizadoEm = dto.AtualizadoEm
         };
@@ -161,14 +161,14 @@ public sealed class OrdemServicoController : ControllerBase
         return new StatusOrdemServicoResponse
         {
             OrdemServicoId = dto.OrdemServicoId,
-            StatusAtual = dto.StatusAtual,
+            StatusAtual = ((EStatusOrdemServico)dto.StatusAtual).ToString(),
             AtualizadoEm = dto.AtualizadoEm,
             Historico = dto.Historico.Select(historico => new StatusHistoricoOrdemServicoResponse
             {
                 Id = historico.Id,
                 IdOS = historico.IdOS,
                 IdFuncionario = historico.IdFuncionario,
-                StatusAtual = historico.StatusAtual,
+                StatusAtual = ((EStatusOrdemServico)historico.StatusAtual).ToString(),
                 UpdatedAt = historico.UpdatedAt
             }).ToList()
         };
