@@ -4,6 +4,6 @@ public sealed record CriarPecaDto(
     string Nome,
     string? Marca,
     string? Codigo,
-    int Preco,
+    decimal Preco,
     int UnidadeMedida,
     int QuantidadeEstoque);

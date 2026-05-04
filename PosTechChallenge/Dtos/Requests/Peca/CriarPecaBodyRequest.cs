@@ -13,7 +13,7 @@ public sealed record CriarPecaBodyRequest
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "Preço deve ser um número positivo.")]
-    public int Preco { get; init; }
+    public decimal Preco { get; init; }
 
     [Required]
     public int UnidadeMedida { get; init; }
