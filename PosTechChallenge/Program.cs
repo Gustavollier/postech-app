@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+var openApiServerUrl = builder.Configuration["OpenApi:ServerUrl"];
+var useHttpsRedirection = builder.Configuration.GetValue("HttpsRedirection:Enabled", true);
+
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .GetChildren()
@@ -36,6 +39,17 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         // 1. Adiciona a definição do esquema de segurança
+        if (string.IsNullOrWhiteSpace(openApiServerUrl) is false)
+        {
+            document.Servers = new List<OpenApiServer>
+            {
+                new()
+                {
+                    Url = openApiServerUrl
+                }
+            };
+        }
+
         document.Components ??= new();
         document.Components.SecuritySchemes.Add("Bearer", new OpenApiSecurityScheme
         {
@@ -126,7 +140,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+if (useHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseRouting();
 app.UseCors();
 app.Use(async (context, next) =>

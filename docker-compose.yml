@@ -63,6 +63,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Production}"
       ASPNETCORE_HTTP_PORTS: "8080"
+      HttpsRedirection__Enabled: "false"
+      OpenApi__ServerUrl: "http://localhost:8080"
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PosTechChallenge;User Id=appchat;Password=${APP_DB_PASSWORD:?Defina APP_DB_PASSWORD no .env};TrustServerCertificate=True;"
       Jwt__SecretKey: "${JWT_SECRET_KEY:?Defina JWT_SECRET_KEY no .env}"
       Jwt__Issuer: "PosTechChallenge"

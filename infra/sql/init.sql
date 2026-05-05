@@ -226,6 +226,11 @@ VALUES
     (2, DATEADD(HOUR, -20, @Agora), 2, 1),
     (2, DATEADD(HOUR, -1, @Agora), 2, 3),
     (3, DATEADD(HOUR, -3, @Agora), 3, 0);
+
+INSERT INTO Orcamento (IdOS, ValorMaoDeObra, ValorPecas, ValorTotal, Status, CriadoEm, AtualizadoEm)
+VALUES
+    (1, 120.00, 319.40, 439.40, 0, DATEADD(HOUR, -2, @Agora), DATEADD(HOUR, -2, @Agora)),
+    (2, 120.00, 149.90, 269.90, 1, DATEADD(HOUR, -1, @Agora), DATEADD(HOUR, -1, @Agora));
 GO
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO appchat;
