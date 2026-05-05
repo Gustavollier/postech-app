@@ -18,6 +18,41 @@ public sealed class OrcamentoUseCaseTests
     private readonly Mock<IStatusRepositorio> _statusRepositorioMock = new();
 
     [Fact]
+    public async Task ObterPorOrdemServicoIdAsync_OrcamentoExistente_DeveRetornarOrcamento()
+    {
+        _orcamentoRepositorioMock
+            .Setup(r => r.ObterPorOrdemServicoIdAsync(1))
+            .ReturnsAsync(CriarOrcamento(EStatusOrcamento.Pendente));
+
+        var useCase = new ObterOrcamentoUseCase(_orcamentoRepositorioMock.Object);
+
+        var resultado = await useCase.ObterPorOrdemServicoIdAsync(1);
+
+        Assert.True(resultado.IsValid);
+        Assert.Equal(1, resultado.Output!.IdOS);
+        Assert.Equal(100m, resultado.Output.ValorMaoDeObra);
+        Assert.Equal(50m, resultado.Output.ValorPecas);
+        Assert.Equal(150m, resultado.Output.ValorTotal);
+        Assert.Equal((int)EStatusOrcamento.Pendente, resultado.Output.Status);
+    }
+
+    [Fact]
+    public async Task ObterPorOrdemServicoIdAsync_OrcamentoAusente_DeveRetornarFalha()
+    {
+        _orcamentoRepositorioMock
+            .Setup(r => r.ObterPorOrdemServicoIdAsync(99))
+            .ReturnsAsync((Orcamento?)null);
+
+        var useCase = new ObterOrcamentoUseCase(_orcamentoRepositorioMock.Object);
+
+        var resultado = await useCase.ObterPorOrdemServicoIdAsync(99);
+
+        Assert.False(resultado.IsValid);
+        Assert.Equal("Orcamento da OS 99 nao encontrado.", resultado.Message);
+        Assert.Null(resultado.Output);
+    }
+
+    [Fact]
     public async Task CalcularAsync_ComItens_DeveCriarOrcamentoComValoresCalculados()
     {
         _ordemServicoRepositorioMock

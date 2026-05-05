@@ -39,6 +39,21 @@ public sealed class OrcamentoControllerTests : IClassFixture<CustomWebApplicatio
     }
 
     [Fact]
+    public async Task ObterPorOrdemServicoId_OrcamentoNaoEncontrado_DeveRetornar404()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+        _factory.OrcamentoServiceMock
+            .Setup(s => s.ObterPorOrdemServicoIdAsync(99))
+            .ReturnsAsync(Resultado<ObterOrcamentoDto>.Falha("Orcamento da OS 99 nao encontrado."));
+
+        var response = await _client.GetAsync("/api/v1/orcamentos/os/99");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Orcamento da OS 99 nao encontrado.", json.RootElement.GetProperty("message").GetString());
+    }
+
+    [Fact]
     public async Task Calcular_SemToken_DeveRetornar401()
     {
         _client.DefaultRequestHeaders.Authorization = null;
