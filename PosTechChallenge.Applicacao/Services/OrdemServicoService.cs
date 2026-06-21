@@ -40,6 +40,9 @@ public sealed class OrdemServicoService : IOrdemServicoService
     public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize, int page)
         => await _obterOrdemServicoUseCase.ObterTodosAsync(status, page, pageSize);
 
+    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterOrdenadoPorStatusAsync()
+    => await _obterOrdemServicoUseCase.ObterOrdenadoPorStatusAsync();
+
     public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterPorClienteIdAsync(int idCliente, int pageSize = 10, int page = 1)
         => await _obterOrdemServicoPorClienteUseCase.ExecutarAsync(idCliente, pageSize, page);
 

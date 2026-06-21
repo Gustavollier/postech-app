@@ -50,6 +50,19 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("ordenado-por-status")]
+    public async Task<IActionResult> ObterOrdenadoPorStatusAsync()
+    {
+        Resultado<IEnumerable<ObterOrdemServicoDto>> resultado = await _ordemServicoService.ObterOrdenadoPorStatusAsync();
+
+        if (resultado.IsValid is false)
+            return NotFound(new { message = resultado.Message });
+
+        var response = resultado.Output?.Select(MapearParaResponse).ToList() ?? [];
+
+        return Ok(response);
+    }
+
     [HttpGet("cliente/{idCliente:int}")]
     public async Task<IActionResult> ObterPorClienteIdAsync([FromRoute] int idCliente, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {

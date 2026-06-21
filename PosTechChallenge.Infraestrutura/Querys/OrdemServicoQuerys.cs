@@ -22,6 +22,27 @@ namespace PosTechChallenge.Infraestrutura.Querys
         OFFSET (@Page - 1) * @PageSize ROWS
         FETCH NEXT @PageSize ROWS ONLY";
 
+        public const string OBTER_ORDENADO_POR_STATUS = @"
+    SELECT
+        Id,
+        IdCliente,
+        IdVeiculo,
+        IdFuncionario,
+        Status,
+        CriadoEm,
+        AtualizadoEm
+    FROM OrdemServico
+    WHERE Status NOT IN (4, 5)
+    ORDER BY
+        CASE
+            WHEN Status = 3 THEN 1 -- EmExecucao
+            WHEN Status = 2 THEN 2 -- AguardandoAprovacao
+            WHEN Status = 1 THEN 3 -- EmDiagnostico
+            WHEN Status = 0 THEN 4 -- Recebida
+            ELSE 999
+        END,
+        CriadoEm ASC";
+
         public const string OBTER_VALOR_POR_ID = @"SELECT  
             COALESCE(SUM(
                 CASE

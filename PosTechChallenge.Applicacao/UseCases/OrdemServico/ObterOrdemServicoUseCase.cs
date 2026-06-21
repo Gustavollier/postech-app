@@ -41,6 +41,25 @@ public sealed class ObterOrdemServicoUseCase
         }
     }
 
+    public async Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterOrdenadoPorStatusAsync()
+    {
+        try
+        {
+            var ordensServico = await _ordemServicoRepositorio.ObterOrdenadoPorStatusAsync();
+
+            var lista = ordensServico.Select(MapearParaDto).ToList();
+
+            if (!lista.Any())
+                return Resultado<IEnumerable<ObterOrdemServicoDto>>.Falha("Nenhuma ordem de serviço encontrada.");
+
+            return Resultado<IEnumerable<ObterOrdemServicoDto>>.Sucesso(lista);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<ObterOrdemServicoDto>>.Falha(ex.Message);
+        }
+    }
+
     public async Task<Resultado<ObterOrdemServicoDto>> ObterPorIdAsync(int id)
     {
         try

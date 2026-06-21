@@ -21,6 +21,13 @@ namespace PosTechChallenge.Infraestrutura.Repositorios
             return await connection.QueryAsync<OrdemServico>(OrdemServicoQuerys.OBTER_TODOS, new { PageSize = pageSize, Page = page });
         }
 
+        public async Task<IEnumerable<OrdemServico>> ObterOrdenadoPorStatusAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            return await connection.QueryAsync<OrdemServico>(OrdemServicoQuerys.OBTER_ORDENADO_POR_STATUS);
+        }
+
         public async Task<IEnumerable<OrdemServico>> ObterPorClienteIdAsync(int idCliente, int pageSize, int page)
         {
             using var connection = _connectionFactory.CreateConnection();

@@ -8,6 +8,7 @@ public interface IOrdemServicoService
 {
     Task<Resultado> CriarAsync(CriarOrdemServicoDto dto);
     Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterTodosAsync(EStatusOrdemServico? status, int pageSize = 10, int page = 1);
+    Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterOrdenadoPorStatusAsync();
     Task<Resultado<IEnumerable<ObterOrdemServicoDto>>> ObterPorClienteIdAsync(int idCliente, int pageSize = 10, int page = 1);
     Task<Resultado<decimal>> ObterValorPorIdAsync(int id);
     Task<Resultado<ObterOrdemServicoDto>> ObterPorIdAsync(int id);
