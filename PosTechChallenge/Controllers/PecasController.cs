@@ -23,7 +23,6 @@ public class PecasController : ControllerBase
     {
         if (bodyRequest.QuantidadeEstoque < 0)
             return BadRequest(new { message = "Quantidade de estoque não pode ser negativa." });
-
         var dto = new CriarPecaDto(
             Nome: bodyRequest.Nome,
             Marca: bodyRequest.Marca,
