@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postechallenge-api
+  namespace: postechallenge
+spec:
+  template:
+    spec:
+      # Adicionado pelo overlay CI — secret criado pelo pipeline antes do apply
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: postechallenge-api
+          # CI sempre puxa a imagem do GHCR — nunca usa cache
+          imagePullPolicy: Always

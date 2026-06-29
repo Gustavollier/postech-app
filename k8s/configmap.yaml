@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postechallenge-config
+  namespace: postechallenge
+  labels:
+    app: postechallenge
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_HTTP_PORTS: "8080"
+  HttpsRedirection__Enabled: "false"
+  OpenApi__ServerUrl: "http://localhost:8080"
