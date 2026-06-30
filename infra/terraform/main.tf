@@ -31,7 +31,7 @@ module "k8s_base" {
   app_db_password   = var.app_db_password
   jwt_secret_key    = var.jwt_secret_key
   sql_init_file     = "${local.project_root}/infra/sql/init.sql"
-  init_job_manifest = "${local.project_root}/k8s/sqlserver/init-job.yaml"
+  init_job_manifest = "${local.project_root}/k8s/base/sqlserver/init-job.yaml"
 
   # GHCR imagePullSecret — vazio no local, preenchido pelo CI via TF_VAR_*
   ghcr_username = var.ghcr_username

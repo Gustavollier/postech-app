@@ -5,7 +5,7 @@ kind: Kustomization
 # Uso: kubectl apply -k k8s/overlays/local/
 
 resources:
-  - ../../
+  - ../../base
 
 # Kustomize substitui a imagem sem precisar editar nenhum arquivo
 images:

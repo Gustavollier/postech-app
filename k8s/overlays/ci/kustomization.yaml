@@ -6,7 +6,7 @@ kind: Kustomization
 #   kustomize edit set image postechallenge-api=ghcr.io/<owner>/<repo>:<sha>
 
 resources:
-  - ../../
+  - ../../base
 
 # Placeholder — substituído pelo pipeline antes do terraform apply
 # via: kustomize edit set image postechallenge-api=ghcr.io/<owner>/<repo>:<sha>
