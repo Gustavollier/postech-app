@@ -188,12 +188,12 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra/terraform
-        run: terraform plan -no-color
+        run: terraform plan -var="kustomize_overlay=ci" -no-color
         continue-on-error: false
 
       - name: Terraform Apply — cluster + K8s resources
         working-directory: infra/terraform
-        run: terraform apply -auto-approve -no-color
+        run: terraform apply -var="kustomize_overlay=ci" -auto-approve -no-color
 
       # ── Verificação de estado ──────────────────────────────────────────────
       - name: Check cluster state

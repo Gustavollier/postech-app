@@ -103,6 +103,7 @@ resource "null_resource" "apply_kustomize_overlay" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
     command = <<-EOT
+      set -e
       echo "Aplicando overlay Kustomize: ${var.overlay_path}"
       kubectl apply -k ${var.overlay_path} --context ${var.kubectl_context}
       echo "Overlay aplicado."
