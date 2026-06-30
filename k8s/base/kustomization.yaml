@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Recursos base — agnósticos a ambiente
+# NÃO aplique este diretório diretamente.
+# Use os overlays: k8s/overlays/local/ ou k8s/overlays/ci/
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - sqlserver/pvc.yaml
+  - sqlserver/statefulset.yaml
+  - sqlserver/service.yaml
+  - api/deployment.yaml
+  - api/service.yaml
+  - api/hpa.yaml
+  # init-job é aplicado separadamente pelo Terraform (job one-shot)
+  # - sqlserver/init-job.yaml

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postechallenge-api
+  namespace: postechallenge
+  labels:
+    app: postechallenge-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postechallenge-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: postechallenge-api
+    spec:
+      initContainers:
+        - name: wait-for-sqlserver
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Aguardando SQL Server em sqlserver:1433..."
+              until nc -z sqlserver 1433; do
+                echo "SQL Server ainda não disponível — aguardando 5s..."
+                sleep 5
+              done
+              echo "SQL Server disponível!"
+
+      containers:
+        - name: postechallenge-api
+          image: postechallenge-api:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          env:
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postechallenge-secrets
+                  key: MSSQL_SA_PASSWORD
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: postechallenge-secrets
+                  key: ConnectionStrings__DefaultConnection
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postechallenge-secrets
+                  key: JWT_SECRET_KEY
+
+          envFrom:
+            - configMapRef:
+                name: postechallenge-config
+
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

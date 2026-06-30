@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Overlay CI/CD — para uso no GitHub Actions
+# A imagem é atualizada pelo pipeline via:
+#   kustomize edit set image postechallenge-api=ghcr.io/<owner>/<repo>:<sha>
+
+resources:
+  - ../../base
+
+# Placeholder — substituído pelo pipeline antes do terraform apply
+# via: kustomize edit set image postechallenge-api=ghcr.io/<owner>/<repo>:<sha>
+images:
+  - name: postechallenge-api
+    newName: ghcr.io/PLACEHOLDER_ORG/PLACEHOLDER_REPO
+    newTag: latest
+
+# Patch: imagePullSecrets (ghcr-secret criado pelo Terraform) + imagePullPolicy Always
+patches:
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: postechallenge-api
