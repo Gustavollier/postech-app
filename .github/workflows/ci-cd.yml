@@ -69,12 +69,12 @@ jobs:
         run: |
           dotnet test --no-build -c Release \
             --collect:"XPlat Code Coverage" \
-            --logger "trx;LogFileName=test-results.xml" \
+            --logger "trx;LogFileName=test-results.trx" \
             --results-directory ./TestResults \
             --verbosity normal
 
       - name: Publish test report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v1.6.0
         if: always()
         with:
           name: Unit & Integration Tests
