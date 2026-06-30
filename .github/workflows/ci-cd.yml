@@ -32,10 +32,12 @@ env:
   CLUSTER_NAME: postechallenge
   NAMESPACE: postechallenge
 
-# Permissões mínimas — escrita de packages necessária para push no GHCR
+# Permissões — packages:write para GHCR, checks:write para relatório de testes
 permissions:
   contents: read
   packages: write
+  checks: write
+  pull-requests: write
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -65,17 +67,22 @@ jobs:
 
       - name: Run tests
         run: |
-          TEST_PROJECTS=$(find . -name "*.Tests.csproj" -o -name "*.Test.csproj" 2>/dev/null | head -1)
-          if [ -n "$TEST_PROJECTS" ]; then
-            echo "Executando testes em: $TEST_PROJECTS"
-            dotnet test --no-build -c Release \
-              --logger "trx;LogFileName=test-results.xml" \
-              --results-directory ./TestResults
-          else
-            echo "Nenhum projeto de testes encontrado — etapa pulada."
-          fi
+          dotnet test --no-build -c Release \
+            --collect:"XPlat Code Coverage" \
+            --logger "trx;LogFileName=test-results.xml" \
+            --results-directory ./TestResults \
+            --verbosity normal
 
-      - name: Upload test results
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit & Integration Tests
+          path: "TestResults/**/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Upload test results & coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
