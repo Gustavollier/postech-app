@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
+using PosTechChallenge.Aplicacao.Helpers;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Cliente;
 using PosTechChallenge.Dtos.Responses.Cliente;
-using PosTechChallenge.Dominio.ValueObjects;
 
 namespace PosTechChallenge.Controllers;
 
@@ -22,7 +22,7 @@ public class ClienteController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarClienteBodyRequest bodyRequest)
     {
-        var validacaoDocumento = ValidarDocumento(bodyRequest.CPF, bodyRequest.CNPJ);
+        var validacaoDocumento = DocumentValidationHelper.ValidateDocument(bodyRequest.CPF, bodyRequest.CNPJ);
         if (validacaoDocumento != null)
             return BadRequest(new { message = validacaoDocumento });
 
@@ -84,7 +84,7 @@ public class ClienteController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Atualizar([FromRoute] int id, [FromBody] AtualizarClienteBodyRequest bodyRequest)
     {
-        var validacaoDocumento = ValidarDocumento(bodyRequest.CPF, bodyRequest.CNPJ);
+        var validacaoDocumento = DocumentValidationHelper.ValidateDocument(bodyRequest.CPF, bodyRequest.CNPJ);
         if (validacaoDocumento != null)
             return BadRequest(new { message = validacaoDocumento });
 
@@ -115,45 +115,16 @@ public class ClienteController : ControllerBase
         return Ok(new { message = resultado.Message });
     }
 
-    private static string? ValidarDocumento(string? cpf, string? cnpj)
+    private static ClienteResponse MapearParaResponse(ClienteDto dto) => new()
     {
-        var possuiCpf = !string.IsNullOrWhiteSpace(cpf);
-        var possuiCnpj = !string.IsNullOrWhiteSpace(cnpj);
-
-        if (!possuiCpf && !possuiCnpj)
-            return "Informe CPF ou CNPJ.";
-
-        if (possuiCpf && possuiCnpj)
-            return "Informe apenas CPF ou CNPJ.";
-
-        try
-        {
-            if (possuiCpf)
-                _ = new CpfValueObject(cpf!);
-            else
-                _ = new CnpjValueObject(cnpj!);
-        }
-        catch (ArgumentException ex)
-        {
-            return ex.Message;
-        }
-
-        return null;
-    }
-
-    private static ClienteResponse MapearParaResponse(ClienteDto cliente)
-    {
-        return new ClienteResponse
-        {
-            Id = cliente.Id,
-            CreatedAt = cliente.CreatedAt,
-            UpdatedAt = cliente.UpdatedAt,
-            CPF = cliente.CPF,
-            CNPJ = cliente.CNPJ,
-            NomeCompleto = cliente.NomeCompleto,
-            Telefone = cliente.Telefone,
-            Email = cliente.Email,
-            Ativo = cliente.Ativo
-        };
-    }
+        Id = dto.Id,
+        CreatedAt = dto.CreatedAt,
+        UpdatedAt = dto.UpdatedAt,
+        CPF = dto.CPF,
+        CNPJ = dto.CNPJ,
+        NomeCompleto = dto.NomeCompleto,
+        Telefone = dto.Telefone,
+        Email = dto.Email,
+        Ativo = dto.Ativo
+    };
 }

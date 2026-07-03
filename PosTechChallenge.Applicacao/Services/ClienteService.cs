@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
+using PosTechChallenge.Aplicacao.Helpers;
 using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Mappers;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
 using PosTechChallenge.Dominio.Results;
@@ -26,6 +28,8 @@ public sealed class ClienteService : IClienteService
     {
         try
         {
+            // FASE 2.1: Remover validações de null/whitespace
+            // Nota: Validação é responsabilidade do Controller
             var cliente = new Cliente
             {
                 NomeCompleto = clienteDto.NomeCompleto,
@@ -57,7 +61,8 @@ public sealed class ClienteService : IClienteService
             if (cliente == null)
                 return Resultado<ClienteDto>.Falha($"Cliente com ID {id} não encontrado.");
 
-            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
+            // FASE 3.2: Usar ClienteMappingHelper ao invés de método privado
+            return Resultado<ClienteDto>.Sucesso(ClienteMappingHelper.MapEntityToDto(cliente));
         }
         catch (Exception ex)
         {
@@ -75,7 +80,8 @@ public sealed class ClienteService : IClienteService
             if (cliente == null)
                 return Resultado<ClienteDto>.Falha($"Cliente com CPF/CNPJ {cpfCnpj} não encontrado.");
 
-            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
+            // FASE 3.2: Usar ClienteMappingHelper ao invés de método privado
+            return Resultado<ClienteDto>.Sucesso(ClienteMappingHelper.MapEntityToDto(cliente));
         }
         catch (Exception ex)
         {
@@ -89,21 +95,26 @@ public sealed class ClienteService : IClienteService
         try
         {
             var clientes = await _clienteRepositorio.ObterTodosAsync(page, pageSize);
-            
+
             int quantidadeClientes = await _clienteRepositorio.ObterQuantidadeClientesAsync();
 
             if (quantidadeClientes is 0 || clientes == null || clientes.Any() is false)
                 return Resultado<ObterClienteDto>.Falha("Nenhum cliente encontrado.");
 
-            IEnumerable<ClienteDto> dtos = clientes.Select(MapearParaClienteDto).ToList();
+            // FASE 3.2: Usar ClienteMappingHelper ao invés de método privado
+            IEnumerable<ClienteDto> dtos = clientes.Select(ClienteMappingHelper.MapEntityToDto).ToList();
 
+            // FASE 2.2: CORRIGIDO - Bug crítico de paginação
+            // ANTES: TotalPages = quantidadeClientes / 10 (hardcoded, sempre /10) ❌
+            // DEPOIS: TotalPages = ceiling(quantidadeClientes / pageSize) ✅
+            // Exemplo: 105 clientes, pageSize 10 = 11 páginas (não 10)
             var response = new ObterClienteDto
             {
                 Items = dtos,
                 Page = page,
                 PageSize = pageSize,
                 TotalItems = clientes.Count(),
-                TotalPages = quantidadeClientes / 10
+                TotalPages = PaginationHelper.CalculateTotalPages(quantidadeClientes, pageSize)
             };
 
             return Resultado<ObterClienteDto>.Sucesso(response);
@@ -124,9 +135,11 @@ public sealed class ClienteService : IClienteService
             if (clienteExistente == null)
                 return Resultado.Falha($"Cliente com ID {id} não encontrado.");
 
+            // FASE 2.1: Remover validações de null/whitespace
+            // Nota: Validação é responsabilidade do Controller
             clienteExistente.NomeCompleto = clienteDto.NomeCompleto;
-            clienteExistente.CPF = string.IsNullOrWhiteSpace(clienteDto.CPF) ? null : clienteDto.CPF;
-            clienteExistente.CNPJ = string.IsNullOrWhiteSpace(clienteDto.CNPJ) ? null : clienteDto.CNPJ;
+            clienteExistente.CPF = clienteDto.CPF;  // Já validado no Controller
+            clienteExistente.CNPJ = clienteDto.CNPJ;  // Já validado no Controller
             clienteExistente.Telefone = clienteDto.Telefone;
             clienteExistente.Email = clienteDto.Email;
             clienteExistente.UpdatedAt = DateTime.UtcNow;
