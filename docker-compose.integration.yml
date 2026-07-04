@@ -1,0 +1,62 @@
+# =============================================================================
+# SQL Server dedicado para os TESTES DE INTEGRAÇÃO.
+#
+# Uso local:
+#   docker compose -f docker-compose.integration.yml up -d --wait
+#   INTEGRATION_TEST_DB_CONNECTION="Server=localhost,1433;Database=PosTechChallenge;User Id=sa;Password=Your_password123;TrustServerCertificate=True;Encrypt=False;" \
+#     dotnet test PosTechChallenge.Testes.Integracao
+#   docker compose -f docker-compose.integration.yml down -v
+#
+# Na pipeline os testes se conectam como 'sa' ao banco PosTechChallenge, cujo
+# schema é criado pelo serviço sql-init-test a partir de infra/sql/init.sql.
+# =============================================================================
+
+services:
+  sqlserver-test:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-test
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Your_password123}"
+      SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Your_password123}"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -No -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - test-backend
+
+  sql-init-test:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-init-test
+    depends_on:
+      sqlserver-test:
+        condition: service_healthy
+    volumes:
+      - ./infra/sql/init.sql:/usr/config/init.sql:ro
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Your_password123}"
+      APP_DB_PASSWORD: "${APP_DB_PASSWORD:-Your_password123}"
+    user: root
+    networks:
+      - test-backend
+    entrypoint:
+      - /bin/bash
+      - -ec
+      - |
+        echo 'Aplicando schema de teste (infra/sql/init.sql)...'
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver-test -U sa -P "$$MSSQL_SA_PASSWORD" -No -v APP_DB_PASSWORD="$$APP_DB_PASSWORD" -i /usr/config/init.sql
+        echo 'Schema de teste criado com sucesso.'
+
+networks:
+  test-backend:
+    driver: bridge

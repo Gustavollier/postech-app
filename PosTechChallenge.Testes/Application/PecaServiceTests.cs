@@ -23,8 +23,8 @@ public class PecaServiceTests
     {
         Pecas? pecaCriada = null;
         _repositorio
-            .Setup(r => r.CriarAsync(It.IsAny<Pecas>()))
-            .Callback<Pecas>(p => pecaCriada = p)
+            .Setup(r => r.CriarAsync(It.IsAny<Pecas>(), It.IsAny<CancellationToken>()))
+            .Callback<Pecas, CancellationToken>((p, _) => pecaCriada = p)
             .ReturnsAsync(1);
 
         var resultado = await _service.CriarAsync(new CriarPecaDto(
@@ -43,7 +43,7 @@ public class PecaServiceTests
     [Fact]
     public async Task ObterTodosAsync_ComEstoqueBaixo_DeveFiltrarItens()
     {
-        _repositorio.Setup(r => r.ObterTodosAsync()).ReturnsAsync(new[]
+        _repositorio.Setup(r => r.ObterTodosAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new[]
         {
             Peca(id: 1, quantidade: 2),
             Peca(id: 2, quantidade: 20)
@@ -59,7 +59,7 @@ public class PecaServiceTests
     [Fact]
     public async Task ObterTodosAsync_SemItens_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterTodosAsync()).ReturnsAsync(Array.Empty<Pecas>());
+        _repositorio.Setup(r => r.ObterTodosAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Pecas>());
 
         var resultado = await _service.ObterTodosAsync(estoqueBaixo: false, limiteEstoqueBaixo: 5);
 
@@ -69,19 +69,19 @@ public class PecaServiceTests
     [Fact]
     public async Task AjustarEstoqueAsync_EstoqueFicariaNegativo_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Peca(id: 1, quantidade: 3));
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Peca(id: 1, quantidade: 3));
 
         var resultado = await _service.AjustarEstoqueAsync(1, new AjustarEstoquePecaDto(-5));
 
         Assert.False(resultado.IsValid);
-        _repositorio.Verify(r => r.AjustarEstoqueAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>()), Times.Never);
+        _repositorio.Verify(r => r.AjustarEstoqueAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task AjustarEstoqueAsync_EstoqueValido_DeveAtualizar()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Peca(id: 1, quantidade: 3));
-        _repositorio.Setup(r => r.AjustarEstoqueAsync(1, 8, It.IsAny<DateTime>())).ReturnsAsync(true);
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Peca(id: 1, quantidade: 3));
+        _repositorio.Setup(r => r.AjustarEstoqueAsync(1, 8, It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         var resultado = await _service.AjustarEstoqueAsync(1, new AjustarEstoquePecaDto(5));
 
@@ -91,7 +91,7 @@ public class PecaServiceTests
     [Fact]
     public async Task DesativarAsync_PecaNaoEncontrada_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(99)).ReturnsAsync((Pecas?)null);
+        _repositorio.Setup(r => r.ObterPorIdAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync((Pecas?)null);
 
         var resultado = await _service.DesativarAsync(99);
 

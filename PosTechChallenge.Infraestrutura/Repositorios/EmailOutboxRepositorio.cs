@@ -1,26 +1,31 @@
 using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
 using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios;
 
 public sealed class EmailOutboxRepositorio : IEmailOutboxRepositorio
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly IDbSession _session;
 
-    public EmailOutboxRepositorio(IDbConnectionFactory connectionFactory)
+    public EmailOutboxRepositorio(IDbSession session)
     {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _session = session ?? throw new ArgumentNullException(nameof(session));
     }
 
-    public async Task<int> CriarAsync(EmailOutbox emailOutbox)
+    public async Task<int> CriarAsync(EmailOutbox emailOutbox, CancellationToken cancellationToken = default)
     {
-        if (emailOutbox == null)
-            throw new ArgumentNullException(nameof(emailOutbox));
+        ArgumentNullException.ThrowIfNull(emailOutbox);
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        return await connection.ExecuteScalarAsync<int>(EmailOutboxQuerys.CRIAR, emailOutbox);
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            EmailOutboxQuerys.CRIAR,
+            emailOutbox,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
     }
 }

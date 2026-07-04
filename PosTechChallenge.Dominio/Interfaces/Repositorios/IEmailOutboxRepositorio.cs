@@ -4,5 +4,5 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios;
 
 public interface IEmailOutboxRepositorio
 {
-    Task<int> CriarAsync(EmailOutbox emailOutbox);
+    Task<int> CriarAsync(EmailOutbox emailOutbox, CancellationToken cancellationToken = default);
 }

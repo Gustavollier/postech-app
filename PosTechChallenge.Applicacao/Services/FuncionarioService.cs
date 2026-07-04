@@ -24,21 +24,21 @@ public sealed class FuncionarioService : IFuncionarioService
         _deletarFuncionarioUseCase = deletarFuncionarioUseCase;
     }
 
-    public async Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto) 
-        => await _criarFuncionarioUseCase.CriarAsync(funcionarioDto);
+    public Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto, CancellationToken cancellationToken = default)
+        => _criarFuncionarioUseCase.CriarAsync(funcionarioDto, cancellationToken);
 
-    public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf) 
-        => await _obterFuncionarioUseCase.ObterPorCpfAsync(cpf);
+    public Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf, CancellationToken cancellationToken = default)
+        => _obterFuncionarioUseCase.ObterPorCpfAsync(cpf, cancellationToken);
 
-    public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome) 
-        => await _obterFuncionarioUseCase.ObterPorNomeAsync(nome);
+    public Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome, CancellationToken cancellationToken = default)
+        => _obterFuncionarioUseCase.ObterPorNomeAsync(nome, cancellationToken);
 
-    public async Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync() 
-        => await _obterFuncionarioUseCase.ObterTodosAsync();
+    public Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync(CancellationToken cancellationToken = default)
+        => _obterFuncionarioUseCase.ObterTodosAsync(cancellationToken);
 
-    public async Task<Resultado> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto) 
-        => await _atualizarFuncionarioUseCase.AtualizarAsync(cpf, funcionarioDto);
+    public Task<Resultado> AtualizarAsync(string cpf, AtualizarFuncionarioDto funcionarioDto, CancellationToken cancellationToken = default)
+        => _atualizarFuncionarioUseCase.AtualizarAsync(cpf, funcionarioDto, cancellationToken);
 
-    public async Task<Resultado> DeletarAsync(string cpf) 
-        => await _deletarFuncionarioUseCase.DeletarPorCpfAsync(cpf);
+    public Task<Resultado> DeletarAsync(string cpf, CancellationToken cancellationToken = default)
+        => _deletarFuncionarioUseCase.DeletarPorCpfAsync(cpf, cancellationToken);
 }

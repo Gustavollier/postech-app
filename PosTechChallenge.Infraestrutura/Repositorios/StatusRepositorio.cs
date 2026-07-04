@@ -1,59 +1,82 @@
 using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
 using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios
 {
-    public class StatusRepositorio : IStatusRepositorio
+    public sealed class StatusRepositorio : IStatusRepositorio
     {
-        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly IDbSession _session;
 
-        public StatusRepositorio(IDbConnectionFactory connectionFactory)
+        public StatusRepositorio(IDbSession session)
         {
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
         }
 
-        public async Task<IEnumerable<Status>> ObterTodosAsync()
+        public async Task<IEnumerable<Status>> ObterTodosAsync(CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.QueryAsync<Status>(StatusQuerys.OBTER_TODOS);
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                StatusQuerys.OBTER_TODOS,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QueryAsync<Status>(command).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<Status>> ObterPorOrdemServicoIdAsync(int ordemServicoId)
+        public async Task<IEnumerable<Status>> ObterPorOrdemServicoIdAsync(int ordemServicoId, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.QueryAsync<Status>(StatusQuerys.OBTER_POR_ORDEM_SERVICO_ID, new { IdOS = ordemServicoId });
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                StatusQuerys.OBTER_POR_ORDEM_SERVICO_ID,
+                new { IdOS = ordemServicoId },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QueryAsync<Status>(command).ConfigureAwait(false);
         }
 
-        public async Task<Status?> ObterPorIdAsync(int id)
+        public async Task<Status?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.QueryFirstOrDefaultAsync<Status>(StatusQuerys.OBTER_POR_ID, new { Id = id });
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                StatusQuerys.OBTER_POR_ID,
+                new { Id = id },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QueryFirstOrDefaultAsync<Status>(command).ConfigureAwait(false);
         }
 
-        public async Task<int> CriarAsync(Status status)
+        public async Task<int> CriarAsync(Status status, CancellationToken cancellationToken = default)
         {
-            if (status == null)
-                throw new ArgumentNullException(nameof(status));
+            ArgumentNullException.ThrowIfNull(status);
 
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.ExecuteScalarAsync<int>(StatusQuerys.CRIAR, status);
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                StatusQuerys.CRIAR,
+                status,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
         }
 
-        public async Task<bool> AtualizarAsync(Status status)
+        public async Task<bool> AtualizarAsync(Status status, CancellationToken cancellationToken = default)
         {
-            if (status == null)
-                throw new ArgumentNullException(nameof(status));
+            ArgumentNullException.ThrowIfNull(status);
 
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            var result = await connection.ExecuteAsync(StatusQuerys.ATUALIZAR, status);
-            return result > 0;
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                StatusQuerys.ATUALIZAR,
+                status,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
     }
 }

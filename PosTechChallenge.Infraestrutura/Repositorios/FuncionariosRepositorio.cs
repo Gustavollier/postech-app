@@ -1,78 +1,107 @@
 using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
 using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios;
-public class FuncionariosRepositorio : IFuncionarioRepositorio
+
+public sealed class FuncionariosRepositorio : IFuncionarioRepositorio
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly IDbSession _session;
 
-    public FuncionariosRepositorio(IDbConnectionFactory connectionFactory)
+    public FuncionariosRepositorio(IDbSession session)
     {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _session = session ?? throw new ArgumentNullException(nameof(session));
     }
 
-    public async Task<IEnumerable<Funcionario>> ObterTodosAsync()
+    public async Task<IEnumerable<Funcionario>> ObterTodosAsync(CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.OBTER_TODOS,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        return await connection.QueryAsync<Funcionario>(FuncionarioQuerys.OBTER_TODOS);
+        return await connection.QueryAsync<Funcionario>(command).ConfigureAwait(false);
     }
 
-    public async Task<Funcionario?> ObterPorIdAsync(int id)
+    public async Task<Funcionario?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.OBTER_POR_ID,
+            new { Id = id },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_ID, new { Id = id });
+        return await connection.QueryFirstOrDefaultAsync<Funcionario>(command).ConfigureAwait(false);
     }
 
-    public async Task<Funcionario?> ObterPorNomeAsync(string nome) 
+    public async Task<Funcionario?> ObterPorNomeAsync(string nome, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_NOME, new { Nome = nome });
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.OBTER_POR_NOME,
+            new { Nome = nome },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        return await connection.QueryFirstOrDefaultAsync<Funcionario>(command).ConfigureAwait(false);
     }
 
-    public async Task<Funcionario?> ObterPorCPFAsync(string CPF)
+    public async Task<Funcionario?> ObterPorCPFAsync(string CPF, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.OBTER_POR_CPF,
+            new { CPF = CPF },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        return await connection.QueryFirstOrDefaultAsync<Funcionario>(FuncionarioQuerys.OBTER_POR_CPF, new { CPF = CPF });
+        return await connection.QueryFirstOrDefaultAsync<Funcionario>(command).ConfigureAwait(false);
     }
 
-    public async Task<int> CriarAsync(Funcionario funcionario)
+    public async Task<int> CriarAsync(Funcionario funcionario, CancellationToken cancellationToken = default)
     {
-        if (funcionario == null)
-            throw new ArgumentNullException(nameof(funcionario));
+        ArgumentNullException.ThrowIfNull(funcionario);
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.CRIAR,
+            funcionario,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        return await connection.ExecuteScalarAsync<int>(FuncionarioQuerys.CRIAR, funcionario);
+        // Retorna o Id gerado (SCOPE_IDENTITY).
+        return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
     }
 
-    public async Task<bool> AtualizarAsync(Funcionario funcionario)
+    public async Task<bool> AtualizarAsync(Funcionario funcionario, CancellationToken cancellationToken = default)
     {
-        if (funcionario == null)
-            throw new ArgumentNullException(nameof(funcionario));
+        ArgumentNullException.ThrowIfNull(funcionario);
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.ATUALIZAR,
+            funcionario,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        var result = await connection.ExecuteAsync(FuncionarioQuerys.ATUALIZAR, funcionario);
-        return result > 0;
+        var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+        return linhasAfetadas > 0;
     }
 
-    public async Task<bool> DeletarAsync(int id)
+    public async Task<bool> DeletarAsync(int id, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            FuncionarioQuerys.DELETAR,
+            new { Id = id },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
 
-        var result = await connection.ExecuteAsync(FuncionarioQuerys.DELETAR, new { Id = id });
-        return result > 0;
+        var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+        return linhasAfetadas > 0;
     }
 }

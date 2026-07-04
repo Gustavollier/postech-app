@@ -1,55 +1,70 @@
 using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
 using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios;
 
 public sealed class OrcamentoRepositorio : IOrcamentoRepositorio
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly IDbSession _session;
 
-    public OrcamentoRepositorio(IDbConnectionFactory connectionFactory)
+    public OrcamentoRepositorio(IDbSession session)
     {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _session = session ?? throw new ArgumentNullException(nameof(session));
     }
 
-    public async Task<Orcamento?> ObterPorOrdemServicoIdAsync(int ordemServicoId)
+    public async Task<Orcamento?> ObterPorOrdemServicoIdAsync(int ordemServicoId, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        return await connection.QueryFirstOrDefaultAsync<Orcamento>(
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
             OrcamentoQuerys.OBTER_POR_ORDEM_SERVICO_ID,
-            new { IdOS = ordemServicoId });
+            new { IdOS = ordemServicoId },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        return await connection.QueryFirstOrDefaultAsync<Orcamento>(command).ConfigureAwait(false);
     }
 
-    public async Task<OrcamentoValores> CalcularValoresAsync(int ordemServicoId)
+    public async Task<OrcamentoValores> CalcularValoresAsync(int ordemServicoId, CancellationToken cancellationToken = default)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        return await connection.QuerySingleAsync<OrcamentoValores>(
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
             OrcamentoQuerys.CALCULAR_VALORES,
-            new { IdOS = ordemServicoId });
+            new { IdOS = ordemServicoId },
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        return await connection.QuerySingleAsync<OrcamentoValores>(command).ConfigureAwait(false);
     }
 
-    public async Task<int> CriarAsync(Orcamento orcamento)
+    public async Task<int> CriarAsync(Orcamento orcamento, CancellationToken cancellationToken = default)
     {
-        if (orcamento == null)
-            throw new ArgumentNullException(nameof(orcamento));
+        ArgumentNullException.ThrowIfNull(orcamento);
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        return await connection.ExecuteScalarAsync<int>(OrcamentoQuerys.CRIAR, orcamento);
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            OrcamentoQuerys.CRIAR,
+            orcamento,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
     }
 
-    public async Task<bool> AtualizarAsync(Orcamento orcamento)
+    public async Task<bool> AtualizarAsync(Orcamento orcamento, CancellationToken cancellationToken = default)
     {
-        if (orcamento == null)
-            throw new ArgumentNullException(nameof(orcamento));
+        ArgumentNullException.ThrowIfNull(orcamento);
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        var result = await connection.ExecuteAsync(OrcamentoQuerys.ATUALIZAR, orcamento);
-        return result > 0;
+        var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var command = new CommandDefinition(
+            OrcamentoQuerys.ATUALIZAR,
+            orcamento,
+            transaction: _session.Transaction,
+            cancellationToken: cancellationToken);
+
+        var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+        return linhasAfetadas > 0;
     }
 }

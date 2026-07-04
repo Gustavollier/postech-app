@@ -4,8 +4,8 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios;
 
 public interface IOrcamentoRepositorio
 {
-    Task<Orcamento?> ObterPorOrdemServicoIdAsync(int ordemServicoId);
-    Task<OrcamentoValores> CalcularValoresAsync(int ordemServicoId);
-    Task<int> CriarAsync(Orcamento orcamento);
-    Task<bool> AtualizarAsync(Orcamento orcamento);
+    Task<Orcamento?> ObterPorOrdemServicoIdAsync(int ordemServicoId, CancellationToken cancellationToken = default);
+    Task<OrcamentoValores> CalcularValoresAsync(int ordemServicoId, CancellationToken cancellationToken = default);
+    Task<int> CriarAsync(Orcamento orcamento, CancellationToken cancellationToken = default);
+    Task<bool> AtualizarAsync(Orcamento orcamento, CancellationToken cancellationToken = default);
 }

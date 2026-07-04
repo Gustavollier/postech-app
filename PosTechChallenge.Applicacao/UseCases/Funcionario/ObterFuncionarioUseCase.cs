@@ -13,11 +13,11 @@ public class ObterFuncionarioUseCase
         _funcionarioRepositorio = funcionarioRepositorio;
     }
 
-    public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf)
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf, CancellationToken cancellationToken = default)
     {
         try
         {
-            var funcionario = await _funcionarioRepositorio.ObterPorCPFAsync(cpf);
+            var funcionario = await _funcionarioRepositorio.ObterPorCPFAsync(cpf, cancellationToken);
 
             if (funcionario == null)
                 return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com CPF {cpf} não encontrado.");
@@ -30,11 +30,11 @@ public class ObterFuncionarioUseCase
         }
     }
 
-    public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome)
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorNomeAsync(string nome, CancellationToken cancellationToken = default)
     {
         try
-        {                                                       
-            var funcionario = await _funcionarioRepositorio.ObterPorNomeAsync(nome);
+        {
+            var funcionario = await _funcionarioRepositorio.ObterPorNomeAsync(nome, cancellationToken);
 
             if (funcionario == null)
                 return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com nome '{nome}' não encontrado.");
@@ -47,16 +47,17 @@ public class ObterFuncionarioUseCase
         }
     }
 
-    public async Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync()
+    public async Task<Resultado<IEnumerable<ObterFuncionarioDto>>> ObterTodosAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync();
+            var funcionarios = await _funcionarioRepositorio.ObterTodosAsync(cancellationToken);
 
-            if (funcionarios == null || !funcionarios.Any())
+            var dtos = funcionarios?.Select(MapearParaDto).ToList() ?? [];
+
+            if (dtos.Count == 0)
                 return Resultado<IEnumerable<ObterFuncionarioDto>>.Falha("Nenhum funcionário encontrado.");
 
-            var dtos = funcionarios.Select(MapearParaDto).ToList();
             return Resultado<IEnumerable<ObterFuncionarioDto>>.Sucesso(dtos);
         }
         catch (Exception ex)

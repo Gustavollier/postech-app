@@ -1,69 +1,96 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
 using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios
 {
-    public class PecasRepositorio : IPecasRepositorio
+    public sealed class PecasRepositorio : IPecasRepositorio
     {
-        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly IDbSession _session;
 
-        public PecasRepositorio(IDbConnectionFactory connectionFactory)
+        public PecasRepositorio(IDbSession session)
         {
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
         }
 
-        public async Task<IEnumerable<Pecas>> ObterTodosAsync()
+        public async Task<IEnumerable<Pecas>> ObterTodosAsync(CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.QueryAsync<Pecas>(PecasQuerys.OBTER_TODOS);
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.OBTER_TODOS,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QueryAsync<Pecas>(command).ConfigureAwait(false);
         }
 
-        public async Task<Pecas?> ObterPorIdAsync(int id)
+        public async Task<Pecas?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.QueryFirstOrDefaultAsync<Pecas>(PecasQuerys.OBTER_POR_ID, new { Id = id });
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.OBTER_POR_ID,
+                new { Id = id },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QueryFirstOrDefaultAsync<Pecas>(command).ConfigureAwait(false);
         }
 
-        public async Task<int> CriarAsync(Pecas peca)
+        public async Task<int> CriarAsync(Pecas peca, CancellationToken cancellationToken = default)
         {
-            if (peca == null)
-                throw new ArgumentNullException(nameof(peca));
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            return await connection.ExecuteScalarAsync<int>(PecasQuerys.CRIAR, peca);
+            ArgumentNullException.ThrowIfNull(peca);
+
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.CRIAR,
+                peca,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
         }
 
-        public async Task<bool> AtualizarAsync(Pecas peca)
+        public async Task<bool> AtualizarAsync(Pecas peca, CancellationToken cancellationToken = default)
         {
-            if (peca == null)
-                throw new ArgumentNullException(nameof(peca));
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            var result = await connection.ExecuteAsync(PecasQuerys.ATUALIZAR, peca);
-            return result > 0;
+            ArgumentNullException.ThrowIfNull(peca);
+
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.ATUALIZAR,
+                peca,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
 
-        public async Task<bool> AjustarEstoqueAsync(int id, int quantidadeEstoque, DateTime atualizadoEm)
+        public async Task<bool> AjustarEstoqueAsync(int id, int quantidadeEstoque, DateTime atualizadoEm, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            var result = await connection.ExecuteAsync(PecasQuerys.AJUSTAR_ESTOQUE, new { Id = id, QuantidadeEstoque = quantidadeEstoque, AtualizadoEm = atualizadoEm });
-            return result > 0;
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.AJUSTAR_ESTOQUE,
+                new { Id = id, QuantidadeEstoque = quantidadeEstoque, AtualizadoEm = atualizadoEm },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
 
-        public async Task<bool> DeletarAsync(int id, DateTime atualizadoEm)
+        public async Task<bool> DeletarAsync(int id, DateTime atualizadoEm, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
-            var result = await connection.ExecuteAsync(PecasQuerys.DELETAR, new { Id = id, AtualizadoEm = atualizadoEm });
-            return result > 0;
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                PecasQuerys.DELETAR,
+                new { Id = id, AtualizadoEm = atualizadoEm },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
+
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
     }
 }

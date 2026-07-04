@@ -31,7 +31,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     {
         _client.DefaultRequestHeaders.Authorization = null;
         _factory.FuncionarioServiceMock
-            .Setup(s => s.CriarAsync(It.IsAny<CriarFuncionarioDto>()))
+            .Setup(s => s.CriarAsync(It.IsAny<CriarFuncionarioDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Funcionario criado com sucesso."));
 
         var response = await _client.PostAsJsonAsync("/api/v1/Funcionario", CriarBody());
@@ -54,7 +54,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     public async Task ObterTodos_ComFuncionarios_DeveRetornar200()
     {
         _factory.FuncionarioServiceMock
-            .Setup(s => s.ObterTodosAsync())
+            .Setup(s => s.ObterTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado<IEnumerable<ObterFuncionarioDto>>.Sucesso(new[] { ObterDto() }));
 
         var response = await _client.GetAsync("/api/v1/Funcionario");
@@ -68,7 +68,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     public async Task ObterPorCpf_NaoEncontrado_DeveRetornar404()
     {
         _factory.FuncionarioServiceMock
-            .Setup(s => s.ObterPorCpfAsync(CpfValido))
+            .Setup(s => s.ObterPorCpfAsync(CpfValido, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado<ObterFuncionarioDto>.Falha("Funcionario nao encontrado."));
 
         var response = await _client.GetAsync($"/api/v1/Funcionario/cpf?cpf={CpfValido}");
@@ -92,7 +92,7 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
             "Bearer",
             CustomWebApplicationFactory.GerarToken("Gerente"));
         _factory.FuncionarioServiceMock
-            .Setup(s => s.DeletarAsync(CpfValido))
+            .Setup(s => s.DeletarAsync(CpfValido, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Funcionario deletado com sucesso."));
 
         var response = await _client.DeleteAsync($"/api/v1/Funcionario?cpf={CpfValido}");

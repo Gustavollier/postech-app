@@ -20,7 +20,7 @@ public class ClienteController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Criar([FromBody] CriarClienteBodyRequest bodyRequest)
+    public async Task<IActionResult> Criar([FromBody] CriarClienteBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
         var validacaoDocumento = DocumentValidationHelper.ValidateDocument(bodyRequest.CPF, bodyRequest.CNPJ);
         if (validacaoDocumento != null)
@@ -33,7 +33,7 @@ public class ClienteController : ControllerBase
             Telefone: bodyRequest.Telefone,
             Email: bodyRequest.Email);
 
-        var resultado = await _clienteService.CriarAsync(criarClienteDto);
+        var resultado = await _clienteService.CriarAsync(criarClienteDto, cancellationToken);
 
         if (!resultado.IsValid)
             return BadRequest(new { message = resultado.Message });
@@ -56,9 +56,9 @@ public class ClienteController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> ObterPorId([FromRoute] int id)
+    public async Task<IActionResult> ObterPorId([FromRoute] int id, CancellationToken cancellationToken)
     {
-        var resultado = await _clienteService.ObterPorIdAsync(id);
+        var resultado = await _clienteService.ObterPorIdAsync(id, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -67,12 +67,12 @@ public class ClienteController : ControllerBase
     }
 
     [HttpGet("cpf-cnpj/{cpfCnpj}")]
-    public async Task<IActionResult> ObterPorCpfCnpj([FromRoute] string cpfCnpj)
+    public async Task<IActionResult> ObterPorCpfCnpj([FromRoute] string cpfCnpj, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(cpfCnpj))
             return BadRequest(new { message = "CPF/CNPJ é obrigatório." });
 
-        var resultado = await _clienteService.ObterPorCpfCnpjAsync(cpfCnpj);
+        var resultado = await _clienteService.ObterPorCpfCnpjAsync(cpfCnpj, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -82,7 +82,7 @@ public class ClienteController : ControllerBase
 
     [Authorize(Roles = "Gerente")]
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Atualizar([FromRoute] int id, [FromBody] AtualizarClienteBodyRequest bodyRequest)
+    public async Task<IActionResult> Atualizar([FromRoute] int id, [FromBody] AtualizarClienteBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
         var validacaoDocumento = DocumentValidationHelper.ValidateDocument(bodyRequest.CPF, bodyRequest.CNPJ);
         if (validacaoDocumento != null)
@@ -95,7 +95,7 @@ public class ClienteController : ControllerBase
             Telefone: bodyRequest.Telefone,
             Email: bodyRequest.Email);
 
-        var resultado = await _clienteService.AtualizarAsync(id, atualizarClienteDto);
+        var resultado = await _clienteService.AtualizarAsync(id, atualizarClienteDto, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -105,9 +105,9 @@ public class ClienteController : ControllerBase
 
     [Authorize(Roles = "Gerente")]
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Desativar([FromRoute] int id)
+    public async Task<IActionResult> Desativar([FromRoute] int id, CancellationToken cancellationToken)
     {
-        var resultado = await _clienteService.DesativarAsync(id);
+        var resultado = await _clienteService.DesativarAsync(id, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
