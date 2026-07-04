@@ -23,7 +23,7 @@ public sealed class FuncionarioIntegracaoTests
     [Fact]
     public async Task Criar_DeveComitarFuncionarioESegurancaNaMesmaTransacao()
     {
-        await _factory.LimparBancoAsync();
+        await _factory.LimparBancoAsync(CpfValido);
 
         var body = new
         {
@@ -53,7 +53,7 @@ public sealed class FuncionarioIntegracaoTests
     [Fact]
     public async Task ObterPorCpf_ComTokenValido_DeveRetornarFuncionarioCriado()
     {
-        await _factory.LimparBancoAsync();
+        await _factory.LimparBancoAsync(CpfValido);
 
         var body = new
         {

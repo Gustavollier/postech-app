@@ -23,7 +23,7 @@ public sealed class ClienteIntegracaoTests
     [Fact]
     public async Task Criar_e_ObterPorCpfCnpj_DevePersistirEComitarCliente()
     {
-        await _factory.LimparBancoAsync();
+        await _factory.LimparBancoAsync(CpfValido);
         var token = IntegrationTestFactory.GerarToken("Gerente");
 
         var body = new

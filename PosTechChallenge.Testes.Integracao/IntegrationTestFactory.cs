@@ -51,15 +51,26 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>, IAs
         await Task.CompletedTask;
     }
 
-    /// <summary>Remove os dados das tabelas do slice, garantindo isolamento entre testes.</summary>
-    public async Task LimparBancoAsync()
+    /// <summary>
+    /// Remove apenas os dados criados pelos testes (identificados pelo CPF), garantindo
+    /// isolamento sem afetar os registros de seed referenciados por Veiculo/OrdemServico.
+    /// </summary>
+    public async Task LimparBancoAsync(string cpf)
     {
         await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
         // Ordem respeita a FK Seguranca -> Funcionario.
         await connection.ExecuteAsync(
-            "DELETE FROM Seguranca; DELETE FROM Funcionario; DELETE FROM Cliente;");
+            """
+            DELETE s FROM Seguranca s
+            INNER JOIN Funcionario f ON f.Id = s.FuncionarioId
+            WHERE f.CPF = @Cpf;
+
+            DELETE FROM Funcionario WHERE CPF = @Cpf;
+            DELETE FROM Cliente WHERE CPF = @Cpf;
+            """,
+            new { Cpf = cpf });
     }
 
     public async Task<T?> QuerySingleOrDefaultAsync<T>(string sql, object? param = null)
