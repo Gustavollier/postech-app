@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
+using PosTechChallenge.Aplicacao.Helpers;
 using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Aplicacao.Mappers;
+using PosTechChallenge.Dominio.Interfaces;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
 using PosTechChallenge.Dominio.Results;
@@ -12,17 +15,20 @@ public sealed class ClienteService : IClienteService
     private const string MensagemErroInterno = "Erro interno ao processar cliente.";
 
     private readonly IClienteRepositorio _clienteRepositorio;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ClienteService> _logger;
 
     public ClienteService(
         IClienteRepositorio clienteRepositorio,
+        IUnitOfWork unitOfWork,
         ILogger<ClienteService> logger)
     {
         _clienteRepositorio = clienteRepositorio;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task<Resultado> CriarAsync(CriarClienteDto clienteDto)
+    public async Task<Resultado> CriarAsync(CriarClienteDto clienteDto, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -38,26 +44,30 @@ public sealed class ClienteService : IClienteService
                 Ativo = true
             };
 
-            await _clienteRepositorio.CriarAsync(cliente);
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            await _clienteRepositorio.CriarAsync(cliente, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
+
             return Resultado.Sucesso("Cliente criado com sucesso.");
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackAsync(CancellationToken.None);
             _logger.LogError(ex, "Erro ao criar cliente.");
             return Resultado.Falha(MensagemErroInterno);
         }
     }
 
-    public async Task<Resultado<ClienteDto>> ObterPorIdAsync(int id)
+    public async Task<Resultado<ClienteDto>> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var cliente = await _clienteRepositorio.ObterPorIdAsync(id);
+            var cliente = await _clienteRepositorio.ObterPorIdAsync(id, cancellationToken);
 
             if (cliente == null)
                 return Resultado<ClienteDto>.Falha($"Cliente com ID {id} não encontrado.");
 
-            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
+            return Resultado<ClienteDto>.Sucesso(ClienteMappingHelper.MapEntityToDto(cliente));
         }
         catch (Exception ex)
         {
@@ -66,16 +76,16 @@ public sealed class ClienteService : IClienteService
         }
     }
 
-    public async Task<Resultado<ClienteDto>> ObterPorCpfCnpjAsync(string cpfCnpj)
+    public async Task<Resultado<ClienteDto>> ObterPorCpfCnpjAsync(string cpfCnpj, CancellationToken cancellationToken = default)
     {
         try
         {
-            var cliente = await _clienteRepositorio.ObterPorCpfCnpjAsync(cpfCnpj);
+            var cliente = await _clienteRepositorio.ObterPorCpfCnpjAsync(cpfCnpj, cancellationToken);
 
             if (cliente == null)
                 return Resultado<ClienteDto>.Falha($"Cliente com CPF/CNPJ {cpfCnpj} não encontrado.");
 
-            return Resultado<ClienteDto>.Sucesso(MapearParaClienteDto(cliente));
+            return Resultado<ClienteDto>.Sucesso(ClienteMappingHelper.MapEntityToDto(cliente));
         }
         catch (Exception ex)
         {
@@ -84,26 +94,27 @@ public sealed class ClienteService : IClienteService
         }
     }
 
-    public async Task<Resultado<ObterClienteDto>> ObterTodosAsync(int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<Resultado<ObterClienteDto>> ObterTodosAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
         try
         {
-            var clientes = await _clienteRepositorio.ObterTodosAsync(page, pageSize);
-            
-            int quantidadeClientes = await _clienteRepositorio.ObterQuantidadeClientesAsync();
+            // Materializa uma única vez para evitar múltiplas enumerações da sequência.
+            var clientes = (await _clienteRepositorio.ObterTodosAsync(page, pageSize, cancellationToken)).ToList();
 
-            if (quantidadeClientes is 0 || clientes == null || clientes.Any() is false)
+            int quantidadeClientes = await _clienteRepositorio.ObterQuantidadeClientesAsync(cancellationToken);
+
+            if (quantidadeClientes is 0 || clientes.Count == 0)
                 return Resultado<ObterClienteDto>.Falha("Nenhum cliente encontrado.");
 
-            IEnumerable<ClienteDto> dtos = clientes.Select(MapearParaClienteDto).ToList();
+            IEnumerable<ClienteDto> dtos = clientes.Select(ClienteMappingHelper.MapEntityToDto).ToList();
 
             var response = new ObterClienteDto
             {
                 Items = dtos,
                 Page = page,
                 PageSize = pageSize,
-                TotalItems = clientes.Count(),
-                TotalPages = quantidadeClientes / 10
+                TotalItems = clientes.Count,
+                TotalPages = PaginationHelper.CalculateTotalPages(quantidadeClientes, pageSize)
             };
 
             return Resultado<ObterClienteDto>.Sucesso(response);
@@ -115,24 +126,26 @@ public sealed class ClienteService : IClienteService
         }
     }
 
-    public async Task<Resultado> AtualizarAsync(int id, AtualizarClienteDto clienteDto)
+    public async Task<Resultado> AtualizarAsync(int id, AtualizarClienteDto clienteDto, CancellationToken cancellationToken = default)
     {
         try
         {
-            var clienteExistente = await _clienteRepositorio.ObterPorIdAsync(id);
+            var clienteExistente = await _clienteRepositorio.ObterPorIdAsync(id, cancellationToken);
 
             if (clienteExistente == null)
                 return Resultado.Falha($"Cliente com ID {id} não encontrado.");
 
             clienteExistente.NomeCompleto = clienteDto.NomeCompleto;
-            clienteExistente.CPF = string.IsNullOrWhiteSpace(clienteDto.CPF) ? null : clienteDto.CPF;
-            clienteExistente.CNPJ = string.IsNullOrWhiteSpace(clienteDto.CNPJ) ? null : clienteDto.CNPJ;
+            clienteExistente.CPF = clienteDto.CPF;
+            clienteExistente.CNPJ = clienteDto.CNPJ;
             clienteExistente.Telefone = clienteDto.Telefone;
             clienteExistente.Email = clienteDto.Email;
             clienteExistente.UpdatedAt = DateTime.UtcNow;
             clienteExistente.Ativo = true;
 
-            var atualizado = await _clienteRepositorio.AtualizarAsync(clienteExistente);
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            var atualizado = await _clienteRepositorio.AtualizarAsync(clienteExistente, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             return atualizado
                 ? Resultado.Sucesso("Cliente atualizado com sucesso.")
@@ -140,21 +153,24 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackAsync(CancellationToken.None);
             _logger.LogError(ex, "Erro ao atualizar cliente {ClienteId}.", id);
             return Resultado.Falha(MensagemErroInterno);
         }
     }
 
-    public async Task<Resultado> DesativarAsync(int id)
+    public async Task<Resultado> DesativarAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {
-            var clienteExistente = await _clienteRepositorio.ObterPorIdAsync(id);
+            var clienteExistente = await _clienteRepositorio.ObterPorIdAsync(id, cancellationToken);
 
             if (clienteExistente == null)
                 return Resultado.Falha($"Cliente com ID {id} não encontrado.");
 
-            var desativado = await _clienteRepositorio.DesativarAsync(id);
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            var desativado = await _clienteRepositorio.DesativarAsync(id, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             return desativado
                 ? Resultado.Sucesso("Cliente desativado com sucesso.")
@@ -162,24 +178,9 @@ public sealed class ClienteService : IClienteService
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackAsync(CancellationToken.None);
             _logger.LogError(ex, "Erro ao desativar cliente {ClienteId}.", id);
             return Resultado.Falha(MensagemErroInterno);
         }
-    }
-
-    private static ClienteDto MapearParaClienteDto(Cliente cliente)
-    {
-        return new ClienteDto
-        {
-            Id = cliente.Id,
-            CreatedAt = cliente.CreatedAt,
-            UpdatedAt = cliente.UpdatedAt,
-            CPF = cliente.CPF,
-            CNPJ = cliente.CNPJ,
-            NomeCompleto = cliente.NomeCompleto,
-            Telefone = cliente.Telefone,
-            Email = cliente.Email,
-            Ativo = cliente.Ativo
-        };
     }
 }

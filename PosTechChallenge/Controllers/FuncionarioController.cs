@@ -22,7 +22,7 @@ public class FuncionarioController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost]
-    public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest)
+    public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
         var validacaoCpf = ValidarCpf(bodyRequest.CPF);
         if (validacaoCpf != null)
@@ -38,7 +38,7 @@ public class FuncionarioController : ControllerBase
             ConfirmacaoSenha: bodyRequest.ConfirmacaoSenha
         );
 
-        var resultado = await _funcionarioService.CriarAsync(criarFuncionarioDto);
+        var resultado = await _funcionarioService.CriarAsync(criarFuncionarioDto, cancellationToken);
 
         if (!resultado.IsValid)
             return BadRequest(new { message = resultado.Message });
@@ -47,9 +47,9 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> ObterTodos()
+    public async Task<IActionResult> ObterTodos(CancellationToken cancellationToken)
     {
-        var resultado = await _funcionarioService.ObterTodosAsync();
+        var resultado = await _funcionarioService.ObterTodosAsync(cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -68,13 +68,13 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpGet("cpf")]
-    public async Task<IActionResult> ObterPorCpf([FromQuery] string cpf)
+    public async Task<IActionResult> ObterPorCpf([FromQuery] string cpf, CancellationToken cancellationToken)
     {
         var validacaoCpf = ValidarCpf(cpf);
         if (validacaoCpf != null)
             return BadRequest(new { message = validacaoCpf });
 
-        var resultado = await _funcionarioService.ObterPorCpfAsync(cpf);
+        var resultado = await _funcionarioService.ObterPorCpfAsync(cpf, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -93,12 +93,12 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpGet("nome")]
-    public async Task<IActionResult> ObterPorNome([FromQuery] string nome)
+    public async Task<IActionResult> ObterPorNome([FromQuery] string nome, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(nome))
             return BadRequest(new { message = "Nome é obrigatório." });
 
-        var resultado = await _funcionarioService.ObterPorNomeAsync(nome);
+        var resultado = await _funcionarioService.ObterPorNomeAsync(nome, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -118,7 +118,7 @@ public class FuncionarioController : ControllerBase
 
     [Authorize(Roles = "Gerente")]
     [HttpPut]
-    public async Task<IActionResult> Atualizar([FromQuery] string cpf, [FromBody] AtualizarFuncionarioBodyRequest bodyRequest)
+    public async Task<IActionResult> Atualizar([FromQuery] string cpf, [FromBody] AtualizarFuncionarioBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
         var validacaoCpf = ValidarCpf(cpf);
         if (validacaoCpf != null)
@@ -132,7 +132,7 @@ public class FuncionarioController : ControllerBase
             ValorHora: bodyRequest.ValorHora
         );
 
-        var resultado = await _funcionarioService.AtualizarAsync(cpf, atualizarFuncionarioDto);
+        var resultado = await _funcionarioService.AtualizarAsync(cpf, atualizarFuncionarioDto, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
@@ -142,13 +142,13 @@ public class FuncionarioController : ControllerBase
 
     [Authorize(Roles = "Gerente")]
     [HttpDelete]
-    public async Task<IActionResult> Deletar([FromQuery] string cpf)
+    public async Task<IActionResult> Deletar([FromQuery] string cpf, CancellationToken cancellationToken)
     {
         var validacaoCpf = ValidarCpf(cpf);
         if (validacaoCpf != null)
             return BadRequest(new { message = validacaoCpf });
 
-        var resultado = await _funcionarioService.DeletarAsync(cpf);
+        var resultado = await _funcionarioService.DeletarAsync(cpf, cancellationToken);
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });

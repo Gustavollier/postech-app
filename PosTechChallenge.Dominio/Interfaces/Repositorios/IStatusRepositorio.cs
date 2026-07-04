@@ -4,10 +4,10 @@ namespace PosTechChallenge.Dominio.Interfaces.Repositorios
 {
     public interface IStatusRepositorio
     {
-        Task<IEnumerable<Status>> ObterTodosAsync();
-        Task<IEnumerable<Status>> ObterPorOrdemServicoIdAsync(int ordemServicoId);
-        Task<Status?> ObterPorIdAsync(int id);
-        Task<int> CriarAsync(Status status);
-        Task<bool> AtualizarAsync(Status status);
+        Task<IEnumerable<Status>> ObterTodosAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<Status>> ObterPorOrdemServicoIdAsync(int ordemServicoId, CancellationToken cancellationToken = default);
+        Task<Status?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<int> CriarAsync(Status status, CancellationToken cancellationToken = default);
+        Task<bool> AtualizarAsync(Status status, CancellationToken cancellationToken = default);
     }
 }

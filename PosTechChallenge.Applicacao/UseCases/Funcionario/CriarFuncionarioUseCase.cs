@@ -1,5 +1,6 @@
 using PosTechChallenge.Aplicacao.Dto.Funcionario;
 using PosTechChallenge.Aplicacao.Utils;
+using PosTechChallenge.Dominio.Interfaces;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Results;
 using PosTechChallenge.Dominio.ValueObjects;
@@ -10,19 +11,20 @@ public class CriarFuncionarioUseCase
 {
     private readonly IFuncionarioRepositorio _funcionarioRepositorio;
     private readonly ISegurancaRepositorio _segurancaRepositorio;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CriarFuncionarioUseCase(
         IFuncionarioRepositorio funcionarioRepositorio,
-        ISegurancaRepositorio segurancaRepositorio)
+        ISegurancaRepositorio segurancaRepositorio,
+        IUnitOfWork unitOfWork)
     {
         _funcionarioRepositorio = funcionarioRepositorio;
         _segurancaRepositorio = segurancaRepositorio;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto)
+    public async Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto, CancellationToken cancellationToken = default)
     {
-        var funcionarioId = 0;
-
         try
         {
             SenhaValueObject senhaValueObject = new(funcionarioDto.Senha);
@@ -39,18 +41,21 @@ public class CriarFuncionarioUseCase
                 ValorHora = funcionarioDto.ValorHora
             };
 
-            funcionarioId = await _funcionarioRepositorio.CriarAsync(funcionario);
+            // Funcionário e senha gravados na mesma transação.
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+            var funcionarioId = await _funcionarioRepositorio.CriarAsync(funcionario, cancellationToken);
             var senhaHash = PasswordHasher.HashPassword(senhaValueObject.Valor);
 
-            await _segurancaRepositorio.SalvarSenhaAsync(funcionarioId, senhaHash);
+            await _segurancaRepositorio.SalvarSenhaAsync(funcionarioId, senhaHash, cancellationToken);
+
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             return Resultado.Sucesso("Funcionário criado com sucesso.");
         }
         catch (Exception)
         {
-            if (funcionarioId > 0)
-                await _funcionarioRepositorio.DeletarAsync(funcionarioId);
-
+            await _unitOfWork.RollbackAsync(CancellationToken.None);
             return Resultado.Falha("Erro ao criar funcionário.");
         }
     }

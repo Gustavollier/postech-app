@@ -1,81 +1,107 @@
-﻿using Dapper;
-using PosTechChallenge.Dominio.Model;
-using PosTechChallenge.Infraestrutura.Querys;
+using Dapper;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
+using PosTechChallenge.Dominio.Model;
+using PosTechChallenge.Infraestrutura.Data;
+using PosTechChallenge.Infraestrutura.Querys;
 
 namespace PosTechChallenge.Infraestrutura.Repositorios
 {
-    public class VeiculosRepositorio : IVeiculosRepositorio
+    public sealed class VeiculosRepositorio : IVeiculosRepositorio
     {
-        private readonly IDbConnectionFactory _connectionFactory;
+        private readonly IDbSession _session;
 
-        public VeiculosRepositorio(IDbConnectionFactory connectionFactory)
+        public VeiculosRepositorio(IDbSession session)
         {
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
         }
 
-        public async Task<IEnumerable<Veiculo>> ObterTodosAsync()
+        public async Task<IEnumerable<Veiculo>> ObterTodosAsync(CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.OBTER_TODOS,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            return await connection.QueryAsync<Veiculo>(VeiculoQuerys.OBTER_TODOS);
+            return await connection.QueryAsync<Veiculo>(command).ConfigureAwait(false);
         }
 
-        public async Task<Veiculo?> ObterPorIdAsync(int id)
+        public async Task<Veiculo?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.OBTER_POR_ID,
+                new { Id = id },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            return await connection.QueryFirstOrDefaultAsync<Veiculo>(VeiculoQuerys.OBTER_POR_ID, new { Id = id});
+            return await connection.QueryFirstOrDefaultAsync<Veiculo>(command).ConfigureAwait(false);
         }
 
-        public async Task<Veiculo?> ObterPorPlacaAsync(string placa)
+        public async Task<Veiculo?> ObterPorPlacaAsync(string placa, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.OBTER_POR_PLACA,
+                new { Placa = placa },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            return await connection.QueryFirstOrDefaultAsync<Veiculo>(VeiculoQuerys.OBTER_POR_PLACA, new { Placa = placa });
+            return await connection.QueryFirstOrDefaultAsync<Veiculo>(command).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId)
+        public async Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.OBTER_POR_CLIENTE_ID,
+                new { ClienteId = clienteId },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            return await connection.QueryAsync<Veiculo>(VeiculoQuerys.OBTER_POR_CLIENTE_ID, new { ClienteId = clienteId });
+            return await connection.QueryAsync<Veiculo>(command).ConfigureAwait(false);
         }
 
-        public async Task<int> CriarAsync(Veiculo veiculo)
+        public async Task<int> CriarAsync(Veiculo veiculo, CancellationToken cancellationToken = default)
         {
-            if (veiculo == null)
-                throw new ArgumentNullException(nameof(veiculo));
+            ArgumentNullException.ThrowIfNull(veiculo);
 
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.CRIAR,
+                veiculo,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            return await connection.ExecuteScalarAsync<int>(VeiculoQuerys.CRIAR, veiculo);
+            return await connection.QuerySingleAsync<int>(command).ConfigureAwait(false);
         }
 
-        public async Task<bool> AtualizarAsync(Veiculo veiculo)
+        public async Task<bool> AtualizarAsync(Veiculo veiculo, CancellationToken cancellationToken = default)
         {
-            if (veiculo == null)
-                throw new ArgumentNullException(nameof(veiculo));
+            ArgumentNullException.ThrowIfNull(veiculo);
 
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.ATUALIZAR,
+                veiculo,
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            var result = await connection.ExecuteAsync(VeiculoQuerys.ATUALIZAR, veiculo);
-            return result > 0;
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
 
-        public async Task<bool> DeletarAsync(int id)
+        public async Task<bool> DeletarAsync(int id, CancellationToken cancellationToken = default)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            connection.Open();
+            var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
+            var command = new CommandDefinition(
+                VeiculoQuerys.DELETAR,
+                new { Id = id },
+                transaction: _session.Transaction,
+                cancellationToken: cancellationToken);
 
-            var result = await connection.ExecuteAsync(VeiculoQuerys.DELETAR, new { Id = id });
-            return result > 0;
+            var linhasAfetadas = await connection.ExecuteAsync(command).ConfigureAwait(false);
+            return linhasAfetadas > 0;
         }
     }
 }

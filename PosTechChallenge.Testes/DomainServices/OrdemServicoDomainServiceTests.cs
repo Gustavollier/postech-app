@@ -49,7 +49,7 @@ public class OrdemServicoDomainServiceTests
     public async Task ValidarCriacaoAsync_ClienteNaoEncontrado_DeveRetornarFalha()
     {
         var os = CriarOrdemServico();
-        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdCliente)).ReturnsAsync((Cliente?)null);
+        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdCliente, It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -62,7 +62,7 @@ public class OrdemServicoDomainServiceTests
     {
         var os = CriarOrdemServico();
         var cliente = new Cliente { Id = os.IdCliente, Ativo = false };
-        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdCliente)).ReturnsAsync(cliente);
+        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdCliente, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -75,7 +75,7 @@ public class OrdemServicoDomainServiceTests
     {
         var os = CriarOrdemServico();
         ConfigurarClienteAtivo(os.IdCliente);
-        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo)).ReturnsAsync((Veiculo?)null);
+        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo, It.IsAny<CancellationToken>())).ReturnsAsync((Veiculo?)null);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -89,7 +89,7 @@ public class OrdemServicoDomainServiceTests
         var os = CriarOrdemServico();
         ConfigurarClienteAtivo(os.IdCliente);
         var veiculo = new Veiculo { Id = os.IdVeiculo, ClienteId = os.IdCliente, Ativo = false };
-        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo)).ReturnsAsync(veiculo);
+        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo, It.IsAny<CancellationToken>())).ReturnsAsync(veiculo);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -103,7 +103,7 @@ public class OrdemServicoDomainServiceTests
         var os = CriarOrdemServico();
         ConfigurarClienteAtivo(os.IdCliente);
         var veiculo = new Veiculo { Id = os.IdVeiculo, ClienteId = 999, Ativo = true };
-        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo)).ReturnsAsync(veiculo);
+        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdVeiculo, It.IsAny<CancellationToken>())).ReturnsAsync(veiculo);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -117,7 +117,7 @@ public class OrdemServicoDomainServiceTests
         var os = CriarOrdemServico();
         ConfigurarClienteAtivo(os.IdCliente);
         ConfigurarVeiculoAtivo(os.IdVeiculo, os.IdCliente);
-        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdFuncionario)).ReturnsAsync((Funcionario?)null);
+        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(os.IdFuncionario, It.IsAny<CancellationToken>())).ReturnsAsync((Funcionario?)null);
 
         var resultado = await _service.ValidarCriacaoAsync(os);
 
@@ -192,7 +192,7 @@ public class OrdemServicoDomainServiceTests
     public async Task ValidarTransicaoStatusAsync_FuncionarioNaoEncontrado_DeveRetornarFalha()
     {
         var os = CriarOrdemServico(status: EStatusOrdemServico.Recebida);
-        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(It.IsAny<int>())).ReturnsAsync((Funcionario?)null);
+        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync((Funcionario?)null);
 
         var resultado = await _service.ValidarTransicaoStatusAsync(os, EStatusOrdemServico.EmDiagnostico, 1);
 
@@ -291,7 +291,7 @@ public class OrdemServicoDomainServiceTests
             .ReturnsAsync(new List<ItemOS> { item });
 
         var peca = new Pecas { Id = 10, Ativo = true, QuantidadeEstoque = 2 };
-        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(10)).ReturnsAsync(peca);
+        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(peca);
 
         var resultado = await _service.ValidarTransicaoStatusAsync(os, EStatusOrdemServico.Finalizada, 1);
 
@@ -323,18 +323,18 @@ public class OrdemServicoDomainServiceTests
     private void ConfigurarClienteAtivo(int idCliente)
     {
         var cliente = new Cliente { Id = idCliente, Ativo = true };
-        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(idCliente)).ReturnsAsync(cliente);
+        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(idCliente, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
     }
 
     private void ConfigurarVeiculoAtivo(int idVeiculo, int idCliente)
     {
         var veiculo = new Veiculo { Id = idVeiculo, ClienteId = idCliente, Ativo = true };
-        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(idVeiculo)).ReturnsAsync(veiculo);
+        _veiculosRepositorioMock.Setup(r => r.ObterPorIdAsync(idVeiculo, It.IsAny<CancellationToken>())).ReturnsAsync(veiculo);
     }
 
     private void ConfigurarFuncionario(int idFuncionario)
     {
         var funcionario = new Funcionario { Id = idFuncionario };
-        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(idFuncionario)).ReturnsAsync(funcionario);
+        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(idFuncionario, It.IsAny<CancellationToken>())).ReturnsAsync(funcionario);
     }
 }

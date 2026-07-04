@@ -32,11 +32,15 @@ public sealed class RequestExecutionTimingMiddleware
             return;
         }
 
-        var endpoint = context.GetEndpoint();
-        var routePattern = endpoint as RouteEndpoint;
-        var route = routePattern?.RoutePattern.RawText ?? endpoint?.DisplayName;
-        var method = context.Request.Method;
-        var key = string.IsNullOrWhiteSpace(route) ? $"{method} {context.Request.Path}" : $"{method} {route}";
+        // Usa o template da rota como chave. Requisições sem rota casada (404, sondagens)
+        // são ignoradas para não gerar chaves distintas em excesso no monitor.
+        var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+        if (string.IsNullOrWhiteSpace(route))
+        {
+            return;
+        }
+
+        var key = $"{context.Request.Method} {route}";
 
         monitor.Record(key, stopwatch.Elapsed);
     }

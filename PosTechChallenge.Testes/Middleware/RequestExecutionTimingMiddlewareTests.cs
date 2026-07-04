@@ -35,6 +35,23 @@ public class RequestExecutionTimingMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_RotaNaoMapeada_NaoDeveRegistrar()
+    {
+        // Sem endpoint roteado (ex.: 404, sondagens). Registrar o Path bruto geraria
+        // chaves de cardinalidade ilimitada no monitor singleton — não deve registrar.
+        var context = new DefaultHttpContext();
+        context.Request.Method = "GET";
+        context.Request.Path = "/rota/inexistente/12345";
+
+        var monitor = new Mock<IExecutionTimeMonitor>();
+        var middleware = new RequestExecutionTimingMiddleware(_ => Task.CompletedTask);
+
+        await middleware.InvokeAsync(context, monitor.Object);
+
+        monitor.Verify(m => m.Record(It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Never);
+    }
+
+    [Fact]
     public async Task InvokeAsync_RotaDeMonitoramento_NaoDeveRegistrarTempo()
     {
         var context = new DefaultHttpContext();

@@ -1,18 +1,15 @@
-﻿using PosTechChallenge.Dominio.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using PosTechChallenge.Dominio.Model;
 
 namespace PosTechChallenge.Dominio.Interfaces.Repositorios
 {
     public interface IVeiculosRepositorio
     {
-        Task<IEnumerable<Veiculo>> ObterTodosAsync();
-        Task<Veiculo?> ObterPorIdAsync(int id);
-        Task<Veiculo?> ObterPorPlacaAsync(string placa);
-        Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId);
-        Task<int> CriarAsync(Veiculo veiculo);
-        Task<bool> AtualizarAsync(Veiculo veiculo);
-        Task<bool> DeletarAsync(int id);
+        Task<IEnumerable<Veiculo>> ObterTodosAsync(CancellationToken cancellationToken = default);
+        Task<Veiculo?> ObterPorIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<Veiculo?> ObterPorPlacaAsync(string placa, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Veiculo>> ObterPorClienteIdAsync(int clienteId, CancellationToken cancellationToken = default);
+        Task<int> CriarAsync(Veiculo veiculo, CancellationToken cancellationToken = default);
+        Task<bool> AtualizarAsync(Veiculo veiculo, CancellationToken cancellationToken = default);
+        Task<bool> DeletarAsync(int id, CancellationToken cancellationToken = default);
     }
 }

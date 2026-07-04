@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
 using PosTechChallenge.Aplicacao.Services;
+using PosTechChallenge.Dominio.Interfaces;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
 using Xunit;
@@ -11,20 +12,21 @@ namespace PosTechChallenge.Testes.Application;
 public class ClienteServiceTests
 {
     private readonly Mock<IClienteRepositorio> _repositorio = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly ClienteService _service;
 
     public ClienteServiceTests()
     {
-        _service = new ClienteService(_repositorio.Object, NullLogger<ClienteService>.Instance);
+        _service = new ClienteService(_repositorio.Object, _unitOfWork.Object, NullLogger<ClienteService>.Instance);
     }
 
     [Fact]
-    public async Task CriarAsync_CpfVazio_DevePersistirCpfComoNulo()
+    public async Task CriarAsync_CpfVazio_DevePersistirCpfComoNuloEComitar()
     {
         Cliente? clienteCriado = null;
         _repositorio
-            .Setup(r => r.CriarAsync(It.IsAny<Cliente>()))
-            .Callback<Cliente>(c => clienteCriado = c)
+            .Setup(r => r.CriarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Callback<Cliente, CancellationToken>((c, _) => clienteCriado = c)
             .ReturnsAsync(1);
 
         var resultado = await _service.CriarAsync(new CriarClienteDto(
@@ -38,12 +40,32 @@ public class ClienteServiceTests
         Assert.Null(clienteCriado?.CPF);
         Assert.Equal("11222333000181", clienteCriado?.CNPJ);
         Assert.True(clienteCriado?.Ativo);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CriarAsync_QuandoRepositorioFalha_DeveFazerRollback()
+    {
+        _repositorio
+            .Setup(r => r.CriarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Falha simulada."));
+
+        var resultado = await _service.CriarAsync(new CriarClienteDto(
+            NomeCompleto: "Cliente Teste",
+            CPF: "52998224725",
+            CNPJ: null,
+            Telefone: "11999990000",
+            Email: "cliente@email.com"));
+
+        Assert.False(resultado.IsValid);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task ObterPorIdAsync_Encontrado_DeveMapearClienteDto()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Cliente());
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Cliente());
 
         var resultado = await _service.ObterPorIdAsync(1);
 
@@ -54,8 +76,8 @@ public class ClienteServiceTests
     [Fact]
     public async Task ObterTodosAsync_SemClientes_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterTodosAsync(1, 10)).ReturnsAsync(Array.Empty<Cliente>());
-        _repositorio.Setup(r => r.ObterQuantidadeClientesAsync()).ReturnsAsync(0);
+        _repositorio.Setup(r => r.ObterTodosAsync(1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Cliente>());
+        _repositorio.Setup(r => r.ObterQuantidadeClientesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(0);
 
         var resultado = await _service.ObterTodosAsync(1, 10, CancellationToken.None);
 
@@ -65,8 +87,8 @@ public class ClienteServiceTests
     [Fact]
     public async Task ObterTodosAsync_ComClientes_DeveRetornarPaginacao()
     {
-        _repositorio.Setup(r => r.ObterTodosAsync(1, 10)).ReturnsAsync(new[] { Cliente() });
-        _repositorio.Setup(r => r.ObterQuantidadeClientesAsync()).ReturnsAsync(20);
+        _repositorio.Setup(r => r.ObterTodosAsync(1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { Cliente() });
+        _repositorio.Setup(r => r.ObterQuantidadeClientesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(20);
 
         var resultado = await _service.ObterTodosAsync(1, 10, CancellationToken.None);
 
@@ -80,22 +102,24 @@ public class ClienteServiceTests
     [Fact]
     public async Task AtualizarAsync_ClienteNaoEncontrado_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(99)).ReturnsAsync((Cliente?)null);
+        _repositorio.Setup(r => r.ObterPorIdAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
 
         var resultado = await _service.AtualizarAsync(99, AtualizarDto());
 
         Assert.False(resultado.IsValid);
+        _unitOfWork.Verify(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DesativarAsync_RepositorioDesativa_DeveRetornarSucesso()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Cliente());
-        _repositorio.Setup(r => r.DesativarAsync(1)).ReturnsAsync(true);
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Cliente());
+        _repositorio.Setup(r => r.DesativarAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         var resultado = await _service.DesativarAsync(1);
 
         Assert.True(resultado.IsValid);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static AtualizarClienteDto AtualizarDto() => new(

@@ -30,7 +30,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Criar_ClienteComCpfValido_DeveRetornar201()
     {
         _factory.ClienteServiceMock
-            .Setup(s => s.CriarAsync(It.IsAny<CriarClienteDto>()))
+            .Setup(s => s.CriarAsync(It.IsAny<CriarClienteDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Cliente criado com sucesso."));
 
         var body = new { NomeCompleto = "João da Silva", CPF = CpfValido };
@@ -79,7 +79,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Criar_QuandoServicoRetornaFalha_DeveRetornar400()
     {
         _factory.ClienteServiceMock
-            .Setup(s => s.CriarAsync(It.IsAny<CriarClienteDto>()))
+            .Setup(s => s.CriarAsync(It.IsAny<CriarClienteDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Falha("CPF já cadastrado."));
 
         var body = new { NomeCompleto = "João da Silva", CPF = CpfValido };
@@ -136,7 +136,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         _factory.ClienteServiceMock
-            .Setup(s => s.ObterPorIdAsync(1))
+            .Setup(s => s.ObterPorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado<ClienteDto>.Sucesso(clienteDto));
 
         var response = await _client.GetAsync("/api/v1/clientes/1");
@@ -148,7 +148,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task ObterPorId_ClienteInexistente_DeveRetornar404()
     {
         _factory.ClienteServiceMock
-            .Setup(s => s.ObterPorIdAsync(99))
+            .Setup(s => s.ObterPorIdAsync(99, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado<ClienteDto>.Falha("Cliente não encontrado."));
 
         var response = await _client.GetAsync("/api/v1/clientes/99");
@@ -172,7 +172,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         _factory.ClienteServiceMock
-            .Setup(s => s.ObterPorCpfCnpjAsync(CpfValido))
+            .Setup(s => s.ObterPorCpfCnpjAsync(CpfValido, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado<ClienteDto>.Sucesso(clienteDto));
 
         var response = await _client.GetAsync($"/api/v1/clientes/cpf-cnpj/{CpfValido}");
@@ -213,7 +213,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Atualizar_TokenGerente_ClienteExistente_DeveRetornar200()
     {
         _factory.ClienteServiceMock
-            .Setup(s => s.AtualizarAsync(It.IsAny<int>(), It.IsAny<AtualizarClienteDto>()))
+            .Setup(s => s.AtualizarAsync(It.IsAny<int>(), It.IsAny<AtualizarClienteDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Cliente atualizado com sucesso."));
 
         var token = CustomWebApplicationFactory.GerarToken(cargo: "Gerente");
@@ -244,7 +244,7 @@ public class ClienteControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Desativar_TokenGerente_ClienteExistente_DeveRetornar200()
     {
         _factory.ClienteServiceMock
-            .Setup(s => s.DesativarAsync(1))
+            .Setup(s => s.DesativarAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Cliente desativado com sucesso."));
 
         var token = CustomWebApplicationFactory.GerarToken(cargo: "Gerente");

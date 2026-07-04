@@ -16,6 +16,10 @@ public sealed class LoginRateLimitingMiddleware
     private readonly ConcurrentDictionary<string, IpRateLimitState> _ipRequests = new();
     private readonly ConcurrentDictionary<string, LoginFailureState> _cpfFailures = new();
 
+    // Como o middleware é singleton, os dicionários vivem por toda a aplicação.
+    // Guardamos o instante da última limpeza para expurgar entradas expiradas periodicamente.
+    private long _lastCleanupTicks;
+
     public LoginRateLimitingMiddleware(
         RequestDelegate next,
         ILogger<LoginRateLimitingMiddleware> logger,
@@ -36,6 +40,8 @@ public sealed class LoginRateLimitingMiddleware
 
         var now = _timeProvider.GetUtcNow();
         var ip = GetClientIp(context);
+
+        RemoverEntradasExpiradas(now);
 
         if (IsIpRateLimited(ip, now))
         {
@@ -108,7 +114,7 @@ public sealed class LoginRateLimitingMiddleware
     {
         var state = _cpfFailures.AddOrUpdate(
             cpf,
-            _ => new LoginFailureState(1, null),
+            _ => new LoginFailureState(1, null, now),
             (_, current) =>
             {
                 var attempts = current.FailedAttempts + 1;
@@ -116,11 +122,40 @@ public sealed class LoginRateLimitingMiddleware
                     ? now.Add(LockoutDuration)
                     : current.LockedUntil;
 
-                return new LoginFailureState(attempts, lockedUntil);
+                return new LoginFailureState(attempts, lockedUntil, now);
             });
 
         if (state.LockedUntil is not null)
             _logger.LogWarning("CPF {Cpf} bloqueado ate {LockedUntil}.", cpf, state.LockedUntil);
+    }
+
+    /// <summary>
+    /// Remove entradas já expiradas dos dicionários, no máximo uma vez por janela.
+    /// </summary>
+    private void RemoverEntradasExpiradas(DateTimeOffset now)
+    {
+        var lastTicks = Interlocked.Read(ref _lastCleanupTicks);
+        if (now.UtcTicks - lastTicks < RequestWindow.Ticks)
+            return;
+
+        // Apenas uma execução concorrente faz a varredura por janela.
+        if (Interlocked.CompareExchange(ref _lastCleanupTicks, now.UtcTicks, lastTicks) != lastTicks)
+            return;
+
+        foreach (var (ip, state) in _ipRequests)
+        {
+            if (now - state.WindowStart >= RequestWindow)
+                _ipRequests.TryRemove(ip, out _);
+        }
+
+        foreach (var (cpf, state) in _cpfFailures)
+        {
+            var bloqueioExpirado = state.LockedUntil is { } until && until <= now;
+            var falhaAntiga = state.LockedUntil is null && now - state.LastFailure >= LockoutDuration;
+
+            if (bloqueioExpirado || falhaAntiga)
+                _cpfFailures.TryRemove(cpf, out _);
+        }
     }
 
     private static string GetClientIp(HttpContext context)
@@ -158,5 +193,5 @@ public sealed class LoginRateLimitingMiddleware
 
     private sealed record IpRateLimitState(DateTimeOffset WindowStart, int Count);
 
-    private sealed record LoginFailureState(int FailedAttempts, DateTimeOffset? LockedUntil);
+    private sealed record LoginFailureState(int FailedAttempts, DateTimeOffset? LockedUntil, DateTimeOffset LastFailure);
 }

@@ -22,8 +22,8 @@ public class VeiculoServiceTests
     {
         Veiculo? veiculoCriado = null;
         _repositorio
-            .Setup(r => r.CriarAsync(It.IsAny<Veiculo>()))
-            .Callback<Veiculo>(v => veiculoCriado = v)
+            .Setup(r => r.CriarAsync(It.IsAny<Veiculo>(), It.IsAny<CancellationToken>()))
+            .Callback<Veiculo, CancellationToken>((v, _) => veiculoCriado = v)
             .ReturnsAsync(1);
 
         var resultado = await _service.CriarAsync(CriarDto(placa: "abc1d23"));
@@ -36,7 +36,7 @@ public class VeiculoServiceTests
     [Fact]
     public async Task ObterPorIdAsync_Encontrado_DeveMapearDto()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Veiculo());
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Veiculo());
 
         var resultado = await _service.ObterPorIdAsync(1);
 
@@ -48,7 +48,7 @@ public class VeiculoServiceTests
     [Fact]
     public async Task ObterPorIdAsync_NaoEncontrado_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(99)).ReturnsAsync((Veiculo?)null);
+        _repositorio.Setup(r => r.ObterPorIdAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync((Veiculo?)null);
 
         var resultado = await _service.ObterPorIdAsync(99);
 
@@ -60,7 +60,7 @@ public class VeiculoServiceTests
     public async Task ObterPorClienteIdAsync_SemVeiculos_DeveRetornarFalha()
     {
         _repositorio
-            .Setup(r => r.ObterPorClienteIdAsync(10))
+            .Setup(r => r.ObterPorClienteIdAsync(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<Veiculo>());
 
         var resultado = await _service.ObterPorClienteIdAsync(10);
@@ -71,8 +71,8 @@ public class VeiculoServiceTests
     [Fact]
     public async Task AtualizarAsync_EncontradoERepositorioAtualiza_DeveRetornarSucesso()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Veiculo());
-        _repositorio.Setup(r => r.AtualizarAsync(It.IsAny<Veiculo>())).ReturnsAsync(true);
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Veiculo());
+        _repositorio.Setup(r => r.AtualizarAsync(It.IsAny<Veiculo>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         var resultado = await _service.AtualizarAsync(1, AtualizarDto());
 
@@ -82,8 +82,8 @@ public class VeiculoServiceTests
     [Fact]
     public async Task AtualizarAsync_RepositorioNaoAtualiza_DeveRetornarFalha()
     {
-        _repositorio.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(Veiculo());
-        _repositorio.Setup(r => r.AtualizarAsync(It.IsAny<Veiculo>())).ReturnsAsync(false);
+        _repositorio.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(Veiculo());
+        _repositorio.Setup(r => r.AtualizarAsync(It.IsAny<Veiculo>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         var resultado = await _service.AtualizarAsync(1, AtualizarDto());
 

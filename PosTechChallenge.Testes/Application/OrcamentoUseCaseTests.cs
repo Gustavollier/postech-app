@@ -21,7 +21,7 @@ public sealed class OrcamentoUseCaseTests
     public async Task ObterPorOrdemServicoIdAsync_OrcamentoExistente_DeveRetornarOrcamento()
     {
         _orcamentoRepositorioMock
-            .Setup(r => r.ObterPorOrdemServicoIdAsync(1))
+            .Setup(r => r.ObterPorOrdemServicoIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CriarOrcamento(EStatusOrcamento.Pendente));
 
         var useCase = new ObterOrcamentoUseCase(_orcamentoRepositorioMock.Object);
@@ -40,7 +40,7 @@ public sealed class OrcamentoUseCaseTests
     public async Task ObterPorOrdemServicoIdAsync_OrcamentoAusente_DeveRetornarFalha()
     {
         _orcamentoRepositorioMock
-            .Setup(r => r.ObterPorOrdemServicoIdAsync(99))
+            .Setup(r => r.ObterPorOrdemServicoIdAsync(99, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Orcamento?)null);
 
         var useCase = new ObterOrcamentoUseCase(_orcamentoRepositorioMock.Object);
@@ -56,16 +56,16 @@ public sealed class OrcamentoUseCaseTests
     public async Task CalcularAsync_ComItens_DeveCriarOrcamentoComValoresCalculados()
     {
         _ordemServicoRepositorioMock
-            .Setup(r => r.ObterPorIdAsync(1))
+            .Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CriarOS(EStatusOrdemServico.EmDiagnostico));
         _itemsRepositorioMock
-            .Setup(r => r.ObterPorOrdemServicoIdAsync(1))
+            .Setup(r => r.ObterPorOrdemServicoIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync([new ItemOS { Id = 1, IdOS = 1, QuantidadeItem = 2 }]);
         _orcamentoRepositorioMock
-            .Setup(r => r.CalcularValoresAsync(1))
+            .Setup(r => r.CalcularValoresAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new OrcamentoValores { ValorMaoDeObra = 240m, ValorPecas = 79.80m, ValorTotal = 319.80m });
         _orcamentoRepositorioMock
-            .Setup(r => r.CriarAsync(It.IsAny<Orcamento>()))
+            .Setup(r => r.CriarAsync(It.IsAny<Orcamento>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(10);
 
         var useCase = CriarCalcularUseCase();
@@ -85,16 +85,16 @@ public sealed class OrcamentoUseCaseTests
         var os = CriarOS(EStatusOrdemServico.Recebida);
         var historico = new List<EStatusOrdemServico>();
 
-        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(os);
-        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>())).ReturnsAsync(true);
-        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(new Cliente { Id = 1, Email = "cliente@teste.com" });
-        _itemsRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1)).ReturnsAsync([new ItemOS { Id = 1, IdOS = 1, QuantidadeItem = 1 }]);
-        _orcamentoRepositorioMock.Setup(r => r.CalcularValoresAsync(1)).ReturnsAsync(new OrcamentoValores { ValorMaoDeObra = 100m, ValorPecas = 50m, ValorTotal = 150m });
-        _orcamentoRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Orcamento>())).ReturnsAsync(1);
-        _emailOutboxRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<EmailOutbox>())).ReturnsAsync(1);
+        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(os);
+        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _clienteRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(new Cliente { Id = 1, Email = "cliente@teste.com" });
+        _itemsRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync([new ItemOS { Id = 1, IdOS = 1, QuantidadeItem = 1 }]);
+        _orcamentoRepositorioMock.Setup(r => r.CalcularValoresAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(new OrcamentoValores { ValorMaoDeObra = 100m, ValorPecas = 50m, ValorTotal = 150m });
+        _orcamentoRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Orcamento>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _emailOutboxRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<EmailOutbox>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _statusRepositorioMock
-            .Setup(r => r.CriarAsync(It.IsAny<Status>()))
-            .Callback<Status>(status => historico.Add(status.StatusAtual))
+            .Setup(r => r.CriarAsync(It.IsAny<Status>(), It.IsAny<CancellationToken>()))
+            .Callback<Status, CancellationToken>((status, _) => historico.Add(status.StatusAtual))
             .ReturnsAsync(1);
 
         var useCase = new EnviarOrcamentoUseCase(
@@ -109,7 +109,7 @@ public sealed class OrcamentoUseCaseTests
         Assert.True(resultado.IsValid);
         Assert.Equal(EStatusOrdemServico.AguardandoAprovacao, os.Status);
         Assert.Equal([EStatusOrdemServico.EmDiagnostico, EStatusOrdemServico.AguardandoAprovacao], historico);
-        _emailOutboxRepositorioMock.Verify(r => r.CriarAsync(It.Is<EmailOutbox>(e => e.Destinatario == "cliente@teste.com")), Times.Once);
+        _emailOutboxRepositorioMock.Verify(r => r.CriarAsync(It.Is<EmailOutbox>(e => e.Destinatario == "cliente@teste.com"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -118,11 +118,11 @@ public sealed class OrcamentoUseCaseTests
         var os = CriarOS(EStatusOrdemServico.AguardandoAprovacao);
         var orcamento = CriarOrcamento(EStatusOrcamento.Pendente);
 
-        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(os);
-        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>())).ReturnsAsync(true);
-        _orcamentoRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1)).ReturnsAsync(orcamento);
-        _orcamentoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Orcamento>())).ReturnsAsync(true);
-        _statusRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Status>())).ReturnsAsync(1);
+        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(os);
+        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _orcamentoRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(orcamento);
+        _orcamentoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Orcamento>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _statusRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Status>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         var useCase = new ResponderOrcamentoUseCase(
             _ordemServicoRepositorioMock.Object,
@@ -142,11 +142,11 @@ public sealed class OrcamentoUseCaseTests
         var os = CriarOS(EStatusOrdemServico.AguardandoAprovacao);
         var orcamento = CriarOrcamento(EStatusOrcamento.Pendente);
 
-        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(os);
-        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>())).ReturnsAsync(true);
-        _orcamentoRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1)).ReturnsAsync(orcamento);
-        _orcamentoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Orcamento>())).ReturnsAsync(true);
-        _statusRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Status>())).ReturnsAsync(1);
+        _ordemServicoRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(os);
+        _ordemServicoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Dominio.Model.OrdemServico>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _orcamentoRepositorioMock.Setup(r => r.ObterPorOrdemServicoIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(orcamento);
+        _orcamentoRepositorioMock.Setup(r => r.AtualizarAsync(It.IsAny<Orcamento>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _statusRepositorioMock.Setup(r => r.CriarAsync(It.IsAny<Status>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         var useCase = new ResponderOrcamentoUseCase(
             _ordemServicoRepositorioMock.Object,

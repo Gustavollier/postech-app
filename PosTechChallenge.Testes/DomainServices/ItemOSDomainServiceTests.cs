@@ -130,7 +130,7 @@ public class ItemOSDomainServiceTests
     {
         var os = CriarOrdemServico();
         var item = CriarItemMaoDeObra(idFuncionario: 99);
-        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(99)).ReturnsAsync((Funcionario?)null);
+        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync((Funcionario?)null);
 
         var resultado = await _service.ValidarInclusaoAsync(os, item);
 
@@ -181,7 +181,7 @@ public class ItemOSDomainServiceTests
     {
         var os = CriarOrdemServico();
         var item = CriarItemPeca(idPeca: 99, quantidade: 1);
-        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(99)).ReturnsAsync((Pecas?)null);
+        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(99, It.IsAny<CancellationToken>())).ReturnsAsync((Pecas?)null);
 
         var resultado = await _service.ValidarInclusaoAsync(os, item);
 
@@ -195,7 +195,7 @@ public class ItemOSDomainServiceTests
         var os = CriarOrdemServico();
         var item = CriarItemPeca(idPeca: 1, quantidade: 1);
         var peca = new Pecas { Id = 1, Ativo = false, QuantidadeEstoque = 10 };
-        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(peca);
+        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(peca);
 
         var resultado = await _service.ValidarInclusaoAsync(os, item);
 
@@ -209,7 +209,7 @@ public class ItemOSDomainServiceTests
         var os = CriarOrdemServico();
         var item = CriarItemPeca(idPeca: 1, quantidade: 10);
         var peca = new Pecas { Id = 1, Ativo = true, QuantidadeEstoque = 5 };
-        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(peca);
+        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(peca);
 
         var resultado = await _service.ValidarInclusaoAsync(os, item);
 
@@ -223,7 +223,7 @@ public class ItemOSDomainServiceTests
         var os = CriarOrdemServico();
         var item = CriarItemPeca(idPeca: 1, quantidade: 3);
         var peca = new Pecas { Id = 1, Ativo = true, QuantidadeEstoque = 10 };
-        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1)).ReturnsAsync(peca);
+        _pecasRepositorioMock.Setup(r => r.ObterPorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(peca);
 
         var resultado = await _service.ValidarInclusaoAsync(os, item);
 
@@ -309,6 +309,6 @@ public class ItemOSDomainServiceTests
     private void ConfigurarFuncionario(int idFuncionario)
     {
         var funcionario = new Funcionario { Id = idFuncionario };
-        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(idFuncionario)).ReturnsAsync(funcionario);
+        _funcionarioRepositorioMock.Setup(r => r.ObterPorIdAsync(idFuncionario, It.IsAny<CancellationToken>())).ReturnsAsync(funcionario);
     }
 }
