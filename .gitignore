@@ -366,3 +366,31 @@ PosTechChallenge/Properties/launchSettings.json
 .env.*
 !.env.example
 .dotnet_home/
+
+# ─── Terraform ───────────────────────────────────────────────────────────────
+# State: contém TODOS os valores (inclusive secrets) em texto plano — nunca versione
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Diretório de trabalho local (providers baixados, módulos)
+**/.terraform/
+
+# Variáveis com valores reais — versione apenas o *.tfvars.example
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Planos salvos (podem conter secrets) e logs de crash
+*.tfplan
+crash.log
+crash.*.log
+
+# Overrides locais
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# OBS: o arquivo .terraform.lock.hcl DEVE ser versionado (trava versões de providers)
+!.terraform.lock.hcl
