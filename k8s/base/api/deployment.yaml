@@ -53,11 +53,11 @@ spec:
                 secretKeyRef:
                   name: postechallenge-secrets
                   key: ConnectionStrings__DefaultConnection
-            - name: JWT_SECRET_KEY
+            - name: Jwt__SecretKey
               valueFrom:
                 secretKeyRef:
                   name: postechallenge-secrets
-                  key: JWT_SECRET_KEY
+                  key: Jwt__SecretKey
 
           envFrom:
             - configMapRef:

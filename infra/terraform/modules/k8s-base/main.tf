@@ -38,7 +38,7 @@ resource "null_resource" "k8s_secrets" {
         --context=${var.kubectl_context} \
         --from-literal=MSSQL_SA_PASSWORD=${var.mssql_sa_password} \
         --from-literal=APP_DB_PASSWORD=${var.app_db_password} \
-        --from-literal=JWT_SECRET_KEY=${var.jwt_secret_key} \
+        --from-literal=Jwt__SecretKey=${var.jwt_secret_key} \
         --from-literal="ConnectionStrings__DefaultConnection=${local.connection_string}" \
         --dry-run=client -o yaml | kubectl apply -f - --context ${var.kubectl_context}
 

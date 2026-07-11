@@ -70,7 +70,7 @@ kubectl create secret generic postechallenge-secrets ^
   --context=docker-desktop ^
   --from-literal=MSSQL_SA_PASSWORD=!MSSQL_SA_PASSWORD! ^
   --from-literal=APP_DB_PASSWORD=!APP_DB_PASSWORD! ^
-  --from-literal=JWT_SECRET_KEY=!JWT_SECRET_KEY! ^
+  --from-literal=Jwt__SecretKey=!JWT_SECRET_KEY! ^
   "--from-literal=ConnectionStrings__DefaultConnection=!CONN!" ^
   --dry-run=client -o yaml | kubectl apply -f - --context docker-desktop
 
