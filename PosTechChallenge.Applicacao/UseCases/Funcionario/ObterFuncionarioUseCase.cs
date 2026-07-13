@@ -13,6 +13,23 @@ public class ObterFuncionarioUseCase
         _funcionarioRepositorio = funcionarioRepositorio;
     }
 
+    public async Task<Resultado<ObterFuncionarioDto>> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var funcionario = await _funcionarioRepositorio.ObterPorIdAsync(id, cancellationToken);
+
+            if (funcionario == null)
+                return Resultado<ObterFuncionarioDto>.Falha($"Funcionário com Id {id} não encontrado.");
+
+            return Resultado<ObterFuncionarioDto>.Sucesso(MapearParaDto(funcionario));
+        }
+        catch (Exception ex)
+        {
+            return Resultado<ObterFuncionarioDto>.Falha(ex.Message);
+        }
+    }
+
     public async Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf, CancellationToken cancellationToken = default)
     {
         try

@@ -107,12 +107,32 @@ dotnet test PosTechChallenge.Testes/PosTechChallenge.Testes.csproj
 
 A API utiliza **JWT Bearer Token**. Antes de acessar endpoints protegidos:
 
-O login continua publico. Para facilitar testes, o cadastro de funcionario tambem e publico e ja recebe a senha inicial no mesmo request.
+O login é público. O cadastro de funcionário exige um token válido com cargo **Gerente** (o seed do banco já cria um Gerente para isso).
 
-### 1. Cadastre um funcionário com senha inicial
+> O seed do banco (`infra/sql/init.sql`) já cria funcionários com CPF pré-definido para testes. A senha padrão dos seeds é `Senha@123`.
+
+### 1. Faça login com um usuário Gerente
+
+```
+POST /api/v1/autenticacao/login
+```
+
+```json
+{
+  "cpf": "CPF_DO_FUNCIONARIO",
+  "senha": "Senha@123"
+}
+```
+
+### 2. Use o token retornado
+
+No Swagger, clique em **Authorize** e insira o token (sem a palavra "Bearer").
+
+### 3. Cadastre um funcionário com senha inicial
 
 ```
 POST /api/v1/Funcionario
+Authorization: Bearer SEU_TOKEN_DE_GERENTE
 ```
 
 ```json
@@ -127,25 +147,6 @@ POST /api/v1/Funcionario
 }
 ```
 
-> O seed do banco (`infra/sql/init.sql`) já cria funcionários com CPF pré-definido para testes. A senha padrão dos seeds é `Senha@123`.
-
-### 2. Faça login
-
-```
-POST /api/v1/autenticacao/login
-```
-
-```json
-{
-  "cpf": "CPF_DO_FUNCIONARIO",
-  "senha": "Senha@123"
-}
-```
-
-### 3. Use o token retornado
-
-No Swagger, clique em **Authorize** e insira o token (sem a palavra "Bearer").
-
 ---
 
 ## 📋 Endpoints disponíveis
@@ -154,7 +155,7 @@ No Swagger, clique em **Authorize** e insira o token (sem a palavra "Bearer").
 |---|---|---|
 | Autenticação | `/api/v1/autenticacao` | Pública |
 | Clientes | `/api/v1/clientes` | JWT |
-| Funcionários | `/api/v1/funcionarios` | JWT |
+| Funcionários | `/api/v1/funcionarios` | JWT (POST/PUT/DELETE exigem cargo Gerente) |
 | Veículos | `/api/v1/veiculos` | JWT |
 | Peças | `/api/v1/pecas` | JWT |
 | Ordens de Serviço | `/api/v1/ordens-servico` | JWT (GET público) |

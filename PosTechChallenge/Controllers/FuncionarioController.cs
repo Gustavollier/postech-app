@@ -20,7 +20,7 @@ public class FuncionarioController : ControllerBase
         _funcionarioService = funcionarioService;
     }
 
-    [AllowAnonymous]
+    [Authorize(Roles = "Gerente")]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
@@ -65,6 +65,27 @@ public class FuncionarioController : ControllerBase
         }).ToList();
 
         return Ok(responses);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> ObterPorId(int id, CancellationToken cancellationToken)
+    {
+        var resultado = await _funcionarioService.ObterPorIdAsync(id, cancellationToken);
+
+        if (!resultado.IsValid)
+            return NotFound(new { message = resultado.Message });
+
+        var response = new FuncionarioResponse
+        {
+            Id = resultado.Output.Id,
+            Nome = resultado.Output.Nome,
+            Contato = resultado.Output.Contato,
+            CPF = resultado.Output.CPF,
+            Cargo = resultado.Output.Cargo.ToString(),
+            ValorHora = resultado.Output.ValorHora
+        };
+
+        return Ok(response);
     }
 
     [HttpGet("cpf")]

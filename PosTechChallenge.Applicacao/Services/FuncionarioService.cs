@@ -27,6 +27,9 @@ public sealed class FuncionarioService : IFuncionarioService
     public Task<Resultado> CriarAsync(CriarFuncionarioDto funcionarioDto, CancellationToken cancellationToken = default)
         => _criarFuncionarioUseCase.CriarAsync(funcionarioDto, cancellationToken);
 
+    public Task<Resultado<ObterFuncionarioDto>> ObterPorIdAsync(int id, CancellationToken cancellationToken = default)
+        => _obterFuncionarioUseCase.ObterPorIdAsync(id, cancellationToken);
+
     public Task<Resultado<ObterFuncionarioDto>> ObterPorCpfAsync(string cpf, CancellationToken cancellationToken = default)
         => _obterFuncionarioUseCase.ObterPorCpfAsync(cpf, cancellationToken);
 
