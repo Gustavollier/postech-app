@@ -26,10 +26,13 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
             CustomWebApplicationFactory.GerarToken("Gerente"));
     }
 
+    // Criar funcionário não exige mais o cargo Gerente, mas continua exigindo um
+    // usuário autenticado: a FallbackPolicy global de Program.cs cobre todo
+    // endpoint que não seja [AllowAnonymous]. Os testes abaixo usam o token do
+    // construtor; a ausência de token é coberta por Criar_SemToken_DeveRetornar401.
     [Fact]
     public async Task Criar_DadosValidos_DeveRetornar201()
     {
-        _client.DefaultRequestHeaders.Authorization = null;
         _factory.FuncionarioServiceMock
             .Setup(s => s.CriarAsync(It.IsAny<CriarFuncionarioDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Resultado.Sucesso("Funcionario criado com sucesso."));
@@ -42,12 +45,24 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task Criar_CpfInvalido_DeveRetornar400()
     {
-        _client.DefaultRequestHeaders.Authorization = null;
         var body = CriarBody() with { CPF = "11111111111" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/Funcionario", body);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Criar_SemToken_DeveRetornar401()
+    {
+        // Cliente próprio em vez de zerar o header do _client compartilhado:
+        // a instância é reaproveitada entre os testes da classe (IClassFixture),
+        // e mutá-la vazaria a ausência de token para os testes seguintes.
+        using var clienteAnonimo = _factory.CreateClient();
+
+        var response = await clienteAnonimo.PostAsJsonAsync("/api/v1/Funcionario", CriarBody());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
