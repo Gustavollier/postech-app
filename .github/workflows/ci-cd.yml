@@ -22,6 +22,11 @@ env:
   CLUSTER_NAME: postech-aks
   NAMESPACE: postechallenge
   APIM_GATEWAY: https://pos-tech-fiap-apim.azure-api.net
+  # Clientes do seed (postech-infra-db/sql/schema-azure.sql). O CPF do "Joao da
+  # Silva" no seed, 12345678901, tem digito verificador errado e e rejeitado
+  # pela Function — serve justamente como o caso negativo.
+  CPF_VALIDO: "98765432100"
+  CPF_INVALIDO: "12345678901"
 
 permissions:
   contents: read
@@ -160,3 +165,51 @@ jobs:
             exit 1
           fi
           echo "Gateway protegendo as rotas corretamente."
+
+          echo "--- autenticacao por CPF na Auth Function, via APIM ---"
+          # O Container App roda com min_replicas = 0, entao a primeira chamada
+          # paga a partida a frio do host de Functions. Tentamos algumas vezes
+          # antes de considerar falha — timeout aqui nao e o mesmo que erro.
+          for tentativa in $(seq 1 6); do
+            resposta=$(curl -s --max-time 60 -X POST "${{ env.APIM_GATEWAY }}/auth" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"cpf\":\"$CPF_VALIDO\"}" || true)
+            token=$(echo "$resposta" | grep -oE '"[Tt]oken"[[:space:]]*:[[:space:]]*"[^"]+"' \
+                     | head -1 | sed -E 's/.*:[[:space:]]*"([^"]+)"/\1/' || true)
+            [ -n "$token" ] && break
+            echo "Tentativa $tentativa sem token (partida a frio?)."
+            sleep 15
+          done
+
+          if [ -z "$token" ]; then
+            echo "::error::A Auth Function nao devolveu token para um CPF valido."
+            echo "Resposta: $resposta"
+            exit 1
+          fi
+          echo "Token emitido pela Function (${#token} caracteres)."
+
+          echo "--- CPF invalido (espera-se 400) ---"
+          codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+                    -X POST "${{ env.APIM_GATEWAY }}/auth" \
+                    -H "Content-Type: application/json" \
+                    -d "{\"cpf\":\"$CPF_INVALIDO\"}" || true)
+          echo "HTTP $codigo"
+          if [ "$codigo" != "400" ]; then
+            echo "::error::Esperado 400 para CPF com digito verificador invalido, recebido $codigo"
+            exit 1
+          fi
+
+          echo "--- rota protegida via APIM, COM o token da Function ---"
+          # A asserção é sobre o gateway, não sobre a autorização da aplicação:
+          # o que se prova aqui é que o validate-jwt do APIM aceita um token
+          # emitido pela Function. Qualquer resposta que não seja 401 significa
+          # que o token passou pelo gateway e chegou ao backend.
+          codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                    "${{ env.APIM_GATEWAY }}/api/v1/clientes" \
+                    -H "Authorization: Bearer $token" || true)
+          echo "HTTP $codigo"
+          if [ "$codigo" = "401" ]; then
+            echo "::error::O APIM rejeitou o token emitido pela Auth Function."
+            exit 1
+          fi
+          echo "Fluxo completo validado: CPF -> JWT -> rota protegida."
