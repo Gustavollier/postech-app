@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PosTechChallenge.Aplicacao.Dto.OrdemServico;
 using PosTechChallenge.Dominio.Interfaces.Repositorios;
 using PosTechChallenge.Dominio.Model;
@@ -13,15 +14,18 @@ public sealed class CriarOrdemServicoUseCase
     private readonly IOrdemServicoRepositorio _ordemServicoRepositorio;
     private readonly IStatusRepositorio _statusRepositorio;
     private readonly OrdemServicoDomainService _ordemServicoDomainService;
+    private readonly ILogger<CriarOrdemServicoUseCase> _logger;
 
     public CriarOrdemServicoUseCase(
         IOrdemServicoRepositorio ordemServicoRepositorio,
         IStatusRepositorio statusRepositorio,
-        OrdemServicoDomainService ordemServicoDomainService)
+        OrdemServicoDomainService ordemServicoDomainService,
+        ILogger<CriarOrdemServicoUseCase> logger)
     {
         _ordemServicoRepositorio = ordemServicoRepositorio;
         _statusRepositorio = statusRepositorio;
         _ordemServicoDomainService = ordemServicoDomainService;
+        _logger = logger;
     }
 
     public async Task<Resultado> CriarAsync(CriarOrdemServicoDto dto)
@@ -53,10 +57,26 @@ public sealed class CriarOrdemServicoUseCase
                 UpdatedAt = agora
             });
 
+            // Propriedades em snake_case: o JsonConsole as emite sob "State" e as
+            // queries do Datadog referenciam @State.evento. Este evento alimenta
+            // o painel "volume diário de ordens de serviço".
+            _logger.LogInformation(
+                "Ordem de serviço criada. {evento} {os_id} {cliente_id} {status}",
+                "OrdemServicoCriada",
+                ordemServicoId,
+                dto.IdCliente,
+                EStatusOrdemServico.Recebida.ToString());
+
             return Resultado.Sucesso("Ordem de serviço criada com sucesso.");
         }
         catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Falha ao processar ordem de serviço. {evento} {cliente_id}",
+                "FalhaProcessamentoOrdemServico",
+                dto.IdCliente);
+
             return Resultado.Falha(ex.Message);
         }
     }

@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: postechallenge
+
+# Diretório autocontido, sem herdar de k8s/base/.
+#
+# O base assume SQL Server rodando como StatefulSet dentro do cluster (modelo da
+# Fase 2) e um Service NodePort. Na Fase 3 o banco é gerenciado (Azure SQL) e o
+# Service é do tipo LoadBalancer, criado pelo Terraform do repo postech-infra-k8s
+# porque o APIM precisa do IP dele como backend antes da aplicação subir.
+#
+# Herdar do base exigiria remover mais coisa do que aproveitar, então este
+# overlay é explícito.
+resources:
+  - configmap.yaml
+  - deployment.yaml
+  - hpa.yaml
+
+# Criados pelo Terraform, fora daqui:
+#   - Namespace postechallenge
+#   - Secret postechallenge-secrets (a partir do Key Vault)
+#   - Service postechallenge-api (LoadBalancer, backend do APIM)
+
+images:
+  - name: postechacr13soat.azurecr.io/postechallenge-api
+    newTag: latest

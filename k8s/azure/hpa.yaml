@@ -1,0 +1,41 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: postechallenge-api
+  namespace: postechallenge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: postechallenge-api
+
+  # O cluster tem 2 nós Standard_D2as_v7 (4 vCPU no total, teto da quota).
+  # Com requests de 150m por pod, 5 réplicas consomem 750m — cabe com folga
+  # ao lado do kube-system e do agente do Datadog.
+  #
+  # Não há cluster autoscaler: a quota não permite um terceiro nó. A
+  # escalabilidade exigida pelo desafio é esta, no nível de pod.
+  minReplicas: 2
+  maxReplicas: 5
+
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
