@@ -1,9 +1,12 @@
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PosTechChallenge.Aplicacao;
+using PosTechChallenge.HealthChecks;
 using PosTechChallenge.Infraestrutura;
 using PosTechChallenge.Infraestrutura.Mapeamentos;
 using PosTechChallenge.Middleware;
@@ -11,6 +14,19 @@ using PosTechChallenge.Monitoring;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Logs estruturados em JSON fora de Development: é o formato que o agente do
+// Datadog parseia sem regra custom, e o que permite filtrar por correlationId.
+// Em Development mantemos o console legível.
+if (builder.Environment.IsDevelopment() is false)
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole(options =>
+    {
+        options.IncludeScopes = true;
+        options.UseUtcTimestamp = true;
+    });
+}
 
 builder.Services.AddControllers();
 
@@ -89,6 +105,11 @@ builder.Services.AddApplicationServices();
 builder.Services.AddSingleton<IExecutionTimeMonitor, ExecutionTimeMonitor>();
 builder.Services.AddSingleton(TimeProvider.System);
 
+// Liveness responde sem tocar em dependência alguma; readiness exige o banco.
+// A tag "ready" é o que separa os dois endpoints mapeados mais abaixo.
+builder.Services.AddHealthChecks()
+    .AddCheck<BancoDeDadosHealthCheck>("banco", tags: ["ready"]);
+
 var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey missing");
 if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
 {
@@ -155,13 +176,53 @@ app.Use(async (context, next) =>
     context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
     await next();
 });
+// Primeiro da cadeia de middlewares nossos: tudo que logar depois disso já sai
+// com o correlationId no escopo, inclusive as falhas de autenticação.
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestExecutionTimingMiddleware>();
 app.UseMiddleware<LoginRateLimitingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Liveness: o processo está de pé. Não consulta o banco de propósito — se o
+// banco cair, o Kubernetes não deve matar e recriar o pod, só tirá-lo do
+// balanceador (o que o readiness abaixo faz).
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false
+}).AllowAnonymous();
+
+// Readiness: só entra no balanceador quem consegue falar com o banco.
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = EscreverRespostaHealthCheck
+}).AllowAnonymous();
+
 app.Run();
+
+// Resposta em JSON para o Datadog conseguir extrair o estado de cada dependência
+// em vez de receber apenas a string "Healthy".
+static Task EscreverRespostaHealthCheck(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json; charset=utf-8";
+
+    var payload = new
+    {
+        status = report.Status.ToString(),
+        duracaoMs = report.TotalDuration.TotalMilliseconds,
+        checks = report.Entries.Select(entrada => new
+        {
+            nome = entrada.Key,
+            status = entrada.Value.Status.ToString(),
+            descricao = entrada.Value.Description,
+            duracaoMs = entrada.Value.Duration.TotalMilliseconds
+        })
+    };
+
+    return context.Response.WriteAsJsonAsync(payload);
+}
 
 public partial class Program
 {

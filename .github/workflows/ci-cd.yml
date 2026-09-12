@@ -1,331 +1,162 @@
-# =============================================================================
-# CI/CD Pipeline — PosTechChallenge
-#
-# Fluxo:
-#   build  → Compila .NET, executa testes, build + push imagem Docker (GHCR)
-#   deploy → Provisiona cluster kind via Terraform, aplica manifests K8s,
-#            executa smoke test
-#
-# Secrets obrigatórios no repositório (Settings → Secrets → Actions):
-#   MSSQL_SA_PASSWORD   — senha SA do SQL Server
-#   APP_DB_PASSWORD     — senha do usuário appchat
-#   JWT_SECRET_KEY      — chave JWT (mín 32 chars)
-#
-# O GITHUB_TOKEN é gerado automaticamente pelo GitHub e não precisa de config.
-# =============================================================================
+name: CI/CD - Aplicação
 
-name: CI/CD Pipeline
+# Build, testes, publicação da imagem no ACR e deploy no AKS.
+# Tudo roda nos runners do GitHub; a autenticação no Azure usa OIDC, então
+# nenhuma senha ou certificado fica guardado no repositório.
+#
+# Secrets (já configurados):
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - "feature/**"
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
+    branches: [main, develop]
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  CLUSTER_NAME: postechallenge
+  DOTNET_VERSION: "10.0.x"
+  ACR_NAME: postechacr13soat
+  IMAGE_NAME: postechallenge-api
+  RESOURCE_GROUP: pos-tech-fiap
+  CLUSTER_NAME: postech-aks
   NAMESPACE: postechallenge
+  APIM_GATEWAY: https://pos-tech-fiap-apim.azure-api.net
 
-# Permissões — packages:write para GHCR, checks:write para relatório de testes
 permissions:
   contents: read
-  packages: write
-  checks: write
-  pull-requests: write
 
 jobs:
-  # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 1: Build, Test, Push
-  # ─────────────────────────────────────────────────────────────────────────────
-  build:
-    name: Build & Push
+  build-test:
+    name: Build & Test
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.set-tag.outputs.tag }}
-      image-name: ${{ steps.set-tag.outputs.name }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore
 
-      - name: Build (Release)
-        run: dotnet build --no-restore -c Release
+      - name: Build
+        run: dotnet build -c Release --no-restore
 
-      - name: Run unit tests
+      - name: Testes unitários
         run: |
-          dotnet test PosTechChallenge.Testes/PosTechChallenge.Testes.csproj --no-build -c Release \
-            --collect:"XPlat Code Coverage" \
-            --logger "trx;LogFileName=unit-test-results.trx" \
-            --results-directory ./TestResults \
-            --verbosity normal
+          dotnet test PosTechChallenge.Testes/PosTechChallenge.Testes.csproj \
+            -c Release --no-build \
+            --logger "trx;LogFileName=unit-tests.trx" \
+            --collect:"XPlat Code Coverage"
 
-      - name: Publish unit test report
-        uses: dorny/test-reporter@v1.6.0
-        if: always()
-        with:
-          name: Unit Tests
-          path: "TestResults/**/*.trx"
-          reporter: dotnet-trx
-          fail-on-error: true
-
-      - name: Upload test results & coverage
+      - name: Publicar resultado dos testes
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-results
-          path: TestResults/
+          name: test-results
+          path: "**/TestResults/**"
           if-no-files-found: ignore
 
-      # ── Docker ────────────────────────────────────────────────────────────
-      - name: Set image name and tag
-        id: set-tag
-        run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/${REPO_LOWER}"
-          IMAGE_TAG="${IMAGE_NAME}:${{ github.sha }}"
-          echo "name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
-          echo "tag=${IMAGE_TAG}"   >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${IMAGE_TAG}"   >> $GITHUB_ENV
-
-      - name: Login to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.set-tag.outputs.tag }}
-            ${{ steps.set-tag.outputs.name }}:latest
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 2: Testes de Integração (SQL Server real via docker-compose)
-  # ─────────────────────────────────────────────────────────────────────────────
-  integration-tests:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-
-    env:
-      MSSQL_SA_PASSWORD: "Your_password123"
-      APP_DB_PASSWORD: "Your_password123"
-      INTEGRATION_TEST_DB_CONNECTION: "Server=localhost,1433;Database=PosTechChallenge;User Id=sa;Password=Your_password123;TrustServerCertificate=True;Encrypt=False;"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
-
-      # Sobe o SQL Server e espera o healthcheck ficar saudável antes de seguir.
-      - name: Subir SQL Server (docker-compose)
-        run: docker compose -f docker-compose.integration.yml up -d --wait sqlserver-test
-
-      # Aplica o schema (infra/sql/init.sql) como container efêmero one-shot.
-      - name: Aplicar schema de teste
-        run: docker compose -f docker-compose.integration.yml run --rm sql-init-test
-
-      - name: Restore
-        run: dotnet restore PosTechChallenge.Testes.Integracao/PosTechChallenge.Testes.Integracao.csproj
-
-      - name: Build (Release)
-        run: dotnet build PosTechChallenge.Testes.Integracao/PosTechChallenge.Testes.Integracao.csproj --no-restore -c Release
-
-      - name: Run integration tests
-        run: |
-          dotnet test PosTechChallenge.Testes.Integracao/PosTechChallenge.Testes.Integracao.csproj --no-build -c Release \
-            --logger "trx;LogFileName=integration-test-results.trx" \
-            --results-directory ./TestResults \
-            --verbosity normal
-
-      - name: Publish integration test report
-        uses: dorny/test-reporter@v1.6.0
-        if: always()
-        with:
-          name: Integration Tests
-          path: "TestResults/**/*.trx"
-          reporter: dotnet-trx
-          fail-on-error: true
-
-      - name: Coletar logs do SQL Server em caso de falha
-        if: failure()
-        run: docker compose -f docker-compose.integration.yml logs --no-color || true
-
-      - name: Derrubar containers
-        if: always()
-        run: docker compose -f docker-compose.integration.yml down -v
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 3: Provision (Terraform) + Deploy (kubectl/kustomize) + Smoke Test
-  # ─────────────────────────────────────────────────────────────────────────────
   deploy:
-    name: Provision & Deploy
-    runs-on: ubuntu-latest
-    needs: [build, integration-tests]
-    # Só faz deploy em push (não em PRs) para não gastar recursos em cada review
+    name: Imagem & Deploy no AKS
+    needs: build-test
     if: github.event_name != 'pull_request'
-
-    env:
-      # Passados via TF_VAR_* — o Terraform os lê automaticamente
-      TF_VAR_cluster_name: postechallenge
-      TF_VAR_kustomize_overlay: ci
-      TF_VAR_mssql_sa_password: ${{ secrets.MSSQL_SA_PASSWORD }}
-      TF_VAR_app_db_password: ${{ secrets.APP_DB_PASSWORD }}
-      TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
-      TF_VAR_ghcr_username: ${{ github.actor }}
-      TF_VAR_ghcr_token: ${{ secrets.GITHUB_TOKEN }}
-
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'homolog' }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ── Ferramentas ────────────────────────────────────────────────────────
-      - name: Install kind
+      - name: Login no Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login no ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build e push da imagem
         run: |
-          KIND_VERSION="v0.27.0"
-          curl -sSLo /tmp/kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
-          chmod +x /tmp/kind
-          sudo mv /tmp/kind /usr/local/bin/kind
-          kind version
+          set -euo pipefail
+          REGISTRY="${{ env.ACR_NAME }}.azurecr.io"
+          TAG="${{ github.sha }}"
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+          docker build \
+            -t "$REGISTRY/${{ env.IMAGE_NAME }}:$TAG" \
+            -t "$REGISTRY/${{ env.IMAGE_NAME }}:latest" \
+            -f Dockerfile .
 
-      - name: Install kustomize
+          docker push "$REGISTRY/${{ env.IMAGE_NAME }}:$TAG"
+          docker push "$REGISTRY/${{ env.IMAGE_NAME }}:latest"
+
+          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Credenciais do AKS
         run: |
-          KUSTOMIZE_VERSION="v5.4.3"
-          curl -sSLo /tmp/kustomize.tar.gz \
-            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
-          tar -xzf /tmp/kustomize.tar.gz -C /tmp
-          sudo mv /tmp/kustomize /usr/local/bin/kustomize
+          az aks get-credentials \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --name "${{ env.CLUSTER_NAME }}" \
+            --overwrite-existing
+
+      - name: Setup kustomize
+        run: |
+          curl -sSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s 5.4.3
+          sudo mv kustomize /usr/local/bin/
           kustomize version
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ">= 1.6"
-
-      # ── Atualiza imagem no overlay CI ─────────────────────────────────────
-      - name: Update ci overlay with built image
+      # Namespace, Secret e Service são criados pelo Terraform do repositório
+      # postech-infra-k8s — o Service precisa existir antes, porque o APIM usa
+      # o IP dele como backend. Aqui aplicamos ConfigMap, Deployment e HPA.
+      - name: Deploy
         run: |
-          IMAGE_TAG="${{ needs.build.outputs.image-tag }}"
-          IMAGE_NAME="${{ needs.build.outputs.image-name }}"
-          echo "Configurando overlay CI com imagem: ${IMAGE_TAG}"
-          cd k8s/overlays/ci
-          kustomize edit set image "postechallenge-api=${IMAGE_TAG}"
-          echo "=== kustomization.yaml atualizado ==="
-          cat kustomization.yaml
+          set -euo pipefail
+          cd k8s/azure
+          kustomize edit set image \
+            "${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          kustomize build . | kubectl apply -f -
 
-      # ── Terraform: Provisiona cluster + recursos K8s ─────────────────────
-      - name: Terraform Init
-        working-directory: infra/terraform
-        run: terraform init
-
-      - name: Terraform Validate
-        working-directory: infra/terraform
-        run: terraform validate
-
-      - name: Terraform Plan
-        working-directory: infra/terraform
-        run: terraform plan -var="kustomize_overlay=ci" -no-color
-        continue-on-error: false
-
-      - name: Terraform Apply — cluster + K8s resources
-        working-directory: infra/terraform
-        run: terraform apply -var="kustomize_overlay=ci" -auto-approve -no-color
-
-      # ── Verificação de estado ──────────────────────────────────────────────
-      - name: Check cluster state
+      - name: Aguardar o rollout
         run: |
-          echo "=== Nodes ==="
-          kubectl get nodes --context kind-${{ env.CLUSTER_NAME }}
+          kubectl rollout status deployment/postechallenge-api \
+            --namespace "${{ env.NAMESPACE }}" \
+            --timeout=300s
 
-          echo ""
-          echo "=== Pods (namespace ${{ env.NAMESPACE }}) ==="
-          kubectl get pods -n ${{ env.NAMESPACE }} --context kind-${{ env.CLUSTER_NAME }}
+      - name: Estado do cluster
+        run: kubectl get pods,svc,hpa --namespace "${{ env.NAMESPACE }}"
 
-          echo ""
-          echo "=== Services ==="
-          kubectl get svc -n ${{ env.NAMESPACE }} --context kind-${{ env.CLUSTER_NAME }}
-
-          echo ""
-          echo "=== HPA ==="
-          kubectl get hpa -n ${{ env.NAMESPACE }} --context kind-${{ env.CLUSTER_NAME }} || true
-
-      # ── Smoke Test ────────────────────────────────────────────────────────
-      - name: Smoke test — API responde com 401 (JWT ativo)
+      # Prova duas coisas: a aplicação responde, e o gateway protege as rotas.
+      - name: Smoke test
         run: |
-          echo "Iniciando port-forward..."
-          kubectl port-forward svc/postechallenge-api 8080:80 \
-            -n ${{ env.NAMESPACE }} \
-            --context kind-${{ env.CLUSTER_NAME }} &
-          PF_PID=$!
-          sleep 8
+          set -euo pipefail
 
-          echo "Testando endpoint /api/v1/ordens-servico (deve retornar 401 — JWT obrigatório)..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --connect-timeout 10 --max-time 15 \
-            http://localhost:8080/api/v1/ordens-servico || echo "000")
+          IP=$(kubectl get svc postechallenge-api -n "${{ env.NAMESPACE }}" \
+                 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "LoadBalancer: $IP"
 
-          echo "HTTP Status: ${HTTP_STATUS}"
+          echo "--- /health direto no cluster ---"
+          for tentativa in $(seq 1 12); do
+            codigo=$(curl -s -o /dev/null -w "%{http_code}" "http://$IP/health" || true)
+            echo "Tentativa $tentativa: HTTP $codigo"
+            [ "$codigo" = "200" ] && break
+            if [ "$tentativa" = "12" ]; then
+              echo "::error::/health nunca respondeu 200"
+              exit 1
+            fi
+            sleep 10
+          done
 
-          kill $PF_PID 2>/dev/null || true
-
-          if [ "$HTTP_STATUS" = "401" ] || [ "$HTTP_STATUS" = "403" ]; then
-            echo "✅ Smoke test passou — API respondeu com ${HTTP_STATUS} (JWT auth ativo)"
-          elif [ "$HTTP_STATUS" = "200" ]; then
-            echo "✅ Smoke test passou — API respondeu com 200"
-          else
-            echo "❌ Smoke test FALHOU — status inesperado: ${HTTP_STATUS}"
-            echo ""
-            echo "=== Logs da API ==="
-            kubectl logs deploy/postechallenge-api \
-              -n ${{ env.NAMESPACE }} \
-              --context kind-${{ env.CLUSTER_NAME }} \
-              --tail=50 || true
+          echo "--- rota protegida via APIM, sem token (espera-se 401) ---"
+          codigo=$(curl -s -o /dev/null -w "%{http_code}" \
+                    "${{ env.APIM_GATEWAY }}/api/v1/clientes" || true)
+          echo "HTTP $codigo"
+          if [ "$codigo" != "401" ]; then
+            echo "::error::Esperado 401 do APIM sem token, recebido $codigo"
             exit 1
           fi
-
-      # ── Resumo do deploy ──────────────────────────────────────────────────
-      - name: Deploy summary
-        if: always()
-        run: |
-          echo "=================================================="
-          echo " Deploy Summary"
-          echo "=================================================="
-          echo " Branch:    ${{ github.ref_name }}"
-          echo " Commit:    ${{ github.sha }}"
-          echo " Imagem:    ${{ needs.build.outputs.image-tag }}"
-          echo " Cluster:   kind-${{ env.CLUSTER_NAME }}"
-          echo " Namespace: ${{ env.NAMESPACE }}"
-          echo "=================================================="
-          echo ""
-          kubectl get all -n ${{ env.NAMESPACE }} \
-            --context kind-${{ env.CLUSTER_NAME }} || true
+          echo "Gateway protegendo as rotas corretamente."

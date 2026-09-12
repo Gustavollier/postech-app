@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postechallenge-api
+  namespace: postechallenge
+  labels:
+    app: postechallenge-api
+    # Unificam APM, logs e métricas sob o mesmo serviço no Datadog.
+    tags.datadoghq.com/env: production
+    tags.datadoghq.com/service: postechallenge-api
+    tags.datadoghq.com/version: "3.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postechallenge-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # O cluster tem 2 nós de 2 vCPU (teto da quota da subscription).
+      # maxSurge 1 cria um pod extra durante o rollout, o que cabe;
+      # maxUnavailable 0 garante que não ficamos sem capacidade.
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: postechallenge-api
+        tags.datadoghq.com/env: production
+        tags.datadoghq.com/service: postechallenge-api
+        tags.datadoghq.com/version: "3.0.0"
+        # Faz o Cluster Agent do Datadog injetar o tracer .NET via admission
+        # controller, sem precisar instalar nada no Dockerfile.
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/dotnet-lib.version: v3.7.0
+    spec:
+      containers:
+        - name: postechallenge-api
+          # A tag é substituída pela pipeline com o SHA do commit.
+          image: postechacr13soat.azurecr.io/postechallenge-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          env:
+            # O Secret é criado pelo Terraform do repo postech-infra-k8s,
+            # a partir dos valores do Key Vault.
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: postechallenge-secrets
+                  key: ConnectionStrings__DefaultConnection
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: postechallenge-secrets
+                  key: Jwt__SecretKey
+
+            # Correlaciona logs e traces no Datadog.
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+
+          envFrom:
+            - configMapRef:
+                name: postechallenge-config
+
+          # Liveness não consulta o banco de propósito: se o Azure SQL cair, o
+          # pod continua saudável como processo e apenas sai do balanceador pelo
+          # readiness. Reiniciar o pod não resolveria um banco indisponível.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 24
+
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
