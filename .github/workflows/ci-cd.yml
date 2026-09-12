@@ -171,19 +171,24 @@ jobs:
           # paga a partida a frio do host de Functions. Tentamos algumas vezes
           # antes de considerar falha — timeout aqui nao e o mesmo que erro.
           for tentativa in $(seq 1 6); do
-            resposta=$(curl -s --max-time 60 -X POST "${{ env.APIM_GATEWAY }}/auth" \
-                        -H "Content-Type: application/json" \
-                        -d "{\"cpf\":\"$CPF_VALIDO\"}" || true)
+            # O codigo HTTP e capturado junto do corpo: sem ele, uma falha aqui
+            # nao diz se o problema foi rota, backend ou o gateway.
+            bruto=$(curl -s -w $'\n%{http_code}' --max-time 60 \
+                      -X POST "${{ env.APIM_GATEWAY }}/auth" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"cpf\":\"$CPF_VALIDO\"}" || true)
+            codigo=$(echo "$bruto" | tail -1)
+            resposta=$(echo "$bruto" | sed '$d')
+            echo "Tentativa $tentativa: HTTP ${codigo:-sem resposta} | corpo: ${resposta:-vazio}"
+
             token=$(echo "$resposta" | grep -oE '"[Tt]oken"[[:space:]]*:[[:space:]]*"[^"]+"' \
                      | head -1 | sed -E 's/.*:[[:space:]]*"([^"]+)"/\1/' || true)
             [ -n "$token" ] && break
-            echo "Tentativa $tentativa sem token (partida a frio?)."
             sleep 15
           done
 
           if [ -z "$token" ]; then
-            echo "::error::A Auth Function nao devolveu token para um CPF valido."
-            echo "Resposta: $resposta"
+            echo "::error::A Auth Function nao devolveu token para um CPF valido (ultimo HTTP: ${codigo:-sem resposta})."
             exit 1
           fi
           echo "Token emitido pela Function (${#token} caracteres)."
