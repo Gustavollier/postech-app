@@ -181,8 +181,9 @@ jobs:
             resposta=$(echo "$bruto" | sed '$d')
             echo "Tentativa $tentativa: HTTP ${codigo:-sem resposta} | corpo: ${resposta:-vazio}"
 
-            token=$(echo "$resposta" | grep -oE '"[Tt]oken"[[:space:]]*:[[:space:]]*"[^"]+"' \
-                     | head -1 | sed -E 's/.*:[[:space:]]*"([^"]+)"/\1/' || true)
+            # O contrato da Function devolve access_token (AuthResponse), nao
+            # "token". jq le o campo pelo nome em vez de raspar a string.
+            token=$(echo "$resposta" | jq -r '.access_token // empty' 2>/dev/null || true)
             [ -n "$token" ] && break
             sleep 15
           done
