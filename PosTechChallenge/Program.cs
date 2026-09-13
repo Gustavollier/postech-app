@@ -148,7 +148,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-if (app.Environment.IsDevelopment())
+// Em Development o Swagger sobe sempre. Fora dele, só quando explicitamente
+// habilitado por configuração — o ambiente publicado da Fase 3 liga a chave para
+// a documentação ficar navegável, mas o default continua desligado, para que
+// nenhum ambiente exponha o contrato da API por descuido.
+//
+// O documento gerado aponta para o gateway do APIM (OpenApi__ServerUrl) e já
+// declara o esquema Bearer, entao o botao Authorize do Swagger UI aceita o token
+// emitido pela Auth Function.
+var swaggerHabilitado = app.Environment.IsDevelopment()
+    || app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+if (swaggerHabilitado)
 {
     // Gera o endpoint do documento: /openapi/v1.json
     app.MapOpenApi().AllowAnonymous();

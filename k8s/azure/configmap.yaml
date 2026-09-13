@@ -13,3 +13,11 @@ data:
 
   # Usado pelo documento OpenAPI para apontar o servidor correto.
   OpenApi__ServerUrl: "https://pos-tech-fiap-apim.azure-api.net"
+
+  # Liga o Swagger fora de Development. A documentação fica navegável no
+  # ambiente publicado, o que a entrega da Fase 3 precisa para a demonstração.
+  #
+  # Consequência assumida: /swagger e /openapi/v1.json ficam anônimos no
+  # LoadBalancer do cluster, expondo o contrato da API (não os dados — as rotas
+  # seguem exigindo JWT). Desligar é trocar esta chave para "false".
+  Swagger__Enabled: "true"

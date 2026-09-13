@@ -156,6 +156,16 @@ jobs:
             sleep 10
           done
 
+          echo "--- Swagger e documento OpenAPI no cluster (espera-se 200) ---"
+          for rota in /swagger/index.html /openapi/v1.json; do
+            codigo=$(curl -s -o /dev/null -w "%{http_code}" "http://$IP$rota" || true)
+            echo "$rota: HTTP $codigo"
+            if [ "$codigo" != "200" ]; then
+              echo "::error::$rota deveria responder 200 com Swagger__Enabled=true, recebido $codigo"
+              exit 1
+            fi
+          done
+
           echo "--- rota protegida via APIM, sem token (espera-se 401) ---"
           codigo=$(curl -s -o /dev/null -w "%{http_code}" \
                     "${{ env.APIM_GATEWAY }}/api/v1/clientes" || true)
