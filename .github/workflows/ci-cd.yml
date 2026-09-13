@@ -157,11 +157,20 @@ jobs:
           done
 
           echo "--- Swagger e documento OpenAPI no cluster (espera-se 200) ---"
+          # Mesma tolerancia do /health: o smoke test roda logo apos o rollout e
+          # o LoadBalancer ainda pode estar trocando os endpoints. Sem retry, a
+          # requisicao pega a janela de troca e volta HTTP 000 — falha de conexao,
+          # que nao e o mesmo que rota ausente.
           for rota in /swagger/index.html /openapi/v1.json; do
-            codigo=$(curl -s -o /dev/null -w "%{http_code}" "http://$IP$rota" || true)
-            echo "$rota: HTTP $codigo"
+            for tentativa in $(seq 1 10); do
+              codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+                        "http://$IP$rota" || true)
+              echo "$rota tentativa $tentativa: HTTP $codigo"
+              [ "$codigo" = "200" ] && break
+              sleep 6
+            done
             if [ "$codigo" != "200" ]; then
-              echo "::error::$rota deveria responder 200 com Swagger__Enabled=true, recebido $codigo"
+              echo "::error::$rota deveria responder 200 com Swagger__Enabled=true, ultimo codigo: $codigo"
               exit 1
             fi
           done
