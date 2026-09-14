@@ -26,10 +26,11 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
             CustomWebApplicationFactory.GerarToken("Gerente"));
     }
 
-    // Criar funcionário não exige mais o cargo Gerente, mas continua exigindo um
-    // usuário autenticado: a FallbackPolicy global de Program.cs cobre todo
-    // endpoint que não seja [AllowAnonymous]. Os testes abaixo usam o token do
-    // construtor; a ausência de token é coberta por Criar_SemToken_DeveRetornar401.
+    // Criar funcionário exige cargo Gerente, e as leituras exigem um cargo de
+    // equipe. Antes bastava estar autenticado — a FallbackPolicy global —, e um
+    // token de cliente criava um funcionário com cargo Gerente para depois entrar
+    // como ele. Os testes abaixo usam o token de Gerente do construtor; a ausência
+    // de token e o token de cliente têm testes próprios.
     [Fact]
     public async Task Criar_DadosValidos_DeveRetornar201()
     {
@@ -63,6 +64,35 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
         var response = await clienteAnonimo.PostAsJsonAsync("/api/v1/Funcionario", CriarBody());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Criar_ComTokenDeCliente_DeveRetornar403()
+    {
+        // A escalação que a regra fecha: um cliente autenticado criava um
+        // funcionário com cargo Gerente e entrava como ele.
+        using var clienteCliente = _factory.CreateClient();
+        clienteCliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarToken("Cliente"));
+
+        var response = await clienteCliente.PostAsJsonAsync("/api/v1/Funcionario", CriarBody());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ObterTodos_ComTokenDeCliente_DeveRetornar403()
+    {
+        // Nome, CPF, contato e valor/hora da equipe são dados da operação.
+        using var clienteCliente = _factory.CreateClient();
+        clienteCliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarToken("Cliente"));
+
+        var response = await clienteCliente.GetAsync("/api/v1/Funcionario");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

@@ -32,7 +32,9 @@ env:
   # mesmo de consultar o banco.
   CLIENTE_ID: "3"
   CPF_FUNCIONARIO: "11144477735"
-  SENHA_FUNCIONARIO: "Senha@123"
+  # A senha do funcionario do seed NAO fica aqui: este repositorio e publico, e
+  # um literal aqui e uma credencial de producao publicada. Ela entra pelo
+  # secret SENHA_FUNCIONARIO, no env do proprio passo do smoke test.
 
 permissions:
   contents: read
@@ -143,8 +145,17 @@ jobs:
 
       # Prova duas coisas: a aplicação responde, e o gateway protege as rotas.
       - name: Smoke test
+        env:
+          SENHA_FUNCIONARIO: ${{ secrets.SENHA_FUNCIONARIO }}
         run: |
           set -euo pipefail
+
+          if [ -z "${SENHA_FUNCIONARIO:-}" ]; then
+            echo "::error::O secret SENHA_FUNCIONARIO nao esta configurado no repositorio."
+            echo "Ele guarda a senha do funcionario do seed usada no login do smoke test."
+            echo "Configure em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
 
           IP=$(kubectl get svc postechallenge-api -n "${{ env.NAMESPACE }}" \
                  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
