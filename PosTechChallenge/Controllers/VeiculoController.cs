@@ -19,6 +19,9 @@ public class VeiculoController : ControllerBase
         _veiculoService = veiculoService;
     }
 
+    // O corpo traz ClienteId: sem atributo, um cliente cadastrava veiculo no
+    // nome de outro.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarVeiculoBodyRequest bodyRequest)
     {

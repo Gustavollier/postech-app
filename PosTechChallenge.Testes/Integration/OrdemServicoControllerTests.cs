@@ -124,9 +124,20 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
     // ── GET /api/v1/ordens-servico/{id}/status — endpoint PÚBLICO ───────────
 
     [Fact]
-    public async Task ObterStatus_SemToken_OSExistente_DeveRetornar200()
+    public async Task ObterStatus_SemToken_DeveRetornar401()
     {
+        // Era anonima: sem token dava para varrer os ids e montar o painel de
+        // movimento da oficina inteira, com quem tocou cada ordem e quando.
         _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.GetAsync("/api/v1/ordens-servico/1/status");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ObterStatus_ComToken_OSExistente_DeveRetornar200()
+    {
         var statusDto = new ObterStatusOrdemServicoDto
         {
             OrdemServicoId = 1,
@@ -139,12 +150,58 @@ public class OrdemServicoControllerTests : IClassFixture<CustomWebApplicationFac
             .Setup(s => s.ObterStatusAsync(1))
             .ReturnsAsync(Resultado<ObterStatusOrdemServicoDto>.Sucesso(statusDto));
 
-        // Sem token — endpoint deve ser acessível publicamente
         var response = await _client.GetAsync("/api/v1/ordens-servico/1/status");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Recebida", json.RootElement.GetProperty("statusAtual").GetString());
+    }
+
+    [Fact]
+    public async Task ObterStatus_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        _factory.OrdemServicoServiceMock
+            .Setup(s => s.ObterPorIdAsync(1))
+            .ReturnsAsync(Resultado<ObterOrdemServicoDto>.Sucesso(new ObterOrdemServicoDto { Id = 1, IdCliente = 7 }));
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await _client.GetAsync("/api/v1/ordens-servico/1/status");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Criar_ComTokenDeCliente_DeveRetornar403()
+    {
+        // Sem atributo, um cliente abria ordem para qualquer cliente, qualquer
+        // veiculo e qualquer responsavel.
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var body = new { IdCliente = 7, IdVeiculo = 1, IdFuncionario = 1 };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/ordens-servico", body);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AtualizarStatus_ComTokenDeCliente_DeveRetornar403()
+    {
+        // Com [Authorize] puro, um cliente avancava a propria ordem ate Entregue.
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var body = new { IdFuncionario = 1, Status = 1 };
+
+        var response = await _client.PatchAsJsonAsync("/api/v1/ordens-servico/1/status", body);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

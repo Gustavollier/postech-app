@@ -20,6 +20,9 @@ public class ClienteController : ControllerBase
         _clienteService = clienteService;
     }
 
+    // Cadastrar cliente e da recepcao. Sem atributo, um cliente autenticado
+    // criava cadastros a vontade.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarClienteBodyRequest bodyRequest, CancellationToken cancellationToken)
     {

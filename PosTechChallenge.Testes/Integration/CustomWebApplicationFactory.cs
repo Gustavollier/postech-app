@@ -70,6 +70,32 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
+    /// <summary>
+    /// Token do perfil cliente, como a Auth Function emite: papel "Cliente" e o
+    /// id do cliente em ClienteId, que e o que define o escopo dele.
+    /// </summary>
+    public static string GerarTokenCliente(int clienteId)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, clienteId.ToString()),
+            new Claim(ClaimTypes.Role, "Cliente"),
+            new Claim("ClienteId", clienteId.ToString()),
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: "PosTechChallenge",
+            audience: "PosTechChallenge-API",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public static string GerarToken(string cargo = "Mecanico", int funcionarioId = 1)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));

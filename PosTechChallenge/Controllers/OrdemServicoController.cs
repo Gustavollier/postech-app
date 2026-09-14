@@ -22,6 +22,9 @@ public sealed class OrdemServicoController : ControllerBase
         _ordemServicoService = ordemServicoService;
     }
 
+    // Sem atributo, um cliente autenticado abria ordem para qualquer cliente,
+    // qualquer veiculo e qualquer responsavel. Abrir ordem e da recepcao.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody][Required] CriarOrdemServicoBodyRequest bodyRequest)
     {
@@ -86,9 +89,14 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize]
     [HttpGet("valor/{id:int}")]
     public async Task<IActionResult> ObterValorPorIdAsync([FromRoute] int id)
     {
+        if (await User.ClienteAcessandoOrdemDeOutroAsync(_ordemServicoService, id))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Esta ordem de servico pertence a outro cliente." });
+
         Resultado<decimal> resultado = await _ordemServicoService.ObterValorPorIdAsync(id);
 
         if (resultado.IsValid is false)
@@ -114,10 +122,16 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
-    [AllowAnonymous]
+    // Era [AllowAnonymous]: sem token dava para varrer os ids e montar o painel
+    // de movimento da oficina inteira, com quem tocou cada ordem e quando.
+    [Authorize]
     [HttpGet("{id:int}/status")]
     public async Task<IActionResult> ObterStatus([FromRoute] int id)
     {
+        if (await User.ClienteAcessandoOrdemDeOutroAsync(_ordemServicoService, id))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Esta ordem de servico pertence a outro cliente." });
+
         Resultado<ObterStatusOrdemServicoDto> resultado = await _ordemServicoService.ObterStatusAsync(id);
 
         if (resultado.IsValid is false)
@@ -143,7 +157,9 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(new { message = resultado.Message });
     }
 
-    [Authorize]
+    // Mover a ordem pelo fluxo e trabalho da oficina: com [Authorize] puro, um
+    // cliente avancava a propria ordem ate "Entregue".
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPatch("{id:int}/status")]
     public async Task<IActionResult> AtualizarStatus([FromRoute][Required] int id, [FromBody][Required] AtualizarStatusOrdemServicoBodyRequest bodyRequest)
     {

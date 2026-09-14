@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Orcamento;
 using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Dtos.Requests.Orcamento;
 using PosTechChallenge.Dtos.Responses.Orcamento;
 using System.ComponentModel.DataAnnotations;
@@ -14,16 +15,25 @@ namespace PosTechChallenge.Controllers;
 public sealed class OrcamentoController : ControllerBase
 {
     private readonly IOrcamentoService _orcamentoService;
+    // O orcamento so conhece o IdOS. Para saber de quem ele e, a ordem responde.
+    private readonly IOrdemServicoService _ordemServicoService;
 
-    public OrcamentoController(IOrcamentoService orcamentoService)
+    public OrcamentoController(IOrcamentoService orcamentoService, IOrdemServicoService ordemServicoService)
     {
         _orcamentoService = orcamentoService;
+        _ordemServicoService = ordemServicoService;
     }
 
-    [AllowAnonymous]
+    // Era [AllowAnonymous]: sem token nenhum dava para varrer os ids e ler o
+    // valor fechado de qualquer ordem da oficina.
+    [Authorize]
     [HttpGet("os/{idOS:int}")]
     public async Task<IActionResult> ObterPorOrdemServicoId([FromRoute] int idOS)
     {
+        if (await User.ClienteAcessandoOrdemDeOutroAsync(_ordemServicoService, idOS))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Este orcamento pertence a ordem de outro cliente." });
+
         var resultado = await _orcamentoService.ObterPorOrdemServicoIdAsync(idOS);
 
         if (!resultado.IsValid)
@@ -32,7 +42,7 @@ public sealed class OrcamentoController : ControllerBase
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
-    [Authorize]
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost("os/{idOS:int}/calcular")]
     public async Task<IActionResult> Calcular([FromRoute] int idOS)
     {
@@ -44,7 +54,7 @@ public sealed class OrcamentoController : ControllerBase
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
-    [Authorize]
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost("os/{idOS:int}/enviar")]
     public async Task<IActionResult> Enviar([FromRoute] int idOS)
     {
@@ -60,10 +70,16 @@ public sealed class OrcamentoController : ControllerBase
         });
     }
 
-    [AllowAnonymous]
+    // A unica escrita do perfil cliente — e era anonima: qualquer um aprovava o
+    // orcamento de qualquer ordem, sem token, so com o id na URL.
+    [Authorize]
     [HttpPost("os/{idOS:int}/responder")]
     public async Task<IActionResult> Responder([FromRoute] int idOS, [FromBody][Required] ResponderOrcamentoBodyRequest bodyRequest)
     {
+        if (await User.ClienteAcessandoOrdemDeOutroAsync(_ordemServicoService, idOS))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Este orcamento pertence a ordem de outro cliente." });
+
         var dto = new ResponderOrcamentoDto(bodyRequest.Status);
         var resultado = await _orcamentoService.ResponderAsync(idOS, dto);
 

@@ -1,5 +1,6 @@
 using Moq;
 using PosTechChallenge.Aplicacao.Dto.ItemOS;
+using PosTechChallenge.Aplicacao.Dto.OrdemServico;
 using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
@@ -43,6 +44,38 @@ public class ItensOSControllerTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsJsonAsync("/api/v1/ordens-servico/10/itens", body);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Criar_ComTokenDeCliente_DeveRetornar403()
+    {
+        // Sem atributo, um cliente autenticado lancava peca e hora em ordem de
+        // qualquer um.
+        using var clienteCliente = _factory.CreateClient();
+        clienteCliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await clienteCliente.PostAsJsonAsync("/api/v1/ordens-servico/10/itens", CriarBody());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ObterPorOrdemServico_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        _factory.OrdemServicoServiceMock
+            .Setup(s => s.ObterPorIdAsync(10))
+            .ReturnsAsync(Resultado<ObterOrdemServicoDto>.Sucesso(new ObterOrdemServicoDto { Id = 10, IdCliente = 7 }));
+
+        using var clienteCliente = _factory.CreateClient();
+        clienteCliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await clienteCliente.GetAsync("/api/v1/ordens-servico/10/itens");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
