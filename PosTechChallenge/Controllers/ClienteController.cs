@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Cliente;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Aplicacao.Helpers;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Cliente;
@@ -41,6 +42,9 @@ public class ClienteController : ControllerBase
         return Created(string.Empty, new { message = resultado.Message });
     }
 
+    // A listagem devolve nome, documento, telefone e e-mail de todos os
+    // clientes. E dado pessoal de terceiros: restrito a equipe.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet]
     public async Task<IActionResult> ObterTodos(CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
@@ -58,6 +62,11 @@ public class ClienteController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId([FromRoute] int id, CancellationToken cancellationToken)
     {
+        // Um cliente enxerga apenas o proprio cadastro; a equipe enxerga todos.
+        if (User.ClienteAcessandoOutro(id))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Voce so pode consultar o proprio cadastro." });
+
         var resultado = await _clienteService.ObterPorIdAsync(id, cancellationToken);
 
         if (!resultado.IsValid)
@@ -66,6 +75,9 @@ public class ClienteController : ControllerBase
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
+    // Busca por documento e ferramenta de atendimento: nas maos de um cliente
+    // viraria consulta de CPF alheio.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet("cpf-cnpj/{cpfCnpj}")]
     public async Task<IActionResult> ObterPorCpfCnpj([FromRoute] string cpfCnpj, CancellationToken cancellationToken)
     {

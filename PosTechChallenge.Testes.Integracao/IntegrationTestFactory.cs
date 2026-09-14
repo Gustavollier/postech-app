@@ -101,6 +101,33 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>, IAs
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    /// <summary>
+    /// Token equivalente ao que a funcao de autenticacao por CPF emite: papel
+    /// "Cliente" e o id do cliente em "ClienteId". E com ele que se verifica
+    /// que um cliente nao alcanca dado de outro.
+    /// </summary>
+    public static string GerarTokenCliente(int clienteId)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, clienteId.ToString()),
+            new Claim(ClaimTypes.Role, "Cliente"),
+            new Claim("ClienteId", clienteId.ToString()),
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: "PosTechChallenge",
+            audience: "PosTechChallenge-API",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     private async Task AguardarBancoDisponivelAsync(int tentativas = 30, int intervaloMs = 2000)
     {
         for (var i = 1; i <= tentativas; i++)
