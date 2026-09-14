@@ -28,8 +28,10 @@ env:
   CPF_VALIDO: "98765432100"
   CPF_INVALIDO: "12345678901"
   # Maria Oliveira e o cliente 3 no seed; Carlos Mendes e o gerente.
+  # Os CPFs do seed sao validos: o login recusa documento malformado antes
+  # mesmo de consultar o banco.
   CLIENTE_ID: "3"
-  CPF_FUNCIONARIO: "11111111111"
+  CPF_FUNCIONARIO: "11144477735"
   SENHA_FUNCIONARIO: "Senha@123"
 
 permissions:
@@ -253,13 +255,19 @@ jobs:
           fi
 
           echo "--- login de funcionario ---"
-          tokf=$(curl -s --max-time 30 -X POST \
+          # Codigo e corpo registrados: sem eles, "nao devolveu token" nao
+          # distingue CPF recusado na validacao (400) de senha errada (401).
+          bruto=$(curl -s -w $'\n%{http_code}' --max-time 30 -X POST \
                    "${{ env.APIM_GATEWAY }}/api/v1/Autenticacao/login" \
                    -H "Content-Type: application/json" \
-                   -d "{\"cpf\":\"$CPF_FUNCIONARIO\",\"senha\":\"$SENHA_FUNCIONARIO\"}" \
-                 | jq -r '.accessToken // empty' 2>/dev/null || true)
+                   -d "{\"cpf\":\"$CPF_FUNCIONARIO\",\"senha\":\"$SENHA_FUNCIONARIO\"}" || true)
+          codigo=$(echo "$bruto" | tail -1)
+          corpo=$(echo "$bruto" | sed '$d')
+          echo "HTTP ${codigo:-sem resposta} | corpo: ${corpo:-vazio}"
+
+          tokf=$(echo "$corpo" | jq -r '.accessToken // empty' 2>/dev/null || true)
           if [ -z "$tokf" ]; then
-            echo "::error::O login de funcionario nao devolveu token."
+            echo "::error::O login de funcionario nao devolveu token (HTTP ${codigo:-sem resposta})."
             exit 1
           fi
           echo "Token de funcionario emitido (${#tokf} caracteres)."
