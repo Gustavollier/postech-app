@@ -15,5 +15,8 @@ namespace PosTechChallenge.Dominio.Model
         public ECargoFuncionario Cargo { get; set; }
 
         public int ValorHora { get; set; }
+
+        /// <summary>Desativado nao aparece em listagem, busca nem login.</summary>
+        public bool Ativo { get; set; } = true;
     }
 }

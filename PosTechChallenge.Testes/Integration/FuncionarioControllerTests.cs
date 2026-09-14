@@ -131,18 +131,31 @@ public class FuncionarioControllerTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task Deletar_GerenteValido_DeveRetornar200()
+    public async Task Desativar_GerenteValido_DeveRetornar200()
     {
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             CustomWebApplicationFactory.GerarToken("Gerente"));
         _factory.FuncionarioServiceMock
             .Setup(s => s.DeletarAsync(CpfValido, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Resultado.Sucesso("Funcionario deletado com sucesso."));
+            .ReturnsAsync(Resultado.Sucesso("Funcionário desativado com sucesso."));
 
         var response = await _client.DeleteAsync($"/api/v1/Funcionario?cpf={CpfValido}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Desativar_ComTokenDeCliente_DeveRetornar403()
+    {
+        using var clienteCliente = _factory.CreateClient();
+        clienteCliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarToken("Cliente"));
+
+        var response = await clienteCliente.DeleteAsync($"/api/v1/Funcionario?cpf={CpfValido}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     private static CriarFuncionarioBody CriarBody() => new(

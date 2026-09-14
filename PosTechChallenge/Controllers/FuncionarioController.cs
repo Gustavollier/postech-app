@@ -171,9 +171,12 @@ public class FuncionarioController : ControllerBase
         return Ok(new { message = resultado.Message });
     }
 
+    // Desativacao, como em Cliente e Pecas: o cadastro sai das listagens e do
+    // login, mas continua no banco com o historico intacto. Um DELETE de verdade
+    // nunca chegou a funcionar aqui — a FK do login sempre barrava.
     [Authorize(Roles = "Gerente")]
     [HttpDelete]
-    public async Task<IActionResult> Deletar([FromQuery] string cpf, CancellationToken cancellationToken)
+    public async Task<IActionResult> Desativar([FromQuery] string cpf, CancellationToken cancellationToken)
     {
         var validacaoCpf = ValidarCpf(cpf);
         if (validacaoCpf != null)
