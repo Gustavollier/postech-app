@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Peca;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Peca;
 using PosTechChallenge.Dtos.Responses.Peca;
@@ -39,6 +40,8 @@ public class PecasController : ControllerBase
         return Created(string.Empty, new { message = resultado.Message });
     }
 
+    // Catálogo com preço e nível de estoque é informação operacional da oficina.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet]
     public async Task<IActionResult> ObterTodos([FromQuery] bool estoqueBaixo = false, [FromQuery] int limiteEstoqueBaixo = 10)
     {

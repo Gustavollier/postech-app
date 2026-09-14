@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.OrdemServico;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dominio.Results;
 using PosTechChallenge.Dtos.Requests.OrdemServico;
@@ -37,6 +38,8 @@ public sealed class OrdemServicoController : ControllerBase
         return Created(string.Empty, new { message = resultado.Message });
     }
 
+    // Panorama da oficina inteira: operacao, nao consulta de cliente.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet]
     public async Task<IActionResult> ObterTodosAsync([FromQuery] EStatusOrdemServico? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
@@ -50,6 +53,7 @@ public sealed class OrdemServicoController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet("ordenado-por-status")]
     public async Task<IActionResult> ObterOrdenadoPorStatusAsync()
     {
@@ -66,6 +70,12 @@ public sealed class OrdemServicoController : ControllerBase
     [HttpGet("cliente/{idCliente:int}")]
     public async Task<IActionResult> ObterPorClienteIdAsync([FromRoute] int idCliente, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
+        // Sem esta checagem, trocar o id na URL entregaria as ordens de outro
+        // cliente a quem tivesse qualquer token valido.
+        if (User.ClienteAcessandoOutro(idCliente))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Voce so pode consultar as proprias ordens de servico." });
+
         Resultado<IEnumerable<ObterOrdemServicoDto>> resultado = await _ordemServicoService.ObterPorClienteIdAsync(idCliente, pageSize, page);
 
         if (resultado.IsValid is false)
@@ -94,6 +104,12 @@ public sealed class OrdemServicoController : ControllerBase
 
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
+
+        // A posse so pode ser verificada depois de carregar a ordem, porque e o
+        // registro que diz de quem ela e.
+        if (User.ClienteAcessandoOutro(resultado.Output!.IdCliente))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Esta ordem de servico pertence a outro cliente." });
 
         return Ok(MapearParaResponse(resultado.Output!));
     }

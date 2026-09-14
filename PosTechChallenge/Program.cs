@@ -13,6 +13,8 @@ using PosTechChallenge.Middleware;
 using PosTechChallenge.Monitoring;
 using System.Text;
 
+using PosTechChallenge.Autorizacao;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Logs estruturados em JSON fora de Development: é o formato que o agente do
@@ -137,6 +139,12 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
+
+    // Estar autenticado nao basta para as rotas da operacao. O token de cliente,
+    // emitido pela funcao de autenticacao por CPF, carrega role "Cliente" e nao
+    // satisfaz esta policy — ele so alcanca o proprio cadastro e as proprias
+    // ordens, com a checagem de posse feita no controller.
+    options.AddPolicy(Perfis.Equipe, politica => politica.RequireRole(Perfis.Cargos));
 });
 SqlMapper.AddTypeHandler(new PlacaDapper());
 
