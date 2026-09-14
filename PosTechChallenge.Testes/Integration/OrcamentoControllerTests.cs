@@ -1,5 +1,6 @@
 using Moq;
 using PosTechChallenge.Aplicacao.Dto.Orcamento;
+using PosTechChallenge.Aplicacao.Dto.OrdemServico;
 using PosTechChallenge.Dominio.Results;
 using System.Net;
 using System.Net.Http.Headers;
@@ -24,9 +25,20 @@ public sealed class OrcamentoControllerTests : IClassFixture<CustomWebApplicatio
     }
 
     [Fact]
-    public async Task ObterPorOrdemServicoId_SemToken_DeveRetornar200()
+    public async Task ObterPorOrdemServicoId_SemToken_DeveRetornar401()
     {
+        // A rota era anonima: sem token nenhum dava para varrer os ids e ler o
+        // valor fechado de qualquer ordem da oficina.
         _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.GetAsync("/api/v1/orcamentos/os/1");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ObterPorOrdemServicoId_ComToken_DeveRetornar200()
+    {
         _factory.OrcamentoServiceMock
             .Setup(s => s.ObterPorOrdemServicoIdAsync(1))
             .ReturnsAsync(Resultado<ObterOrcamentoDto>.Sucesso(CriarOrcamentoDto()));
@@ -39,9 +51,43 @@ public sealed class OrcamentoControllerTests : IClassFixture<CustomWebApplicatio
     }
 
     [Fact]
+    public async Task ObterPorOrdemServicoId_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        _factory.OrdemServicoServiceMock
+            .Setup(s => s.ObterPorIdAsync(1))
+            .ReturnsAsync(Resultado<ObterOrdemServicoDto>.Sucesso(new ObterOrdemServicoDto { Id = 1, IdCliente = 7 }));
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await _client.GetAsync("/api/v1/orcamentos/os/1");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ObterPorOrdemServicoId_ComTokenDoProprioCliente_NaoDeveNegar()
+    {
+        _factory.OrdemServicoServiceMock
+            .Setup(s => s.ObterPorIdAsync(1))
+            .ReturnsAsync(Resultado<ObterOrdemServicoDto>.Sucesso(new ObterOrdemServicoDto { Id = 1, IdCliente = 3 }));
+        _factory.OrcamentoServiceMock
+            .Setup(s => s.ObterPorOrdemServicoIdAsync(1))
+            .ReturnsAsync(Resultado<ObterOrcamentoDto>.Sucesso(CriarOrcamentoDto()));
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await _client.GetAsync("/api/v1/orcamentos/os/1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ObterPorOrdemServicoId_OrcamentoNaoEncontrado_DeveRetornar404()
     {
-        _client.DefaultRequestHeaders.Authorization = null;
         _factory.OrcamentoServiceMock
             .Setup(s => s.ObterPorOrdemServicoIdAsync(99))
             .ReturnsAsync(Resultado<ObterOrcamentoDto>.Falha("Orcamento da OS 99 nao encontrado."));
@@ -92,16 +138,43 @@ public sealed class OrcamentoControllerTests : IClassFixture<CustomWebApplicatio
     }
 
     [Fact]
-    public async Task Responder_SemToken_DeveRetornar200()
+    public async Task Responder_SemToken_DeveRetornar401()
     {
+        // Era anonima: qualquer um aprovava o orcamento de qualquer ordem, sem
+        // token, so com o id na URL.
         _client.DefaultRequestHeaders.Authorization = null;
-        _factory.OrcamentoServiceMock
-            .Setup(s => s.ResponderAsync(1, It.IsAny<ResponderOrcamentoDto>()))
-            .ReturnsAsync(Resultado.Sucesso("Resposta registrada."));
 
         var response = await _client.PostAsJsonAsync("/api/v1/orcamentos/os/1/responder", new { Status = (int)EStatusOrcamento.Aprovado });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Responder_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        _factory.OrdemServicoServiceMock
+            .Setup(s => s.ObterPorIdAsync(1))
+            .ReturnsAsync(Resultado<ObterOrdemServicoDto>.Sucesso(new ObterOrdemServicoDto { Id = 1, IdCliente = 7 }));
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await _client.PostAsJsonAsync("/api/v1/orcamentos/os/1/responder", new { Status = (int)EStatusOrcamento.Aprovado });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Calcular_ComTokenDeCliente_DeveRetornar403()
+    {
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            CustomWebApplicationFactory.GerarTokenCliente(3));
+
+        var response = await _client.PostAsync("/api/v1/orcamentos/os/1/calcular", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     private static ObterOrcamentoDto CriarOrcamentoDto()

@@ -19,6 +19,8 @@ public class PecasController : ControllerBase
         _pecaService = pecaService;
     }
 
+    // Catalogo e estoque sao da operacao.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarPecaBodyRequest bodyRequest)
     {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.ItemOS;
 using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Dtos.Requests.ItemOS;
 using PosTechChallenge.Dtos.Responses.ItemOS;
 
@@ -12,12 +13,27 @@ namespace PosTechChallenge.Controllers;
 public sealed class ItensOSController : ControllerBase
 {
     private readonly IItemOSService _itemOSService;
+    // O item so conhece o IdOS. De quem e a ordem, quem responde e a ordem.
+    private readonly IOrdemServicoService _ordemServicoService;
 
-    public ItensOSController(IItemOSService itemOSService)
+    public ItensOSController(IItemOSService itemOSService, IOrdemServicoService ordemServicoService)
     {
         _itemOSService = itemOSService;
+        _ordemServicoService = ordemServicoService;
     }
 
+    private async Task<IActionResult?> NegarSeOrdemDeOutroClienteAsync(int ordemServicoId)
+    {
+        if (await User.ClienteAcessandoOrdemDeOutroAsync(_ordemServicoService, ordemServicoId))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Esta ordem de servico pertence a outro cliente." });
+
+        return null;
+    }
+
+    // Sem atributo, caia na FallbackPolicy: um cliente autenticado lancava item
+    // em ordem de qualquer um. Lancar peca e hora e trabalho da oficina.
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpPost]
     public async Task<IActionResult> Criar([FromRoute] int ordemServicoId, [FromBody] CriarItemOSBodyRequest bodyRequest)
     {
@@ -39,9 +55,13 @@ public sealed class ItensOSController : ControllerBase
         return Created(string.Empty, new { message = resultado.Message });
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> ObterPorOrdemServicoId([FromRoute] int ordemServicoId)
     {
+        if (await NegarSeOrdemDeOutroClienteAsync(ordemServicoId) is { } negado)
+            return negado;
+
         var resultado = await _itemOSService.ObterPorOrdemServicoIdAsync(ordemServicoId);
 
         if (!resultado.IsValid)
@@ -51,9 +71,13 @@ public sealed class ItensOSController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId([FromRoute] int ordemServicoId, [FromRoute] int id)
     {
+        if (await NegarSeOrdemDeOutroClienteAsync(ordemServicoId) is { } negado)
+            return negado;
+
         var resultado = await _itemOSService.ObterPorIdAsync(ordemServicoId, id);
 
         if (!resultado.IsValid)

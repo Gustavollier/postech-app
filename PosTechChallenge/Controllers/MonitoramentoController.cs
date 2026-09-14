@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Monitoring;
 
 namespace PosTechChallenge.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = Perfis.Equipe)]
 [Route("api/v1/monitoramento")]
 public sealed class MonitoramentoController : ControllerBase
 {
