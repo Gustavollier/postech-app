@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Veiculo;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Aplicacao.Interface.Services;
 using PosTechChallenge.Dtos.Requests.Veiculo;
 using PosTechChallenge.Dtos.Responses.Veiculo;
@@ -51,6 +52,12 @@ public class VeiculoController : ControllerBase
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
 
+        // A posse so pode ser conferida depois de carregar: e o registro que
+        // diz de quem o veiculo e.
+        if (User.ClienteAcessandoOutro(resultado.Output!.ClienteId))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Este veiculo pertence a outro cliente." });
+
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
@@ -65,12 +72,22 @@ public class VeiculoController : ControllerBase
         if (!resultado.IsValid)
             return NotFound(new { message = resultado.Message });
 
+        if (User.ClienteAcessandoOutro(resultado.Output!.ClienteId))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Este veiculo pertence a outro cliente." });
+
         return Ok(MapearParaResponse(resultado.Output!));
     }
 
     [HttpGet("/api/v1/clientes/{clienteId:int}/veiculos")]
     public async Task<IActionResult> ObterPorClienteId([FromRoute] int clienteId)
     {
+        // Mesma regra das ordens: trocar o id na URL nao pode entregar a frota
+        // de outro cliente.
+        if (User.ClienteAcessandoOutro(clienteId))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Voce so pode consultar os proprios veiculos." });
+
         var resultado = await _veiculoService.ObterPorClienteIdAsync(clienteId);
 
         if (!resultado.IsValid)

@@ -95,6 +95,28 @@ public sealed class AutorizacaoIntegracaoTests
     }
 
     [Fact]
+    public async Task VeiculosDeOutroCliente_ComTokenDeCliente_DeveNegar()
+    {
+        // A listagem de veículos por cliente tinha a mesma brecha das ordens:
+        // bastava trocar o id na URL para ver a frota alheia.
+        var resposta = await ObterAsync(
+            $"/api/v1/clientes/{OutroCliente}/veiculos",
+            IntegrationTestFactory.GerarTokenCliente(ClienteDoToken));
+
+        Assert.Equal(HttpStatusCode.Forbidden, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task PropriosVeiculos_ComTokenDeCliente_NaoDeveNegar()
+    {
+        var resposta = await ObterAsync(
+            $"/api/v1/clientes/{ClienteDoToken}/veiculos",
+            IntegrationTestFactory.GerarTokenCliente(ClienteDoToken));
+
+        Assert.NotEqual(HttpStatusCode.Forbidden, resposta.StatusCode);
+    }
+
+    [Fact]
     public async Task CadastroDeOutroCliente_ComTokenDeCliente_DeveNegar()
     {
         var resposta = await ObterAsync(
