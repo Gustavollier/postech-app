@@ -31,7 +31,7 @@ public class DeletarFuncionarioUseCase
             await _funcionarioRepositorio.DeletarAsync(funcionario.Id, cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
 
-            return Resultado.Sucesso("Funcionário deletado com sucesso.");
+            return Resultado.Sucesso("Funcionário desativado com sucesso.");
         }
         catch (Exception ex)
         {

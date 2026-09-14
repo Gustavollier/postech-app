@@ -96,7 +96,7 @@ public sealed class FuncionariosRepositorio : IFuncionarioRepositorio
     {
         var connection = await _session.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
         var command = new CommandDefinition(
-            FuncionarioQuerys.DELETAR,
+            FuncionarioQuerys.DESATIVAR,
             new { Id = id },
             transaction: _session.Transaction,
             cancellationToken: cancellationToken);
