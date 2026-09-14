@@ -20,6 +20,22 @@ public sealed class FuncionarioIntegracaoTests
         _client = factory.CreateClient();
     }
 
+    /// <summary>
+    /// Cadastrar equipe passou a exigir cargo Gerente: antes a rota caía na
+    /// FallbackPolicy e qualquer token autenticado — inclusive o de cliente —
+    /// criava um funcionário.
+    /// </summary>
+    private Task<HttpResponseMessage> CriarComoGerenteAsync(object corpo)
+    {
+        var requisicao = new HttpRequestMessage(HttpMethod.Post, "/api/v1/Funcionario")
+        {
+            Content = JsonContent.Create(corpo)
+        };
+        requisicao.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", IntegrationTestFactory.GerarToken());
+        return _client.SendAsync(requisicao);
+    }
+
     [Fact]
     public async Task Criar_DeveComitarFuncionarioESegurancaNaMesmaTransacao()
     {
@@ -36,7 +52,7 @@ public sealed class FuncionarioIntegracaoTests
             ConfirmacaoSenha = "Senha@123"
         };
 
-        var criar = await _client.PostAsJsonAsync("/api/v1/Funcionario", body);
+        var criar = await CriarComoGerenteAsync(body);
 
         Assert.Equal(HttpStatusCode.Created, criar.StatusCode);
 
@@ -65,7 +81,7 @@ public sealed class FuncionarioIntegracaoTests
             Senha = "Senha@123",
             ConfirmacaoSenha = "Senha@123"
         };
-        await _client.PostAsJsonAsync("/api/v1/Funcionario", body);
+        await CriarComoGerenteAsync(body);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/Funcionario/cpf?cpf={CpfValido}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", IntegrationTestFactory.GerarToken());

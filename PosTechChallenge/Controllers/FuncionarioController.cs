@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PosTechChallenge.Aplicacao.Dto.Funcionario;
 using PosTechChallenge.Aplicacao.Interface.Services;
+using PosTechChallenge.Autorizacao;
 using PosTechChallenge.Dtos.Requests.Funcionario;
 using PosTechChallenge.Dtos.Responses.Funcionario;
 using PosTechChallenge.Dominio.ValueObjects;
@@ -20,6 +21,12 @@ public class FuncionarioController : ControllerBase
         _funcionarioService = funcionarioService;
     }
 
+    // Sem atributo, esta rota caia na FallbackPolicy — apenas "estar autenticado".
+    // Um token de cliente satisfaz isso, e com ele dava para criar um funcionario
+    // com cargo Gerente e depois entrar como ele: escalacao de privilegio que
+    // anulava todas as outras checagens. Cadastrar equipe e ato de gerente, como
+    // atualizar e excluir ja eram.
+    [Authorize(Roles = "Gerente")]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarFuncionarioBodyRequest bodyRequest, CancellationToken cancellationToken)
     {
@@ -45,6 +52,7 @@ public class FuncionarioController : ControllerBase
         return Created(string.Empty, new { message = resultado.Message });
     }
 
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet]
     public async Task<IActionResult> ObterTodos(CancellationToken cancellationToken)
     {
@@ -66,6 +74,7 @@ public class FuncionarioController : ControllerBase
         return Ok(responses);
     }
 
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId(int id, CancellationToken cancellationToken)
     {
@@ -87,6 +96,7 @@ public class FuncionarioController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet("cpf")]
     public async Task<IActionResult> ObterPorCpf([FromQuery] string cpf, CancellationToken cancellationToken)
     {
@@ -112,6 +122,7 @@ public class FuncionarioController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Policy = Perfis.Equipe)]
     [HttpGet("nome")]
     public async Task<IActionResult> ObterPorNome([FromQuery] string nome, CancellationToken cancellationToken)
     {
