@@ -381,7 +381,7 @@ terraform destroy
 
 ```
 ├── .github/workflows/ci-cd.yml     # Pipeline CI/CD (build, testes, imagem no ACR, deploy no AKS, smoke test)
-├── Doc/                            # Documentação (Event Storming, diagramas DDD, OpenAPI, relatórios OWASP/SonarQube)
+├── Documents/                      # Documentação do Desafio
 ├── PosTechChallenge/               # API Web — adapter de entrada (Controllers, Middlewares, Autorização, DTOs)
 ├── PosTechChallenge.Applicacao/    # Camada de aplicação (Use Cases, Services, Mappers)
 ├── PosTechChallenge.Dominio/       # Núcleo do domínio (Entidades, VOs, Domain Services, Ports)
