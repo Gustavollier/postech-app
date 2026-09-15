@@ -176,7 +176,7 @@ Fluxo completo (CPF → token → rota protegida) documentado, com diagrama de s
 
 ### 🔗 Collection completa das APIs (Swagger / OpenAPI)
 
-- **Especificação OpenAPI:** [`Swagger`](http://52.186.34.146/swagger/index.html)
+- **Especificação OpenAPI:** [`Swagger`](Documents/openapi.json)
 
 ---
 
@@ -223,7 +223,7 @@ O compose irá: (1) iniciar o **SQL Server 2022**; (2) aguardar o banco ficar sa
 Acesse o Swagger em:
 
 ```
-http://52.186.34.146/swagger/index.html
+Documents/openapi.json
 ```
 
 ### Testes
