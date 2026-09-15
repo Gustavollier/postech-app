@@ -1,0 +1,69 @@
+sequenceDiagram
+    autonumber
+    actor C as Cliente (App)
+    actor R as Colaborador (Recepção)
+    participant GW as Azure API Management
+    participant F as Auth Function (Container App)
+    participant API as postechallenge-api (AKS)
+    participant DB as Azure SQL Database
+
+    rect rgb(253, 238, 231)
+    Note over C,DB: Etapa 1 — Autenticação (dois emissores, mesmo segredo HMAC)
+    par Cliente — CPF, sem senha
+        C ->> GW: POST /auth { cpf }
+        GW ->> GW: rate-limit-by-key (10/min por IP) + X-Correlation-ID
+        GW ->> F: POST /api/auth (rewrite-uri)
+        F ->> F: valida dígitos verificadores do CPF
+        alt CPF inválido
+            F -->> C: 400 { message, correlationId }
+        else CPF válido
+            F ->> DB: SELECT Cliente WHERE CPF = @Cpf
+            DB -->> F: Cliente { Id, Ativo, Nome }
+            alt não encontrado
+                F -->> C: 404
+            else inativo
+                F -->> C: 403
+            else ativo
+                F ->> F: assina JWT — role=Cliente, ClienteId, cpf, name<br/>exp=15min
+                F -->> C: 200 { access_token, cliente_id, nome }
+            end
+        end
+    and Colaborador — CPF + senha
+        R ->> GW: POST /api/v1/autenticacao/login { cpf, senha }
+        GW ->> GW: rate-limit-by-key (120/min) + X-Correlation-ID
+        GW ->> API: encaminha via Service LoadBalancer
+        API ->> DB: SELECT Funcionario + Seguranca WHERE CPF = @Cpf
+        DB -->> API: Funcionario { Id, Ativo, Cargo, SenhaHash }
+        API ->> API: confere BCrypt(senha) — rate limiting de login por CPF
+        alt credenciais inválidas ou funcionário inativo
+            API -->> R: 401 { message }
+        else válidas
+            API ->> API: assina JWT — role = cargo do funcionário, FuncionarioId<br/>exp=15min
+            API -->> R: 200 { accessToken, refreshToken, cargo }
+        end
+    end
+    end
+
+    rect rgb(234, 245, 238)
+    Note over R,API: Etapa 2 — Abertura de Ordem de Serviço (exige perfil de equipe)
+    R ->> GW: POST /api/v1/ordens-servico<br/>Authorization: Bearer access_token
+    GW ->> GW: rate-limit-by-key (120/min) + X-Correlation-ID
+    GW ->> GW: validate-jwt (issuer, audience, chave HMAC do Key Vault)
+    alt token ausente, expirado ou inválido
+        GW -->> R: 401 "Token inválido ou ausente."
+    else token válido
+        GW ->> API: encaminha via Service LoadBalancer
+        API ->> API: JwtBearer middleware revalida o mesmo token (defesa em profundidade)
+        API ->> API: [Authorize(Policy = Equipe)] — exige role de cargo de funcionário
+        alt token é de Cliente (role=Cliente)
+            API -->> GW: 403 "Perfil não autorizado."
+            GW -->> C: 403 (cliente não abre OS diretamente — passa pela recepção)
+        else token é de colaborador com cargo válido
+            API ->> API: CriarOrdemServicoUseCase — valida cliente/veículo/funcionário
+            API ->> DB: INSERT OrdemServico (Status = Recebida)
+            DB -->> API: Id da nova OS
+            API -->> GW: 201 Created { message }
+            GW -->> R: 201 Created
+        end
+    end
+    end

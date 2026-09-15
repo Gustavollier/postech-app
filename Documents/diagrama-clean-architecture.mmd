@@ -1,0 +1,20 @@
+graph TB
+    subgraph EXT["🌐 Frameworks & Drivers"]
+        direction LR
+        API["PosTechChallenge<br/>(API Web)<br/>Controllers · Middlewares<br/>DTOs Request/Response"]
+        INFRA["PosTechChallenge.Infraestrutura<br/>Repositórios Dapper<br/>Queries SQL · Azure SQL Database"]
+    end
+    subgraph APPL["⚙️ Aplicação"]
+        APP["PosTechChallenge.Applicacao<br/>Use Cases · Services · DTOs · Mappers"]
+    end
+    subgraph DOM_S["💎 Domínio (núcleo)"]
+        DOM["PosTechChallenge.Dominio<br/>Entidades · Value Objects<br/>Domain Services · Ports (interfaces)"]
+    end
+
+    API --> APP
+    APP --> DOM
+    INFRA -. implementa os ports .-> DOM
+
+    style EXT fill:#f7f9fc,stroke:#8095b8,stroke-width:1.5px
+    style APPL fill:#eaf5ee,stroke:#3f8752,stroke-width:1.5px
+    style DOM_S fill:#1F3864,stroke:#1F3864,stroke-width:1.5px,color:#ffffff

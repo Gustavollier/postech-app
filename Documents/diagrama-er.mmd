@@ -1,0 +1,128 @@
+erDiagram
+    UNIDADE {
+        int Id PK
+        nvarchar Nome
+        nvarchar CNPJ UK "novo — identifica a filial"
+        nvarchar Cidade
+        char UF
+        bit Ativo
+    }
+
+    FUNCIONARIO {
+        int Id PK
+        int UnidadeId FK "novo — lotação do colaborador"
+        nvarchar Nome
+        nvarchar CPF UK "ajuste — hoje sem unicidade"
+        int Cargo
+        decimal ValorHora
+        bit Ativo "já implementado — desativação em vez de DELETE"
+    }
+
+    SEGURANCA {
+        int Id PK
+        int FuncionarioId FK, UK
+        nvarchar SenhaHash
+        datetime CriadoEm
+    }
+
+    CLIENTE {
+        int Id PK
+        nvarchar CPF UK "ajuste — hoje sem unicidade"
+        nvarchar CNPJ UK "ajuste — hoje sem unicidade"
+        nvarchar NomeCompleto
+        nvarchar Telefone
+        nvarchar Email
+        bit Ativo
+    }
+
+    VEICULO {
+        int Id PK
+        int ClienteId FK
+        nvarchar Marca
+        nvarchar Modelo
+        nvarchar Placa
+        int AnoModelo
+        int KmEntrada
+        bit Ativo
+    }
+
+    ORDEMSERVICO {
+        int Id PK
+        int IdCliente FK
+        int IdVeiculo FK
+        int IdFuncionario FK
+        int UnidadeId FK "novo — filial de execução"
+        int Status
+        datetime CriadoEm
+        datetime AtualizadoEm
+    }
+
+    ITENS {
+        int Id PK
+        int IdOS FK
+        int TipoItem "0=MaoDeObra 1=Peca — CHECK novo garante exclusividade"
+        int QuantidadeItem
+        int IdFuncionario FK "obrigatório quando TipoItem=0"
+        int IdPeca FK "obrigatório quando TipoItem=1"
+    }
+
+    STATUS {
+        int Id PK
+        int IdOS FK
+        int IdFuncionario FK
+        int StatusAtual
+        datetime UpdatedAt
+    }
+
+    ORCAMENTO {
+        int Id PK
+        int IdOS FK, UK
+        decimal ValorMaoDeObra
+        decimal ValorPecas
+        decimal ValorTotal
+        int Status
+        datetime CriadoEm
+    }
+
+    PECA {
+        int Id PK
+        nvarchar Nome
+        nvarchar Marca
+        nvarchar Codigo UK
+        decimal Preco
+        int UnidadeMedida
+        bit Ativo
+    }
+
+    ESTOQUEPECA {
+        int Id PK
+        int PecaId FK
+        int UnidadeId FK "novo — estoque passa a ser por filial"
+        int QuantidadeEstoque
+    }
+
+    EMAILOUTBOX {
+        int Id PK
+        nvarchar Destinatario
+        nvarchar Assunto
+        nvarchar Corpo
+        int Status
+        int Tentativas
+        datetime CriadoEm
+    }
+
+    UNIDADE ||--o{ FUNCIONARIO : "lota"
+    UNIDADE ||--o{ ORDEMSERVICO : "executa em"
+    UNIDADE ||--o{ ESTOQUEPECA : "mantém estoque em"
+    FUNCIONARIO ||--o| SEGURANCA : "autentica via"
+    CLIENTE ||--o{ VEICULO : "possui"
+    CLIENTE ||--o{ ORDEMSERVICO : "solicita"
+    VEICULO ||--o{ ORDEMSERVICO : "é objeto de"
+    FUNCIONARIO ||--o{ ORDEMSERVICO : "é responsável por"
+    ORDEMSERVICO ||--o{ ITENS : "contém"
+    ORDEMSERVICO ||--o{ STATUS : "tem histórico de"
+    ORDEMSERVICO ||--o| ORCAMENTO : "gera"
+    FUNCIONARIO ||--o{ ITENS : "lança mão de obra em"
+    FUNCIONARIO ||--o{ STATUS : "registra transição de"
+    PECA ||--o{ ITENS : "é consumida em"
+    PECA ||--o{ ESTOQUEPECA : "tem saldo controlado em"
