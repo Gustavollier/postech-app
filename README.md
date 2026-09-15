@@ -411,13 +411,7 @@ terraform destroy
 <!-- TODO: gravar e publicar o vídeo (YouTube ou Vimeo, público ou não listado, até 15 min) -->
 📺 **Link:** `[INSERIR LINK DO VÍDEO — YouTube/Vimeo]`
 
-O vídeo demonstra:
 
-1. A arquitetura de nuvem em produção (APIM, AKS, Auth Function, Azure SQL Database);
-2. Execução do pipeline de CI/CD desta API, do build ao deploy no AKS;
-3. Autenticação por CPF na Auth Function e login de funcionário nesta API;
-4. Consumo das rotas protegidas (abertura de OS, consulta de status, aprovação de orçamento), respeitando os escopos de cada perfil;
-5. Escalabilidade automática via HPA sob carga simulada.
 
 ---
 
