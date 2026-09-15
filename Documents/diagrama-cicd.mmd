@@ -1,0 +1,5 @@
+graph TD
+    A["Push / PR (GitHub)"] --> B["Build & Test<br/>restore · build Release<br/>testes unitários + cobertura"]
+    B -->|"push em main/develop"| C["Login Azure via OIDC<br/>build & push da imagem → ACR"]
+    C --> D["Deploy no AKS<br/>kustomize build k8s/azure | kubectl apply"]
+    D --> E["Smoke test<br/>CPF → JWT → rota protegida, via APIM real"]

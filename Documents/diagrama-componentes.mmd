@@ -1,0 +1,63 @@
+graph TB
+    CLIENTE["📱 Cliente da oficina<br/>App / Portal Web"]
+    COLAB["💻 Colaborador<br/>(mecânico, recepção, gerência)"]
+
+    subgraph AZURE["Azure — Resource Group pos-tech-fiap"]
+        direction TB
+
+        subgraph GW["Borda — eastus"]
+            APIM["🚪 Azure API Management (Developer)<br/>recurso reaproveitado via import<br/>2 APIs: postechallenge-api · postechallenge-auth<br/>validate-jwt · rate-limit · CORS · X-Correlation-ID"]
+        end
+
+        subgraph AKS["AKS — eastus · 2 nós fixos Standard_D2as_v7<br/>(sem cluster autoscaler — teto de quota 4 vCPU)"]
+            direction TB
+            SVC["Service LoadBalancer<br/>(sem ingress-nginx — APIM termina o TLS)"]
+            DEPLOY["Deployment postechallenge-api<br/>2 réplicas base · RollingUpdate maxSurge1/maxUnavailable0"]
+            HPA["HPA — CPU alvo 70%<br/>min 2 / max 5 réplicas"]
+            DDAGENT["Datadog Cluster Agent (Helm)<br/>+ admission controller injeta tracer .NET"]
+            SVC --> DEPLOY
+            HPA -.escala.-> DEPLOY
+            DDAGENT -.instrumenta.-> DEPLOY
+        end
+
+        subgraph ACA["Container Apps — centralus · escala 0→3"]
+            FUNC["λ Auth Function (Container App)<br/>.NET 8 isolated worker<br/>POST /api/auth · GET /api/health<br/>identidade gerenciada dedicada (user-assigned)"]
+        end
+
+        SQLDB[("🗄️ Azure SQL Database<br/>Basic — 5 DTU / 2 GB · centralus<br/>zone_redundant=false")]
+
+        KV["🔑 Azure Key Vault (eastus)<br/>SqlConnectionString · JwtSecretKey<br/>RBAC authorization"]
+
+        ACR["📦 Azure Container Registry (Basic, eastus)"]
+
+        LOGAN["Log Analytics Workspace<br/>postech-logs · retenção 30 dias"]
+
+        DATADOG["Datadog (SaaS)<br/>Dashboards · Monitors (e-mail) · Synthetics (5 min)"]
+
+        APIM -- "rotas da API<br/>(path vazio)" --> SVC
+        APIM -- "rota /auth<br/>(rewrite-uri → /api/auth)" --> FUNC
+
+        DEPLOY -- "Dapper / T-SQL" --> SQLDB
+        FUNC -- "Dapper / T-SQL" --> SQLDB
+
+        KV -. "lido pelo Terraform no apply<br/>(vira K8s Secret)" .-> DEPLOY
+        KV -. "lido pelo Terraform no apply<br/>(vira Container App secret)" .-> FUNC
+
+        ACR -. "AcrPull (kubelet identity)" .-> DEPLOY
+        ACR -. "AcrPull (identidade gerenciada)" .-> FUNC
+
+        APIM -- "diagnostic setting<br/>GatewayLogs + AllMetrics" --> LOGAN
+        LOGAN -- "forwarder" --> DATADOG
+        DDAGENT -- "logs JSON + traces" --> DATADOG
+        FUNC -. "log forwarding" .-> DATADOG
+        DATADOG -. "synthetics a cada 5 min" .-> APIM
+        DATADOG -. "synthetics a cada 5 min" .-> FUNC
+    end
+
+    CLIENTE -- "HTTPS" --> APIM
+    COLAB -- "HTTPS" --> APIM
+
+    style AZURE fill:#f7f9fc,stroke:#8095b8,stroke-width:1.5px
+    style AKS fill:#eaf5ee,stroke:#3f8752,stroke-width:1.5px
+    style ACA fill:#fdeee7,stroke:#c97b52,stroke-width:1.5px
+    style GW fill:#eef2f9,stroke:#3b5b92,stroke-width:1.5px

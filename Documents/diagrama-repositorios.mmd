@@ -1,0 +1,28 @@
+graph TB
+    CLI["Cliente / Colaborador"] -- HTTPS --> APIM["Azure API Management"]
+    APIM -- "/auth" --> FUNC["postech-auth-function<br/>Auth Function (.NET 8 isolated)"]
+    APIM -- "demais rotas" --> APP["postech-app<br/>API principal (.NET 10)<br/>Deployment + HPA no AKS"]
+    FUNC --> DB[("Azure SQL Database")]
+    APP --> DB
+
+    subgraph PROV["Provisionamento (Terraform)"]
+        direction LR
+        DBREPO["postech-infra-db<br/>Azure SQL Database · Key Vault"]
+        K8SREPO["postech-infra-k8s<br/>AKS · APIM · Container Apps · Datadog"]
+    end
+
+    DBREPO -. "cria" .-> DB
+    DBREPO -. "cria" .-> KV["Azure Key Vault<br/>connection string + segredo JWT"]
+    K8SREPO -. "provisiona" .-> APIM
+    K8SREPO -. "provisiona" .-> FUNC
+    K8SREPO -. "provisiona" .-> AKSNODE["AKS<br/>(roda o Deployment de postech-app)"]
+
+    KV -. "lido pelo Terraform<br/>no apply" .-> APIM
+    KV -. "lido pelo Terraform<br/>no apply" .-> APP
+    KV -. "lido pelo Terraform<br/>no apply" .-> FUNC
+
+    style APP fill:#eaf5ee,stroke:#3f8752,stroke-width:1.5px
+    style FUNC fill:#fdeee7,stroke:#c97b52,stroke-width:1.5px
+    style PROV fill:#eef2f9,stroke:#3b5b92,stroke-width:1.5px
+    style DBREPO fill:#f7f9fc,stroke:#8095b8,stroke-width:1.5px
+    style K8SREPO fill:#f7f9fc,stroke:#8095b8,stroke-width:1.5px
