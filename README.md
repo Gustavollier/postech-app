@@ -406,7 +406,7 @@ terraform destroy
 ## 🎬 Vídeo demonstrativo
 
 <!-- TODO: gravar e publicar o vídeo (YouTube ou Vimeo, público ou não listado, até 15 min) -->
-📺 **Link:** `[INSERIR LINK DO VÍDEO — YouTube/Vimeo]`
+📺 **Link:** `[LINK DO VÍDEO — YouTube]`(https://www.youtube.com/watch?v=Awv2vRF1krI).
 
 
 
