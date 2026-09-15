@@ -176,10 +176,7 @@ Fluxo completo (CPF → token → rota protegida) documentado, com diagrama de s
 
 ### 🔗 Collection completa das APIs (Swagger / OpenAPI)
 
-- **Swagger UI interativo** (com a aplicação em execução): `/swagger` — em produção, habilitado por configuração (`Swagger:Enabled=true`) para a demonstração da entrega; localmente sobe sempre, em `Development`.
-- **Especificação OpenAPI (arquivo versionado):** [`Doc/openapi.json`](Doc/openapi.json)
-
-O arquivo [`Doc/openapi.json`](Doc/openapi.json) contém a especificação OpenAPI 3.0 completa e pode ser importado em qualquer visualizador (Swagger UI, [editor.swagger.io](https://editor.swagger.io), Postman, Insomnia) sem necessidade de subir a aplicação.
+- **Especificação OpenAPI:** [`Swagger`](http://52.186.34.146/swagger/index.html)
 
 ---
 
