@@ -120,7 +120,18 @@ Meta: a saga completa, com as compensações testadas.
 
 - [x] Desenhar a máquina da saga a partir do `OrdemServicoDomainService` existente — `fase4/adr/ADR-0006-saga-orquestrada.md`
 - [x] Corrigir a ordem dos passos: o diagnóstico entra entre abertura e orçamento
+- [x] Decidir o uso de CQRS — `fase4/adr/ADR-0008-cqrs-sem-infraestrutura-nova.md`
+- [x] **Orquestrador da saga como máquina pura, testável sem banco e sem broker** — `PosTech.Saga`
+- [x] Caminho feliz: abrir, diagnosticar, orçar, aprovar, pagar, executar, fechar
+- [x] Compensação: orçamento rejeitado
+- [x] Compensação: pagamento recusado (volta um passo, não cancela)
+- [x] Compensação: execução não assume no prazo (estorna e cancela)
+- [x] Compensação só desfaz o que de fato aconteceu (não inventa estorno)
+- [x] 11 testes do orquestrador, incluindo evento fora de ordem e repetido
 - [ ] Atualizar o frame "Saga" do board no Miro para os seis passos
+- [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório criado
+- [ ] **⛔ Read model `OrdemResumo` alimentado pelos eventos** — idem
+- [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
 - [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório e de `dotnet`
 - [ ] **⛔ Caminho feliz: abrir, orçar, aprovar, pagar, executar, fechar** — idem
 - [ ] **⛔ Compensação: pagamento recusado** — idem

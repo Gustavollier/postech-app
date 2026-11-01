@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PosTech.Contratos\PosTech.Contratos.csproj" />
     <ProjectReference Include="..\..\src\PosTech.Mensageria\PosTech.Mensageria.csproj" />
+    <ProjectReference Include="..\..\src\PosTech.Saga\PosTech.Saga.csproj" />
   </ItemGroup>
 
 </Project>
