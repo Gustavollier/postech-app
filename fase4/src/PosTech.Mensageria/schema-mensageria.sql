@@ -68,3 +68,40 @@ BEGIN
         ON EventoProcessado (ProcessadoEm);
 END;
 GO
+
+-- ---------------------------------------------------------------------------
+-- Estado da saga. Vai só para o banco do OS Service, que é quem orquestra.
+--
+-- Mora ao lado da ordem de propósito: a saga e a ordem mudam juntas, e separá-las
+-- criaria exatamente a transação distribuída que o padrão existe para evitar.
+-- ---------------------------------------------------------------------------
+
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'SagaOrdemServico')
+BEGIN
+    CREATE TABLE SagaOrdemServico (
+        IdOrdem INT NOT NULL PRIMARY KEY,
+        -- 0 AguardandoDiagnostico, 1 AguardandoOrcamento, 2 AguardandoAprovacao,
+        -- 3 AguardandoPagamento, 4 AguardandoExecucao, 5 Concluida,
+        -- 6 Compensando, 7 Cancelada
+        Passo TINYINT NOT NULL DEFAULT 0,
+        StatusDaOrdem TINYINT NOT NULL DEFAULT 0,
+        IdOrcamento NVARCHAR(50) NULL,
+        IdPagamento NVARCHAR(50) NULL,
+        -- Id da cobrança no Mercado Pago. Sem ele não dá para estornar.
+        ReferenciaExterna NVARCHAR(100) NULL,
+        Valor DECIMAL(10, 2) NULL,
+        MotivoDaCompensacao NVARCHAR(500) NULL,
+        AtualizadoEm DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    );
+END;
+GO
+
+-- O varredor de timeout pergunta sempre a mesma coisa: quais sagas estão num
+-- passo há tempo demais. Sem o índice, isso vira scan da tabela inteira a cada
+-- volta, e ela cresce com o movimento da oficina.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_SagaOrdemServico_Paradas')
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_SagaOrdemServico_Paradas
+        ON SagaOrdemServico (Passo, AtualizadoEm);
+END;
+GO

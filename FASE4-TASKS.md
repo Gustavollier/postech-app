@@ -129,8 +129,12 @@ Meta: a saga completa, com as compensações testadas.
 - [x] Compensação só desfaz o que de fato aconteceu (não inventa estorno)
 - [x] 11 testes do orquestrador, incluindo evento fora de ordem e repetido
 - [ ] Atualizar o frame "Saga" do board no Miro para os seis passos
-- [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório criado
-- [ ] **⛔ Read model `OrdemResumo` alimentado pelos eventos** — idem
+- [x] **Persistência real da saga em Azure SQL** — `SagaRepositorio`, com o estado e os eventos de compensação na mesma transação
+- [x] Outbox e idempotência em Dapper/Azure SQL — `OutboxRepositorio`, `IdempotenciaRepositorio`
+- [x] Tabela `SagaOrdemServico` no schema idempotente, com índice para o varredor de timeout
+- [x] Varredor de sagas paradas além do prazo — `ObterParadasAsync`
+- [x] 8 testes de integração contra um SQL Server real, incluindo a atomicidade do outbox
+- [x] Read model descartado por decisão do líder técnico (ADR-0008 revisado): tabela nova está fora
 - [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
 - [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório e de `dotnet`
 - [ ] **⛔ Caminho feliz: abrir, orçar, aprovar, pagar, executar, fechar** — idem
