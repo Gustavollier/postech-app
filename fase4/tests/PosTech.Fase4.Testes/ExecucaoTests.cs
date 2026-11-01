@@ -59,6 +59,29 @@ public class GestorDaExecucaoTests
     }
 
     [Fact]
+    public void O_cliente_recebido_na_abertura_viaja_no_diagnostico()
+    {
+        // O Execução é o elo: recebe o cliente no OrdemAberta, guarda, e
+        // repassa no DiagnosticoConcluido. Se parar de repassar, o Billing fica
+        // sem e-mail para criar a cobrança e a saga trava no passo do
+        // orçamento — sem erro nenhum aparecer aqui. Daí este teste.
+        var ordem = Recebida();
+
+        Assert.Equal(10, ordem.IdCliente);
+        Assert.Equal("ana@oficina.test", ordem.EmailCliente);
+
+        GestorDaExecucao.ConcluirDiagnostico(ordem, [MaoDeObra("Troca de óleo", 120.50m)], "corr-1", Agora);
+
+        var evento = Assert.Single(ordem.EventosPendentes);
+        var diagnostico = SerializacaoDeEvento.Desserializar<DiagnosticoConcluido>(evento.Payload)?.Dados;
+
+        Assert.NotNull(diagnostico);
+        Assert.Equal(10, diagnostico.IdCliente);
+        Assert.Equal("Ana Prado", diagnostico.NomeCliente);
+        Assert.Equal("ana@oficina.test", diagnostico.EmailCliente);
+    }
+
+    [Fact]
     public void Item_de_peca_sem_peca_nao_passa()
     {
         var ordem = Recebida();

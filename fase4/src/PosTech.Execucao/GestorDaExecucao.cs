@@ -25,6 +25,9 @@ public static class GestorDaExecucao
         return new OrdemEmExecucao
         {
             IdOrdem = evento.IdOrdem,
+            IdCliente = evento.IdCliente,
+            NomeCliente = evento.NomeCliente,
+            EmailCliente = evento.EmailCliente,
             IdVeiculo = evento.IdVeiculo,
             DescricaoVeiculo = evento.DescricaoVeiculo,
             IdFuncionarioResponsavel = evento.IdFuncionario,
@@ -77,6 +80,11 @@ public static class GestorDaExecucao
             new DiagnosticoConcluido(
                 ordem.IdOrdem,
                 ordem.IdFuncionarioResponsavel,
+                // O cliente viaja junto: é o que permite ao Billing montar o
+                // orçamento e criar a cobrança sem consultar o Identidade.
+                ordem.IdCliente,
+                ordem.NomeCliente,
+                ordem.EmailCliente,
                 [.. itens.Select(i => new ItemDaOrdem(i.Descricao, i.Tipo, i.Quantidade, i.ValorUnitario))],
                 ordem.ValorTotal,
                 agora),

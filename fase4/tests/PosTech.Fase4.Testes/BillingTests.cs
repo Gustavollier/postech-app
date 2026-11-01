@@ -13,7 +13,9 @@ public class MontadorDeOrcamentoTests
     private static readonly DadosDoCliente Cliente = new(10, "Ana Prado", "ana@oficina.test");
 
     private static DiagnosticoConcluido Diagnostico(params ItemDaOrdem[] itens) =>
-        new(IdOrdem: 1, IdFuncionarioResponsavel: 7, Itens: itens,
+        new(IdOrdem: 1, IdFuncionarioResponsavel: 7,
+            IdCliente: 10, NomeCliente: "Ana Prado", EmailCliente: "ana@oficina.test",
+            Itens: itens,
             ValorTotal: itens.Sum(i => i.Quantidade * i.ValorUnitario), ConcluidoEm: Agora);
 
     [Fact]
@@ -136,7 +138,7 @@ public sealed class BillingMongoTests : IAsyncLifetime
 
     private static Orcamento Montar(int idOrdem, string correlationId = "corr-1") =>
         MontadorDeOrcamento.Montar(
-            new DiagnosticoConcluido(idOrdem, 7,
+            new DiagnosticoConcluido(idOrdem, 7, 10, "Ana Prado", "ana@oficina.test",
                 [new ItemDaOrdem("Troca de óleo", ETipoItem.MaoDeObra, 1, 120.50m),
                  new ItemDaOrdem("Filtro", ETipoItem.Peca, 2, 38.90m)],
                 198.30m, DateTime.UtcNow),

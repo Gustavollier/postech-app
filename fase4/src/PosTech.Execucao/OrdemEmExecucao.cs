@@ -40,6 +40,17 @@ public sealed class OrdemEmExecucao
 
     public int IdOrdem { get; set; }
 
+    // O cliente vem no OrdemAberta e fica guardado aqui porque o Execução é
+    // quem repassa esses dados ao Billing no DiagnosticoConcluido — e entre um
+    // evento e o outro pode passar dias, com o documento sendo a única memória
+    // do que foi recebido. Buscar no Identidade na hora de diagnosticar ligaria
+    // os dois serviços por uma chamada síncrona, que é o que o evento evita.
+    public int IdCliente { get; set; }
+
+    public string NomeCliente { get; set; } = string.Empty;
+
+    public string EmailCliente { get; set; } = string.Empty;
+
     public int IdVeiculo { get; set; }
 
     public string DescricaoVeiculo { get; set; } = string.Empty;
