@@ -1,76 +1,65 @@
-# ADR-0008 — CQRS onde ele se paga, e só ali
+# ADR-0008 — CQRS só como separação de código, sem tabela nova
 
 **Status:** aceito
 **Data:** 01/11/2026
+**Revisado:** 01/11/2026, decisão do líder técnico
 
 ## Contexto
 
-A pergunta surgiu com a restrição junto: usar CQRS se fizer sentido, sem gastar
-crédito. São duas perguntas diferentes dentro de uma, e elas têm respostas
-opostas.
+A pergunta veio com a restrição junto: usar CQRS se fizer sentido, sem gastar
+crédito, e **sem criar tabela que não esteja mapeada**.
 
-CQRS "completo" — modelo de escrita e modelo de leitura em **armazenamentos
-separados**, alimentados por projeções — custa um banco a mais por serviço, um
-processo de projeção a mais para manter no ar, e um modo de falha novo (a
-projeção atrasada, que faz o usuário salvar algo e não ver na tela seguinte).
-Com US$ 100 para a fase e quota de 4 vCPU, isso é dinheiro e risco trocados por
-elegância.
-
-Mas a decomposição criou um problema concreto que pede exatamente a parte boa do
-CQRS.
-
-## O problema que a divisão criou
-
-A tela de detalhe de uma ordem mostra, numa coisa só: o status e o histórico
-(do OS Service), o nome do cliente e o veículo (do Identidade), os itens
-lançados (do Execução) e o valor do orçamento (do Billing).
-
-No monólito isso era um `JOIN`. Depois da divisão, viram **três chamadas entre
-serviços por abertura de tela** — e, pior, a tela passa a depender de os três
-estarem no ar. Uma listagem de ordens multiplica isso por linha.
+A primeira versão deste ADR propunha um read model `OrdemResumo` em `os-db`,
+alimentado pelos eventos, para a tela de detalhe da ordem não depender de três
+chamadas entre serviços. Custava zero em infraestrutura, mas custava uma tabela
+nova — e tabela nova está fora do combinado.
 
 ## Decisão
 
-**Sim para CQRS como padrão de código, não para CQRS como infraestrutura.**
+**CQRS apenas como separação de comando e consulta dentro de cada serviço.
+Nenhuma tabela a mais, nenhum banco a mais, nenhum processo a mais.**
 
-Em concreto, três coisas:
+Na prática:
 
-**1. Um read model da ordem, dentro de `os-db`.** Uma tabela `OrdemResumo`
-mantida pelos eventos que o orquestrador já consome. Quando chega
-`DiagnosticoConcluido`, grava os itens e o total; quando chega `OrcamentoGerado`,
-grava o valor; o nome do cliente e o veículo vieram no `OrdemAberta`. A tela lê
-uma linha, de um banco só.
+- **Escrita** passa pelo caso de uso e pelo modelo de domínio, com as
+  invariantes validadas no agregado.
+- **Leitura** vai direto do repositório para o DTO, sem carregar agregado e sem
+  passar por caso de uso.
 
-**O custo em infraestrutura é zero**: é uma tabela num banco que já existe e já
-está pago. Não há banco de leitura, não há processo de projeção separado — quem
-atualiza é o mesmo consumidor que já roda para mover a saga.
+O monólito já fazia isso informalmente — as consultas em Dapper devolvem DTO
+direto, as escritas passam pelos use cases. Aqui vira regra escrita, e continua
+custando nada.
 
-**2. Separação de comando e consulta dentro de cada serviço.** Escrita passa pelo
-caso de uso e pelo modelo de domínio; leitura vai direto do repositório para o
-DTO, sem carregar agregado. O monólito já fazia isso informalmente, com Dapper
-devolvendo DTO nas consultas. Aqui vira regra, e continua custando nada.
+**Fora de escopo:** read model desnormalizado, banco de leitura separado,
+projeções e event sourcing.
 
-**3. Nada de event sourcing.** O estado continua guardado como estado. Event
-sourcing resolveria auditoria, que não é requisito desta fase, ao preço de
-reescrever toda a persistência.
+## Como a tela da ordem fica sem o read model
 
-## O que isso não é
+Boa parte do que a tela precisa já vem de graça, porque a **tabela de estado da
+saga é obrigatória de qualquer forma** (requisito do Saga Pattern, já mapeado no
+plano) e ela carrega o valor, o id do orçamento e o id do pagamento.
 
-Não é CQRS canônico, e o documento de entrega não vai chamar de CQRS completo.
-É **um read model desnormalizado alimentado por evento**, que é a técnica que
-resolve o problema real. Chamar de CQRS completo seria vender mais do que foi
-feito, e a banca costuma perguntar justamente pelo banco de leitura separado que
-não existe.
+| O que a tela mostra | De onde vem | Custo |
+| --- | --- | --- |
+| Status e histórico | `OrdemServico` e `Status`, em `os-db` | já existe |
+| Valor do orçamento | estado da saga, em `os-db` | já é obrigatório |
+| Id do orçamento e do pagamento | estado da saga | já é obrigatório |
+| Nome do cliente e veículo | chamada REST ao Identidade | 1 chamada |
+| Itens lançados | chamada REST ao Execução | 1 chamada |
+
+Sobram **duas chamadas entre serviços** na tela de detalhe, e nenhuma na
+listagem — que mostra status, data e valor, tudo de `os-db`.
 
 ## Consequências
 
-- A consistência do read model é **eventual**, na ordem de milissegundos. Para
-  uma tela de acompanhamento de oficina é aceitável, e a escrita que o usuário
-  acabou de fazer passa pelo caminho de comando, que é imediato.
-- O read model é **descartável**: se divergir, é reconstruído relendo os eventos.
-  Nada de negócio depende dele, e nenhuma decisão é tomada a partir dele.
-- O read model fica em `os-db`, não num banco novo. Se um dia o volume pedir
-  separação, a mudança é de infraestrutura e não de código.
-- Dado duplicado cresce: o nome do cliente passa a existir no Identidade e no
-  resumo da ordem. É o mesmo trade que já aceitamos nos eventos (ADR-0007), e
-  pelo mesmo motivo — a tela não pode depender de três serviços no ar.
+- Duas chamadas a mais no detalhe de uma ordem. Em escala de demonstração isso
+  não aparece, e a listagem, que é a tela mais usada, não paga nada.
+- A tela de detalhe passa a depender de Identidade e Execução estarem no ar.
+  Degradar bem é responsabilidade dela: sem resposta, mostra o que tem de
+  `os-db` em vez de falhar inteira.
+- O documento de entrega vai dizer exatamente isto: **separação de comando e
+  consulta no código, sem read model**. Chamar de CQRS completo seria vender
+  mais do que foi feito, e a banca pergunta justamente pelo banco de leitura
+  separado que não existiria.
+- Se o volume um dia pedir, o read model entra sem reescrever nada: os eventos
+  que o alimentariam já são publicados e já são consumidos pelo orquestrador.
