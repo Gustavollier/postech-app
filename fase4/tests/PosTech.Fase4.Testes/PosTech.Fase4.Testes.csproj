@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\src\PosTech.Persistencia\PosTech.Persistencia.csproj" />
     <ProjectReference Include="..\..\src\PosTech.Billing\PosTech.Billing.csproj" />
     <ProjectReference Include="..\..\src\PosTech.Execucao\PosTech.Execucao.csproj" />
+    <ProjectReference Include="..\..\src\PosTech.Identidade\PosTech.Identidade.csproj" />
   </ItemGroup>
 
 </Project>

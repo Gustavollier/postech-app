@@ -106,8 +106,12 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [x] Listar todo join que hoje cruza contextos e definir o substituto de cada um — só dois, e os dois somem
 - [ ] **⛔ OS Service: migrar ordem, status e histórico** — precisa do repositório e de `dotnet`
 - [ ] **⛔ OS Service: migrar os testes de domínio que acompanham a OS** — idem
-- [ ] **⛔ Identidade: migrar Cliente, Veículo e o login de funcionário** — idem
-- [ ] **⛔ Identidade: apontar a Auth Function para o banco próprio** — idem; fecha a violação de isolamento
+- [x] **Identidade: value objects de CPF e CNPJ, cópia única do contexto** — `PosTech.Identidade`
+- [x] Schema do `identidade-db` com Cliente, Veiculo, Funcionario e Seguranca
+- [x] **UNIQUE em `Cliente.CPF`, `Cliente.CNPJ` e `Funcionario.CPF`** — fecha a lacuna apontada na Fase 3
+- [x] CHECK garantindo exatamente um documento por cliente
+- [x] 22 testes de documento, incluindo a trava de divergência com a Auth Function
+- [ ] **⛔ Apontar a Auth Function para o `identidade-db`** — precisa do repositório criado
 - [x] **Billing: orçamento como documento no MongoDB** — `PosTech.Billing`, com outbox embutido no agregado
 - [x] Regra de montagem do orçamento, pura e testada: o valor sai da soma dos subtotais, com o preço do dia
 - [x] Índice único por ordem, para uma OS não ter dois orçamentos
