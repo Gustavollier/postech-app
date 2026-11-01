@@ -113,7 +113,11 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [x] Índice único por ordem, para uma OS não ter dois orçamentos
 - [x] 15 testes do Billing, 7 deles contra um MongoDB real
 - [ ] **⛔ Billing: pagamento e integração com o Mercado Pago** — precisa das credenciais de sandbox
-- [ ] **⛔ Execução: modelar fila, itens e peças no MongoDB** — idem
+- [x] **Execução: fila, itens e peças** — `PosTech.Execucao`, documentos com outbox embutido
+- [x] Transições da oficina puras e testadas: receber, diagnosticar, liberar, finalizar, cancelar
+- [x] Reserva de peças no diagnóstico, para dois orçamentos não prometerem a mesma peça
+- [x] Formato do fio fixado por teste: acentuação legível e enum por nome
+- [x] 24 testes do Execução e do estoque
 - [ ] **⛔ Fluxo feliz rodando ponta a ponta no compose local** — precisa do daemon do Docker
 
 ---

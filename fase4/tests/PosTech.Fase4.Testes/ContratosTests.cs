@@ -200,3 +200,45 @@ public class ContratosTests
         Assert.Equal("billing.eventos.dlq", Topologia.DeadLetterDe(Topologia.FilaBilling));
     }
 }
+
+/// <summary>
+/// O formato do fio, fixado.
+///
+/// Serialização é contrato público: mudar o encoder ou o conversor de enum
+/// muda o que o outro serviço recebe, e isso não pode acontecer por acidente
+/// numa troca de default do .NET. Este teste quebra se mudar.
+/// </summary>
+public class FormatoDoFioTests
+{
+    [Fact]
+    public void Acentuacao_vai_legivel_e_enum_vai_por_nome()
+    {
+        var evento = new DiagnosticoConcluido(
+            IdOrdem: 1, IdFuncionarioResponsavel: 7,
+            Itens: [new ItemDaOrdem("Troca de óleo", ETipoItem.MaoDeObra, 1, 120.50m)],
+            ValorTotal: 120.50m,
+            ConcluidoEm: new DateTime(2026, 11, 1, 12, 0, 0, DateTimeKind.Utc));
+
+        var json = SerializacaoDeEvento.Serializar(
+            Envelope<DiagnosticoConcluido>.Criar(evento, "corr-1", "execucao-service"));
+
+        Assert.Contains("\"descricao\":\"Troca de óleo\"", json);
+        Assert.Contains("\"tipo\":\"MaoDeObra\"", json);
+        Assert.DoesNotContain("\\u00F3", json);
+    }
+
+    [Fact]
+    public void Enum_por_nome_volta_igual_na_desserializacao()
+    {
+        var evento = new DiagnosticoConcluido(
+            1, 7, [new ItemDaOrdem("Pastilha", ETipoItem.Peca, 4, 89.90m)], 359.60m, DateTime.UtcNow);
+
+        var json = SerializacaoDeEvento.Serializar(
+            Envelope<DiagnosticoConcluido>.Criar(evento, "corr-1", "execucao-service"));
+
+        var volta = SerializacaoDeEvento.Desserializar<DiagnosticoConcluido>(json);
+
+        Assert.Equal(ETipoItem.Peca, volta!.Dados.Itens[0].Tipo);
+        Assert.Equal(359.60m, volta.Dados.ValorTotal);
+    }
+}

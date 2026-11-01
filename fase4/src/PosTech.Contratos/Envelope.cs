@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -116,6 +117,19 @@ public static class SerializacaoDeEvento
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
         PropertyNameCaseInsensitive = true,
+
+        // Sem isto, "Troca de óleo" vira "Troca de \u00F3leo" no corpo da
+        // mensagem. O JSON continua válido, mas o payload é lido por humanos no
+        // painel do RabbitMQ e no Compass — e é essa tela que o vídeo mostra.
+        // O "Unsafe" do nome é sobre embutir JSON direto em HTML, que não é o
+        // nosso caso: isto aqui é transporte entre serviços.
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+
+        // Enum como nome, e não como número. Número é imune a renomear mas
+        // quebra se alguém inserir um valor no meio do enum, que é o erro mais
+        // fácil de cometer. Nome também deixa a mensagem legível sem consultar
+        // o código, o que vale na hora de explicar o fluxo.
+        Converters = { new JsonStringEnumConverter() },
     };
 
     public static string Serializar<T>(Envelope<T> envelope) where T : notnull =>
