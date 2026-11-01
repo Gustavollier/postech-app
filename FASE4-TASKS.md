@@ -41,6 +41,48 @@ projeto usa.
 
 ---
 
+## Secrets dos repositórios
+
+Levantado lendo os `secrets.*` de cada workflow. **Eu não consigo criar nem ler
+secret**: não há ferramenta para isso na integração, e secret do GitHub é
+write-only por definição, então nem o valor dos que já existem é recuperável.
+
+### Já configurados
+
+| Repositório | Secrets | Como sei |
+| --- | --- | --- |
+| `postech-app` | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `SENHA_FUNCIONARIO` | pipeline verde na Fase 3 |
+| `postech-auth-function` | os três `AZURE_*` | idem |
+| `postech-infra-db` | os três `AZURE_*` | idem |
+| `postech-infra-k8s` | os três `AZURE_*`, `DD_API_KEY`, `DD_APP_KEY` | idem |
+
+### Faltando
+
+| Repositório | Secrets | Situação |
+| --- | --- | --- |
+| `postech-os-service` | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` | **confirmado**: o job de deploy falhou no login OIDC |
+| `postech-os-service` | `SONAR_TOKEN` | opcional por ora: sem ele o job se pula sozinho |
+| `postech-billing-service` | os mesmos | quando o serviço for publicado |
+| `postech-execucao-service` | os mesmos | idem |
+| `postech-identidade-service` | os mesmos | idem |
+
+Os três `AZURE_*` são os mesmos dos repositórios antigos. Não são segredos de
+verdade — são identificadores, e saem do portal em
+`Microsoft Entra ID → Registros de aplicativo`.
+
+### A pegadinha do OIDC
+
+Copiar os secrets **não basta**. A credencial federada no Entra ID é amarrada ao
+repositório, no formato `repo:Gustavollier/postech-app:ref:refs/heads/main`. Um
+repositório novo precisa de uma credencial federada nova, senão o login falha
+com as variáveis certas e a mensagem não diz o motivo.
+
+Caminho: `Entra ID → Registros de aplicativo → o app do projeto →
+Certificados e segredos → Credenciais federadas → Adicionar`, uma por
+repositório novo, com o padrão GitHub Actions e a branch `main`.
+
+---
+
 ## Etapa 0 — Decidir e abrir contas
 
 Meta: sair do zero com as decisões fechadas, as contas gratuitas criadas e a
@@ -62,11 +104,11 @@ queima da Azure em repouso.
 - [ ] **⛔ Abrir conta CloudAMQP no plano Little Lemur** — precisa de cadastro
 - [ ] **⛔ Abrir conta SonarCloud e ligar nos repositórios** — precisa de cadastro
 - [ ] **⛔ Abrir conta Mercado Pago e pegar credenciais de sandbox** — precisa de cadastro
-- [ ] **⛔ Criar o repositório `postech-identidade-service`** — criar repositório é decisão de vocês
-- [ ] **⛔ Criar o repositório `postech-os-service`** — idem
-- [ ] **⛔ Criar o repositório `postech-billing-service`** — idem
-- [ ] **⛔ Criar o repositório `postech-execucao-service`** — idem
-- [ ] **⛔ Proteger a `main` dos quatro repositórios novos** — depende dos repositórios existirem
+- [x] Criar o repositório `postech-identidade-service`
+- [x] Criar o repositório `postech-os-service`
+- [x] Criar o repositório `postech-billing-service`
+- [x] Criar o repositório `postech-execucao-service`
+- [ ] **⛔ Proteger a `main` dos quatro repositórios novos** — exige permissão de admin no repositório
 
 ---
 
@@ -88,7 +130,7 @@ Tudo local, custo zero.
 - [x] Processador do outbox com backoff exponencial e limite de tentativas
 - [x] 26 testes unitários de contrato e de outbox
 - [x] **Teste de integração provando o evento ponta a ponta** — 3 testes contra um RabbitMQ real via Testcontainers
-- [ ] **⛔ Esqueleto .NET do OS Service publicando `OrdemAberta`** — precisa do repositório criado
+- [x] **OS Service completo**: API, 3 background services, Dockerfile, manifestos k8s e pipeline
 - [ ] **⛔ Esqueleto .NET do Billing consumindo `DiagnosticoConcluido`** — idem
 
 **Marco da Etapa 1 atingido.** `dotnet test` em `fase4/`: 29 passando, 0 falhas.
@@ -104,8 +146,8 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 
 - [x] Mapear o schema atual por dono (qual tabela vai para qual serviço) — `fase4/mapa-do-schema.md`
 - [x] Listar todo join que hoje cruza contextos e definir o substituto de cada um — só dois, e os dois somem
-- [ ] **⛔ OS Service: migrar ordem, status e histórico** — precisa do repositório e de `dotnet`
-- [ ] **⛔ OS Service: migrar os testes de domínio que acompanham a OS** — idem
+- [x] OS Service: ordem, status e histórico, com schema idempotente
+- [x] OS Service: 70 testes, incluindo 8 de ponta a ponta assíncronos
 - [x] **Identidade: value objects de CPF e CNPJ, cópia única do contexto** — `PosTech.Identidade`
 - [x] Schema do `identidade-db` com Cliente, Veiculo, Funcionario e Seguranca
 - [x] **UNIQUE em `Cliente.CPF`, `Cliente.CNPJ` e `Funcionario.CPF`** — fecha a lacuna apontada na Fase 3
@@ -140,7 +182,7 @@ Meta: a saga completa, com as compensações testadas.
 - [x] Compensação: execução não assume no prazo (estorna e cancela)
 - [x] Compensação só desfaz o que de fato aconteceu (não inventa estorno)
 - [x] 11 testes do orquestrador, incluindo evento fora de ordem e repetido
-- [ ] Atualizar o frame "Saga" do board no Miro para os seis passos
+- [x] Frame "Saga" do board no Miro atualizado para os seis passos
 - [x] **Persistência real da saga em Azure SQL** — `SagaRepositorio`, com o estado e os eventos de compensação na mesma transação
 - [x] Outbox e idempotência em Dapper/Azure SQL — `OutboxRepositorio`, `IdempotenciaRepositorio`
 - [x] Tabela `SagaOrdemServico` no schema idempotente, com índice para o varredor de timeout
@@ -148,14 +190,14 @@ Meta: a saga completa, com as compensações testadas.
 - [x] 8 testes de integração contra um SQL Server real, incluindo a atomicidade do outbox
 - [x] Read model descartado por decisão do líder técnico (ADR-0008 revisado): tabela nova está fora
 - [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
-- [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório e de `dotnet`
-- [ ] **⛔ Caminho feliz: abrir, orçar, aprovar, pagar, executar, fechar** — idem
-- [ ] **⛔ Compensação: pagamento recusado** — idem
-- [ ] **⛔ Compensação: execução não assume dentro do prazo** — idem
-- [ ] **⛔ Compensação: falha ao publicar, com reenvio pelo outbox** — idem
+- [x] Estado da saga persistido em `os-db`, na mesma transação da ordem
+- [x] Caminho feliz rodando sozinho pela fila, com RabbitMQ e SQL Server reais
+- [x] Compensação: pagamento recusado volta um passo e a segunda tentativa passa
+- [x] Compensação: timeout pela varredura, com estorno fechando a saga
+- [x] Compensação: outbox segura o evento com o publicador parado e entrega quando volta
 - [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
 - [ ] **⛔ Webhook de confirmação de pagamento** — precisa de URL pública (ngrok local)
-- [ ] **⛔ Teste automatizado que força a recusa e verifica a compensação** — precisa de `dotnet`
+- [x] Teste que força a recusa e verifica a compensação
 
 ---
 
@@ -164,10 +206,11 @@ Meta: a saga completa, com as compensações testadas.
 Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
 
 - [ ] **⛔ BDD do fluxo da saga com Reqnroll** — precisa dos repositórios e de `dotnet`
-- [ ] **⛔ Gate de cobertura de 80% reprovando no CI de cada serviço** — idem
+- [x] Gate de cobertura de 80% no OS Service, confirmado verde no runner
+- [ ] **⛔ Gate de cobertura nos outros três serviços** — precisa dos serviços montados
 - [ ] **⛔ SonarCloud no CI de cada serviço** — precisa da conta SonarCloud
 - [ ] **⛔ Pipeline do Identidade: build, teste, qualidade, imagem, deploy** — precisa do repositório
-- [ ] **⛔ Pipeline do OS Service** — idem
+- [x] Pipeline do OS Service, verde no runner do GitHub (build, testes e gate de cobertura)
 - [ ] **⛔ Pipeline do Billing** — idem
 - [ ] **⛔ Pipeline do Execução** — idem
 
