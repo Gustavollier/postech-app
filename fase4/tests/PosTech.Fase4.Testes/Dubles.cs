@@ -29,19 +29,19 @@ public sealed class OutboxEmMemoria : IRepositorioDeOutbox
         return Task.FromResult(pendentes);
     }
 
-    public Task MarcarPublicadoAsync(long id, DateTime publicadoEm, CancellationToken cancellationToken = default)
+    public Task MarcarPublicadoAsync(Guid mensagemId, DateTime publicadoEm, CancellationToken cancellationToken = default)
     {
-        var linha = Linhas.Single(l => l.Id == id);
+        var linha = Linhas.Single(l => l.MensagemId == mensagemId);
         linha.Status = EStatusOutbox.Publicado;
         linha.PublicadoEm = publicadoEm;
         return Task.CompletedTask;
     }
 
     public Task RegistrarFalhaAsync(
-        long id, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
+        Guid mensagemId, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
         CancellationToken cancellationToken = default)
     {
-        var linha = Linhas.Single(l => l.Id == id);
+        var linha = Linhas.Single(l => l.MensagemId == mensagemId);
         linha.Tentativas = tentativas;
         linha.ProximaTentativaEm = proximaTentativaEm;
         linha.UltimoErro = erro;

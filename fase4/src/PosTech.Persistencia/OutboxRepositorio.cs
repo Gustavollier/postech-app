@@ -38,7 +38,7 @@ public sealed class OutboxRepositorio : IRepositorioDeOutbox
     private const string MARCAR_PUBLICADO = @"
         UPDATE EventoOutbox
         SET Status = 1, PublicadoEm = @PublicadoEm
-        WHERE Id = @Id AND Status = 0";
+        WHERE MensagemId = @MensagemId AND Status = 0";
 
     private const string REGISTRAR_FALHA = @"
         UPDATE EventoOutbox
@@ -46,7 +46,7 @@ public sealed class OutboxRepositorio : IRepositorioDeOutbox
             ProximaTentativaEm = @ProximaTentativaEm,
             UltimoErro = @UltimoErro,
             Status = @Status
-        WHERE Id = @Id";
+        WHERE MensagemId = @MensagemId";
 
     private readonly string _connectionString;
 
@@ -106,25 +106,25 @@ public sealed class OutboxRepositorio : IRepositorioDeOutbox
         return linhas;
     }
 
-    public async Task MarcarPublicadoAsync(long id, DateTime publicadoEm, CancellationToken cancellationToken = default)
+    public async Task MarcarPublicadoAsync(Guid mensagemId, DateTime publicadoEm, CancellationToken cancellationToken = default)
     {
         await using var conexao = new SqlConnection(_connectionString);
 
         var comando = new CommandDefinition(
-            MARCAR_PUBLICADO, new { Id = id, PublicadoEm = publicadoEm }, cancellationToken: cancellationToken);
+            MARCAR_PUBLICADO, new { MensagemId = mensagemId, PublicadoEm = publicadoEm }, cancellationToken: cancellationToken);
 
         await conexao.ExecuteAsync(comando).ConfigureAwait(false);
     }
 
     public async Task RegistrarFalhaAsync(
-        long id, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
+        Guid mensagemId, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
         CancellationToken cancellationToken = default)
     {
         await using var conexao = new SqlConnection(_connectionString);
 
         var comando = new CommandDefinition(
             REGISTRAR_FALHA,
-            new { Id = id, Tentativas = tentativas, ProximaTentativaEm = proximaTentativaEm, UltimoErro = erro, Status = (byte)status },
+            new { MensagemId = mensagemId, Tentativas = tentativas, ProximaTentativaEm = proximaTentativaEm, UltimoErro = erro, Status = (byte)status },
             cancellationToken: cancellationToken);
 
         await conexao.ExecuteAsync(comando).ConfigureAwait(false);

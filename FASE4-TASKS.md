@@ -108,7 +108,11 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [ ] **⛔ OS Service: migrar os testes de domínio que acompanham a OS** — idem
 - [ ] **⛔ Identidade: migrar Cliente, Veículo e o login de funcionário** — idem
 - [ ] **⛔ Identidade: apontar a Auth Function para o banco próprio** — idem; fecha a violação de isolamento
-- [ ] **⛔ Billing: modelar orçamento e pagamento como documento no MongoDB** — idem
+- [x] **Billing: orçamento como documento no MongoDB** — `PosTech.Billing`, com outbox embutido no agregado
+- [x] Regra de montagem do orçamento, pura e testada: o valor sai da soma dos subtotais, com o preço do dia
+- [x] Índice único por ordem, para uma OS não ter dois orçamentos
+- [x] 15 testes do Billing, 7 deles contra um MongoDB real
+- [ ] **⛔ Billing: pagamento e integração com o Mercado Pago** — precisa das credenciais de sandbox
 - [ ] **⛔ Execução: modelar fila, itens e peças no MongoDB** — idem
 - [ ] **⛔ Fluxo feliz rodando ponta a ponta no compose local** — precisa do daemon do Docker
 

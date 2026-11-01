@@ -11,10 +11,16 @@ public interface IRepositorioDeOutbox
     /// <summary>Pendentes cuja hora de tentar já chegou, mais antigos primeiro.</summary>
     Task<IReadOnlyList<EventoOutbox>> ObterPendentesAsync(int limite, CancellationToken cancellationToken = default);
 
-    Task MarcarPublicadoAsync(long id, DateTime publicadoEm, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// A identidade do evento no outbox é a <c>MensagemId</c>, e não a chave da
+    /// tabela. O outbox SQL tem um Id numérico, o do Mongo vive embutido num
+    /// documento e não tem; a MensagemId existe nos dois e é a mesma que viaja
+    /// no envelope, então é por ela que o processador fala com os dois.
+    /// </summary>
+    Task MarcarPublicadoAsync(Guid mensagemId, DateTime publicadoEm, CancellationToken cancellationToken = default);
 
     Task RegistrarFalhaAsync(
-        long id, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
+        Guid mensagemId, int tentativas, DateTime proximaTentativaEm, string erro, EStatusOutbox status,
         CancellationToken cancellationToken = default);
 }
 
@@ -91,7 +97,7 @@ public sealed class ProcessadorDoOutbox
             try
             {
                 await _publicador.PublicarAsync(evento, cancellationToken).ConfigureAwait(false);
-                await _repositorio.MarcarPublicadoAsync(evento.Id, _agora(), cancellationToken).ConfigureAwait(false);
+                await _repositorio.MarcarPublicadoAsync(evento.MensagemId, _agora(), cancellationToken).ConfigureAwait(false);
                 publicados++;
             }
             catch (OperationCanceledException)
@@ -104,7 +110,7 @@ public sealed class ProcessadorDoOutbox
                 var status = tentativas >= MaximoDeTentativas ? EStatusOutbox.Falhou : EStatusOutbox.Pendente;
 
                 await _repositorio.RegistrarFalhaAsync(
-                    evento.Id,
+                    evento.MensagemId,
                     tentativas,
                     _agora().Add(Backoff(tentativas)),
                     Resumir(excecao),

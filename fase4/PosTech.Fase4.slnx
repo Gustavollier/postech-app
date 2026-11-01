@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PosTech.Billing/PosTech.Billing.csproj" />
     <Project Path="src/PosTech.Contratos/PosTech.Contratos.csproj" />
     <Project Path="src/PosTech.Mensageria/PosTech.Mensageria.csproj" />
     <Project Path="src/PosTech.Persistencia/PosTech.Persistencia.csproj" />

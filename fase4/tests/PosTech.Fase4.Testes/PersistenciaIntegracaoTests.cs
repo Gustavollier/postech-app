@@ -18,9 +18,7 @@ namespace PosTech.Fase4.Testes;
 /// </summary>
 public sealed class PersistenciaIntegracaoTests : IAsyncLifetime
 {
-    private readonly MsSqlContainer _sql = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-        .Build();
+    private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
 
     private string _conexao = null!;
 
@@ -84,7 +82,7 @@ public sealed class PersistenciaIntegracaoTests : IAsyncLifetime
         Assert.Equal("corr-1", gravado.CorrelationId);
         Assert.Equal(EStatusOutbox.Pendente, gravado.Status);
 
-        await repositorio.MarcarPublicadoAsync(gravado.Id, DateTime.UtcNow);
+        await repositorio.MarcarPublicadoAsync(gravado.MensagemId, DateTime.UtcNow);
 
         Assert.DoesNotContain(await repositorio.ObterPendentesAsync(10), l => l.Id == gravado.Id);
     }
