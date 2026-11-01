@@ -1,0 +1,157 @@
+# Fase 4 — Rastreio de tarefas
+
+Checklist de execução da Fase 4 (microsserviços, Saga, mensageria).
+Atualizado conforme as tarefas são concluídas, para o time ver onde estamos sem
+precisar perguntar.
+
+**Início:** 01/11/2026
+**Plano completo:** board no Miro (arquitetura, saga e custos) e o Mapa da Fase 4.
+
+## Legenda
+
+- `[x]` concluída
+- `[ ]` pendente
+- **⛔ impeditivo** — a tarefa não avança até alguém destravar; o motivo está escrito na linha
+
+## Impeditivos do ambiente de automação
+
+Estas ferramentas não existem no ambiente onde as tarefas automatizadas rodam, e
+é por isso que várias linhas abaixo estão marcadas como impeditivo. Nada aqui é
+problema do projeto; é limite de quem executa.
+
+| Ferramenta | Situação | O que fica bloqueado |
+| --- | --- | --- |
+| `dotnet` | ausente, e o host de download está bloqueado na saída de rede | compilar, rodar testes, medir cobertura |
+| Docker (daemon) | CLI existe, daemon não roda | subir compose, testar integração local |
+| `az` | ausente | tudo de Azure: orçamento, quota, APIM, cluster |
+| `kubectl` / `terraform` | ausentes | manifestos aplicados, plan/apply |
+
+Código escrito nessas condições **não foi compilado**. Cada entrega marcada aqui
+precisa de um `dotnet build` do lado de vocês antes de virar verdade.
+
+---
+
+## Etapa 0 — Decidir e abrir contas
+
+Meta: sair do zero com as decisões fechadas, as contas gratuitas criadas e a
+queima da Azure em repouso.
+
+- [x] Levantar os requisitos da Fase 4 e pontuar criticidade
+- [x] Desenhar a arquitetura alvo com os recursos e onde cada um mora
+- [x] Decidir a divisão em serviços: Identidade, Ordem de Serviço, Billing, Execução
+- [x] Decidir a estratégia da Saga: orquestrada, com o orquestrador no OS Service
+- [x] Decidir onde fica o NoSQL: Billing e Execução em MongoDB
+- [x] Decidir o broker: RabbitMQ gerenciado, fora do cluster
+- [x] Registrar a decisão da Saga em ADR — `fase4/adr/ADR-0006-saga-orquestrada.md`
+- [x] Registrar a decisão de bancos por serviço em ADR — `fase4/adr/ADR-0007-banco-por-servico.md`
+- [ ] **⛔ Criar alerta de orçamento na Azure em US$ 50 e US$ 80** — precisa do portal
+- [ ] **⛔ Pedir aumento de quota de vCPU** — precisa do portal, e a aprovação leva dias
+- [ ] **⛔ Confirmar o cluster AKS parado** — precisa de `az`
+- [ ] **⛔ Deletar o APIM para parar a queima de US$ 1,70/dia** — precisa de `az`
+- [ ] **⛔ Abrir conta MongoDB Atlas e criar o cluster M0** — precisa de cadastro
+- [ ] **⛔ Abrir conta CloudAMQP no plano Little Lemur** — precisa de cadastro
+- [ ] **⛔ Abrir conta SonarCloud e ligar nos repositórios** — precisa de cadastro
+- [ ] **⛔ Abrir conta Mercado Pago e pegar credenciais de sandbox** — precisa de cadastro
+- [ ] **⛔ Criar o repositório `postech-identidade-service`** — criar repositório é decisão de vocês
+- [ ] **⛔ Criar o repositório `postech-os-service`** — idem
+- [ ] **⛔ Criar o repositório `postech-billing-service`** — idem
+- [ ] **⛔ Criar o repositório `postech-execucao-service`** — idem
+- [ ] **⛔ Proteger a `main` dos quatro repositórios novos** — depende dos repositórios existirem
+
+---
+
+## Etapa 1 — Um evento atravessando dois serviços
+
+Meta: provar a decisão mais cara da fase enquanto ela ainda é barata de mudar.
+Tudo local, custo zero.
+
+- [x] Definir o envelope de mensagem com `X-Correlation-ID` propagado — `fase4/contratos/Envelope.cs`
+- [x] Definir os contratos dos eventos de domínio — `fase4/contratos/Eventos.cs`
+- [x] Definir a topologia do RabbitMQ: exchange, filas e assinaturas — `fase4/contratos/Eventos.cs`
+- [x] Generalizar o `EmailOutbox` para um outbox transacional de eventos — `fase4/outbox/`
+- [x] Tabela de idempotência do consumidor (`EventoProcessado`) — `fase4/outbox/schema-mensageria.sql`
+- [x] `docker-compose` local com RabbitMQ, MongoDB e SQL Server — `fase4/docker-compose.fase4.yml`, sintaxe validada
+- [ ] **⛔ Publicador que lê o outbox e publica no RabbitMQ** — precisa de `dotnet` para acertar a API do cliente AMQP
+- [ ] **⛔ Consumidor base com retry e dead letter** — idem
+- [ ] **⛔ Esqueleto .NET do OS Service publicando `OrdemAberta`** — precisa de `dotnet`
+- [ ] **⛔ Esqueleto .NET do Billing consumindo `OrdemAberta`** — precisa de `dotnet`
+- [ ] **⛔ Teste de integração provando o evento ponta a ponta** — precisa de `dotnet` e do daemon do Docker
+
+---
+
+## Etapa 2 — Decompor o domínio
+
+Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
+
+- [x] Mapear o schema atual por dono (qual tabela vai para qual serviço) — `fase4/mapa-do-schema.md`
+- [x] Listar todo join que hoje cruza contextos e definir o substituto de cada um — só dois, e os dois somem
+- [ ] **⛔ OS Service: migrar ordem, status e histórico** — precisa do repositório e de `dotnet`
+- [ ] **⛔ OS Service: migrar os testes de domínio que acompanham a OS** — idem
+- [ ] **⛔ Identidade: migrar Cliente, Veículo e o login de funcionário** — idem
+- [ ] **⛔ Identidade: apontar a Auth Function para o banco próprio** — idem; fecha a violação de isolamento
+- [ ] **⛔ Billing: modelar orçamento e pagamento como documento no MongoDB** — idem
+- [ ] **⛔ Execução: modelar fila, itens e peças no MongoDB** — idem
+- [ ] **⛔ Fluxo feliz rodando ponta a ponta no compose local** — precisa do daemon do Docker
+
+---
+
+## Etapa 3 — Saga e Mercado Pago
+
+Meta: a saga completa, com as compensações testadas.
+
+- [x] Desenhar a máquina da saga a partir do `OrdemServicoDomainService` existente — `fase4/adr/ADR-0006-saga-orquestrada.md`
+- [x] Corrigir a ordem dos passos: o diagnóstico entra entre abertura e orçamento
+- [ ] Atualizar o frame "Saga" do board no Miro para os seis passos
+- [ ] **⛔ Persistir o estado da saga no OS Service** — precisa do repositório e de `dotnet`
+- [ ] **⛔ Caminho feliz: abrir, orçar, aprovar, pagar, executar, fechar** — idem
+- [ ] **⛔ Compensação: pagamento recusado** — idem
+- [ ] **⛔ Compensação: execução não assume dentro do prazo** — idem
+- [ ] **⛔ Compensação: falha ao publicar, com reenvio pelo outbox** — idem
+- [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
+- [ ] **⛔ Webhook de confirmação de pagamento** — precisa de URL pública (ngrok local)
+- [ ] **⛔ Teste automatizado que força a recusa e verifica a compensação** — precisa de `dotnet`
+
+---
+
+## Etapa 4 — Qualidade e pipelines
+
+Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
+
+- [ ] **⛔ BDD do fluxo da saga com Reqnroll** — precisa dos repositórios e de `dotnet`
+- [ ] **⛔ Gate de cobertura de 80% reprovando no CI de cada serviço** — idem
+- [ ] **⛔ SonarCloud no CI de cada serviço** — precisa da conta SonarCloud
+- [ ] **⛔ Pipeline do Identidade: build, teste, qualidade, imagem, deploy** — precisa do repositório
+- [ ] **⛔ Pipeline do OS Service** — idem
+- [ ] **⛔ Pipeline do Billing** — idem
+- [ ] **⛔ Pipeline do Execução** — idem
+
+### Ensaio de infraestrutura (1 dia ligado, cerca de US$ 5)
+
+- [ ] **⛔ Subir um deployment de teste e confirmar que 4 serviços cabem em 4 vCPU** — precisa de `kubectl`
+- [ ] **⛔ Desligar o cluster no fim do ensaio** — precisa de `az`
+
+---
+
+## Etapa 5 — Azure de verdade
+
+Meta: o ambiente publicado, com o trace atravessando os serviços.
+Aqui o crédito começa a sair. Parar o cluster toda noite.
+
+- [ ] **⛔ Recriar o APIM** — precisa de `az` ou do portal, e leva 40 min
+- [ ] **⛔ Terraform dos bancos `os-db` e `identidade-db`** — precisa de `terraform`
+- [ ] **⛔ Rotas novas no APIM para os quatro serviços** — idem
+- [ ] **⛔ Guardar os segredos do Atlas e do CloudAMQP no Key Vault** — precisa de `az`
+- [ ] **⛔ Deploy dos quatro serviços no AKS** — precisa de `kubectl`
+- [ ] **⛔ Propagar o contexto de trace dentro da mensagem** — precisa de `dotnet`
+- [ ] **⛔ Confirmar no Datadog um trace cruzando os quatro serviços** — precisa do ambiente no ar
+
+---
+
+## Etapa 6 — Vídeo e entrega
+
+- [ ] Roteiro do vídeo de 15 minutos
+- [ ] Documentação de arquitetura por serviço
+- [ ] PDF de entrega com participantes, links, diagrama e justificativas
+- [ ] **⛔ Ensaiar a falha da saga antes de gravar** — precisa do ambiente no ar
+- [ ] **⛔ Gravar o vídeo** — idem
+- [ ] **⛔ Teardown total depois da entrega** — precisa de `az`
