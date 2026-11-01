@@ -44,8 +44,9 @@ projeto usa.
 ## Secrets dos repositórios
 
 Levantado lendo os `secrets.*` de cada workflow. **Eu não consigo criar nem ler
-secret**: não há ferramenta para isso na integração, e secret do GitHub é
-write-only por definição, então nem o valor dos que já existem é recuperável.
+secret do GitHub**: não há ferramenta para isso na integração, e secret do
+GitHub é write-only por definição. O *valor* dos três `AZURE_*`, porém, eu
+recuperei do próprio Azure pela CLI — eles não ficam guardados só no GitHub.
 
 ### Já configurados
 
@@ -66,20 +67,36 @@ write-only por definição, então nem o valor dos que já existem é recuperáv
 | `postech-execucao-service` | os mesmos | idem |
 | `postech-identidade-service` | os mesmos | idem |
 
-Os três `AZURE_*` são os mesmos dos repositórios antigos. Não são segredos de
-verdade — são identificadores, e saem do portal em
-`Microsoft Entra ID → Registros de aplicativo`.
+Os três `AZURE_*` não são segredos de verdade — são identificadores. Saem de
+`az account show` e de `az ad app list`, e estão no portal em
+`Microsoft Entra ID → Registros de aplicativo`. Os valores foram passados no
+chat em vez de versionados aqui: repositório público não é lugar de id de
+assinatura, mesmo quando ele não abre porta nenhuma sozinho.
 
-### A pegadinha do OIDC
+Esses secrets só importam quando o job de **deploy** roda, isto é, quando
+existir um ambiente na Azure. Build, teste e gate de cobertura passam sem eles.
+
+### A pegadinha do OIDC, e o limite que ela esbarrou
 
 Copiar os secrets **não basta**. A credencial federada no Entra ID é amarrada ao
 repositório, no formato `repo:Gustavollier/postech-app:ref:refs/heads/main`. Um
 repositório novo precisa de uma credencial federada nova, senão o login falha
 com as variáveis certas e a mensagem não diz o motivo.
 
-Caminho: `Entra ID → Registros de aplicativo → o app do projeto →
-Certificados e segredos → Credenciais federadas → Adicionar`, uma por
-repositório novo, com o padrão GitHub Actions e a branch `main`.
+E há um teto: **20 credenciais federadas por registro de aplicativo**. O app da
+Fase 3 (`postech-13soat-github-oidc`) chegou nele com 18 em uso mais 2 que
+foram criadas para o OS Service. As antigas não podem ser apagadas — os
+workflows da Fase 3 usam GitHub Environments, e nesse caso o `subject` muda para
+`...:environment:NOME`, então cada ambiente consome uma credencial própria.
+
+Por isso a Fase 4 ganhou um registro separado: **`postech-13soat-fase4-oidc`**.
+Separar por fase é desenho melhor de qualquer jeito, e deixa os pipelines
+antigos intactos. O que falta nele:
+
+- [ ] **⛔ Credenciais federadas dos 4 repositórios novos** — depende de decidir
+      se os deploys ficam neste app ou no antigo
+- [ ] **⛔ Papel de Contributor no grupo de recursos** — não há grupo de
+      recursos para atribuir enquanto a assinatura estiver vazia
 
 ---
 
@@ -131,7 +148,7 @@ Tudo local, custo zero.
 - [x] 26 testes unitários de contrato e de outbox
 - [x] **Teste de integração provando o evento ponta a ponta** — 3 testes contra um RabbitMQ real via Testcontainers
 - [x] **OS Service completo**: API, 3 background services, Dockerfile, manifestos k8s e pipeline
-- [ ] **⛔ Esqueleto .NET do Billing consumindo `DiagnosticoConcluido`** — idem
+- [x] **Billing Service completo**: API, 3 background services, Dockerfile, manifestos k8s e pipeline
 
 **Marco da Etapa 1 atingido.** `dotnet test` em `fase4/`: 29 passando, 0 falhas.
 O `OrdemAberta` sai do outbox, atravessa um RabbitMQ de verdade e chega no
@@ -157,8 +174,8 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [x] **Billing: orçamento como documento no MongoDB** — `PosTech.Billing`, com outbox embutido no agregado
 - [x] Regra de montagem do orçamento, pura e testada: o valor sai da soma dos subtotais, com o preço do dia
 - [x] Índice único por ordem, para uma OS não ter dois orçamentos
-- [x] 15 testes do Billing, 7 deles contra um MongoDB real
-- [ ] **⛔ Billing: pagamento e integração com o Mercado Pago** — precisa das credenciais de sandbox
+- [x] 46 testes do Billing, 18 deles contra MongoDB e RabbitMQ reais
+- [x] **Billing: pagamento e integração com o Mercado Pago** — gateway, webhook e estorno, com um dublê de adquirente nos testes. O token de sandbox só é necessário para cobrar de verdade; sem ele o serviço sobe com a cobrança indisponível
 - [x] **Execução: fila, itens e peças** — `PosTech.Execucao`, documentos com outbox embutido
 - [x] Transições da oficina puras e testadas: receber, diagnosticar, liberar, finalizar, cancelar
 - [x] Reserva de peças no diagnóstico, para dois orçamentos não prometerem a mesma peça
@@ -211,7 +228,7 @@ Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
 - [ ] **⛔ SonarCloud no CI de cada serviço** — precisa da conta SonarCloud
 - [ ] **⛔ Pipeline do Identidade: build, teste, qualidade, imagem, deploy** — precisa do repositório
 - [x] Pipeline do OS Service, verde no runner do GitHub (build, testes e gate de cobertura)
-- [ ] **⛔ Pipeline do Billing** — idem
+- [x] Pipeline do Billing, mesma estrutura do OS Service (build, testes, gate de 80%, imagem e deploy)
 - [ ] **⛔ Pipeline do Execução** — idem
 
 ### Ensaio de infraestrutura (1 dia ligado, cerca de US$ 5)
@@ -226,9 +243,30 @@ Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
 Meta: o ambiente publicado, com o trace atravessando os serviços.
 Aqui o crédito começa a sair. Parar o cluster toda noite.
 
-- [ ] **⛔ Recriar o APIM** — precisa de `az` ou do portal, e leva 40 min
+**A assinatura está vazia.** Os recursos da Fase 3 foram deletados de propósito
+para parar de queimar crédito — `az group list` e `az resource list` devolvem
+vazio. A queima hoje é zero, e esta etapa deixou de ser "religar" para ser
+"recriar do zero", uma vez, perto da gravação. Duas consequências no Terraform:
+
+1. **O state foi embora com o resto** (a storage `postechtfstate13soat` também
+   era um recurso). O primeiro `apply` precisa de um backend novo.
+2. **Os blocos `import` de `apim.tf` têm que sair.** Eles importavam o APIM, a
+   política e as duas operações de health que existiam no portal; importar o
+   que não existe falha o plan.
+
+- [ ] **⛔ Recriar o backend de state do Terraform** — storage account nova
+- [ ] **⛔ Tirar os `import` e o `prevent_destroy` de `apim.tf`** — o
+      `prevent_destroy` existia porque recriar um Developer leva 40 min; com
+      Consumption o motivo deixa de valer, e queremos `destroy` funcionando
+- [ ] **⛔ Recriar o APIM como Consumption** — ~US$ 50/mês de Developer é a
+      maior linha do orçamento e não se pode parar; Consumption é por chamada,
+      com 1 milhão grátis por mês, e sobe em minutos. As políticas que já temos
+      usam `cors`, `validate-jwt` e `rate-limit-by-key`, todas suportadas lá
 - [ ] **⛔ Terraform dos bancos `os-db` e `identidade-db`** — precisa de `terraform`
-- [ ] **⛔ Rotas novas no APIM para os quatro serviços** — idem
+- [ ] **⛔ Ingress único no AKS com rota por caminho para os quatro serviços** —
+      um IP público em vez de quatro
+- [ ] **⛔ Uma API do APIM por microsserviço** (`/os`, `/billing`, `/execucao`,
+      `/identidade`, `/auth`), cada uma com a sua política e o seu limite
 - [ ] **⛔ Guardar os segredos do Atlas e do CloudAMQP no Key Vault** — precisa de `az`
 - [ ] **⛔ Deploy dos quatro serviços no AKS** — precisa de `kubectl`
 - [ ] **⛔ Propagar o contexto de trace dentro da mensagem** — precisa de `dotnet`
