@@ -13,21 +13,31 @@ precisar perguntar.
 - `[ ]` pendente
 - **⛔ impeditivo** — a tarefa não avança até alguém destravar; o motivo está escrito na linha
 
-## Impeditivos do ambiente de automação
+## Ferramentas do ambiente de desenvolvimento
 
-Estas ferramentas não existem no ambiente onde as tarefas automatizadas rodam, e
-é por isso que várias linhas abaixo estão marcadas como impeditivo. Nada aqui é
-problema do projeto; é limite de quem executa.
+Todas instaladas e verificadas. Tudo que for marcado como concluído aqui foi
+compilado e testado antes de receber o X.
 
-| Ferramenta | Situação | O que fica bloqueado |
+| Ferramenta | Versão | Como foi obtida |
 | --- | --- | --- |
-| `dotnet` | ausente, e o host de download está bloqueado na saída de rede | compilar, rodar testes, medir cobertura |
-| Docker (daemon) | CLI existe, daemon não roda | subir compose, testar integração local |
-| `az` | ausente | tudo de Azure: orçamento, quota, APIM, cluster |
-| `kubectl` / `terraform` | ausentes | manifestos aplicados, plan/apply |
+| .NET SDK | 10.0.114 e 8.0.133 | `apt-get install dotnet-sdk-10.0 dotnet-sdk-8.0` |
+| Docker | 29.9.2, daemon rodando | `dockerd` local, storage driver overlayfs |
+| Azure CLI | 2.91.0 | `pip install azure-cli` num venv em `/opt/azcli` |
+| kubectl | 1.37.2 | `az aks install-cli` |
+| kubelogin | 0.2.22 | idem |
+| Terraform | 1.9.8 | binário de releases.hashicorp.com |
 
-Código escrito nessas condições **não foi compilado**. Cada entrega marcada aqui
-precisa de um `dotnet build` do lado de vocês antes de virar verdade.
+O instalador oficial do .NET (`dot.net`) está bloqueado na saída de rede desta
+máquina; o pacote do Ubuntu 24.04 resolve e entrega as duas versões que o
+projeto usa.
+
+### O que ainda depende de você
+
+- **Login no Azure.** O `az` está instalado mas sem credencial. Um
+  `az login --use-device-code` resolve: eu gero o código, você autentica.
+- **Contas de terceiros.** Atlas, CloudAMQP, SonarCloud e Mercado Pago precisam
+  de cadastro com os seus dados.
+- **Criação dos repositórios.** Nome, visibilidade e dono são decisão sua.
 
 ---
 
@@ -70,12 +80,21 @@ Tudo local, custo zero.
 - [x] Definir a topologia do RabbitMQ: exchange, filas e assinaturas — `fase4/contratos/Eventos.cs`
 - [x] Generalizar o `EmailOutbox` para um outbox transacional de eventos — `fase4/outbox/`
 - [x] Tabela de idempotência do consumidor (`EventoProcessado`) — `fase4/outbox/schema-mensageria.sql`
-- [x] `docker-compose` local com RabbitMQ, MongoDB e SQL Server — `fase4/docker-compose.fase4.yml`, sintaxe validada
-- [ ] **⛔ Publicador que lê o outbox e publica no RabbitMQ** — precisa de `dotnet` para acertar a API do cliente AMQP
-- [ ] **⛔ Consumidor base com retry e dead letter** — idem
-- [ ] **⛔ Esqueleto .NET do OS Service publicando `OrdemAberta`** — precisa de `dotnet`
-- [ ] **⛔ Esqueleto .NET do Billing consumindo `OrdemAberta`** — precisa de `dotnet`
-- [ ] **⛔ Teste de integração provando o evento ponta a ponta** — precisa de `dotnet` e do daemon do Docker
+- [x] `docker-compose` local com RabbitMQ, MongoDB e SQL Server — `fase4/docker-compose.fase4.yml`, validado com `docker compose config`
+- [x] Solução `fase4/PosTech.Fase4.slnx` compilando, 0 erros e 0 warnings
+- [x] Publicador que lê o outbox e publica no RabbitMQ — `PublicadorRabbitMq`, com confirmação do broker ligada
+- [x] Declaração idempotente da topologia: exchange, filas, dead letters e bindings
+- [x] Consumidor base com idempotência, retry em memória e dead letter — `ConsumidorDeEventos`
+- [x] Processador do outbox com backoff exponencial e limite de tentativas
+- [x] 26 testes unitários de contrato e de outbox
+- [x] **Teste de integração provando o evento ponta a ponta** — 3 testes contra um RabbitMQ real via Testcontainers
+- [ ] **⛔ Esqueleto .NET do OS Service publicando `OrdemAberta`** — precisa do repositório criado
+- [ ] **⛔ Esqueleto .NET do Billing consumindo `DiagnosticoConcluido`** — idem
+
+**Marco da Etapa 1 atingido.** `dotnet test` em `fase4/`: 29 passando, 0 falhas.
+O `OrdemAberta` sai do outbox, atravessa um RabbitMQ de verdade e chega no
+consumidor com o `correlationId` intacto; a entrega repetida é descartada; e a
+mensagem que falha sempre termina na dead letter.
 
 ---
 

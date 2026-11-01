@@ -394,3 +394,7 @@ override.tf.json
 
 # OBS: o arquivo .terraform.lock.hcl DEVE ser versionado (trava versões de providers)
 !.terraform.lock.hcl
+
+# Build da solução da Fase 4
+fase4/**/bin/
+fase4/**/obj/

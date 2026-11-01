@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PosTech.Contratos/PosTech.Contratos.csproj" />
+    <Project Path="src/PosTech.Mensageria/PosTech.Mensageria.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PosTech.Fase4.Testes/PosTech.Fase4.Testes.csproj" />
+  </Folder>
+</Solution>
