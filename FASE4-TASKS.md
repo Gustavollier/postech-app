@@ -164,7 +164,7 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [x] Mapear o schema atual por dono (qual tabela vai para qual serviço) — `fase4/mapa-do-schema.md`
 - [x] Listar todo join que hoje cruza contextos e definir o substituto de cada um — só dois, e os dois somem
 - [x] OS Service: ordem, status e histórico, com schema idempotente
-- [x] OS Service: 70 testes, incluindo 8 de ponta a ponta assíncronos
+- [x] OS Service: 88 testes, 94% de cobertura — 8 de ponta a ponta assíncronos e 18 com a API no ar
 - [x] **Identidade: value objects de CPF e CNPJ, cópia única do contexto** — `PosTech.Identidade`
 - [x] Schema do `identidade-db` com Cliente, Veiculo, Funcionario e Seguranca
 - [x] **UNIQUE em `Cliente.CPF`, `Cliente.CNPJ` e `Funcionario.CPF`** — fecha a lacuna apontada na Fase 3
@@ -174,7 +174,7 @@ Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
 - [x] **Billing: orçamento como documento no MongoDB** — `PosTech.Billing`, com outbox embutido no agregado
 - [x] Regra de montagem do orçamento, pura e testada: o valor sai da soma dos subtotais, com o preço do dia
 - [x] Índice único por ordem, para uma OS não ter dois orçamentos
-- [x] 46 testes do Billing, 18 deles contra MongoDB e RabbitMQ reais
+- [x] 73 testes do Billing, 90% de cobertura — 27 deles com o serviço inteiro no ar, contra MongoDB e RabbitMQ reais
 - [x] **Billing: pagamento e integração com o Mercado Pago** — gateway, webhook e estorno, com um dublê de adquirente nos testes. O token de sandbox só é necessário para cobrar de verdade; sem ele o serviço sobe com a cobrança indisponível
 - [x] **Execução: fila, itens e peças** — `PosTech.Execucao`, documentos com outbox embutido
 - [x] Transições da oficina puras e testadas: receber, diagnosticar, liberar, finalizar, cancelar
@@ -223,8 +223,10 @@ Meta: a saga completa, com as compensações testadas.
 Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
 
 - [ ] **⛔ BDD do fluxo da saga com Reqnroll** — precisa dos repositórios e de `dotnet`
-- [x] Gate de cobertura de 80% no OS Service, confirmado verde no runner
-- [ ] **⛔ Gate de cobertura nos outros três serviços** — precisa dos serviços montados
+- [x] Gate de cobertura de 80% no OS Service, confirmado verde no runner — e **reprovou de verdade** uma vez, a 76%, quando a camada HTTP ainda estava sem teste
+- [x] Gate de cobertura de 80% no Billing, verde no runner a 90%
+- [x] **Dois defeitos na própria pipeline**, achados ao ler um run: o job do SonarCloud se pulava sozinho para sempre (o `if: env.SONAR_TOKEN != ''` morava no mesmo step que declarava aquele env, e o GitHub resolve a condição antes de montar o ambiente do step), e o deploy reprovava por falta de ambiente na Azure em vez de se pular
+- [ ] **⛔ Gate de cobertura no Execução e no Identidade** — precisa dos dois serviços montados
 - [ ] **⛔ SonarCloud no CI de cada serviço** — precisa da conta SonarCloud
 - [ ] **⛔ Pipeline do Identidade: build, teste, qualidade, imagem, deploy** — precisa do repositório
 - [x] Pipeline do OS Service, verde no runner do GitHub (build, testes e gate de cobertura)
