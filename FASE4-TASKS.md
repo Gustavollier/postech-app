@@ -1,286 +1,145 @@
 # Fase 4 — Rastreio de tarefas
 
-Checklist de execução da Fase 4 (microsserviços, Saga, mensageria).
-Atualizado conforme as tarefas são concluídas, para o time ver onde estamos sem
-precisar perguntar.
+Checklist da Fase 4 (microsserviços, Saga, mensageria). Atualizado conforme as
+tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 
-**Início:** 01/11/2026
-**Plano completo:** board no Miro (arquitetura, saga e custos) e o Mapa da Fase 4.
+**Início:** 01/11/2026 · **Última atualização:** 03/11/2026
+**Decisão de calendário:** o ambiente na Azure só sobe perto do dia da entrega.
+Até lá, tudo que não depende dele está pronto.
 
 ## Legenda
 
 - `[x]` concluída
 - `[ ]` pendente
-- **⛔ impeditivo** — a tarefa não avança até alguém destravar; o motivo está escrito na linha
-
-## Ferramentas do ambiente de desenvolvimento
-
-Todas instaladas e verificadas. Tudo que for marcado como concluído aqui foi
-compilado e testado antes de receber o X.
-
-| Ferramenta | Versão | Como foi obtida |
-| --- | --- | --- |
-| .NET SDK | 10.0.114 e 8.0.133 | `apt-get install dotnet-sdk-10.0 dotnet-sdk-8.0` |
-| Docker | 29.9.2, daemon rodando | `dockerd` local, storage driver overlayfs |
-| Azure CLI | 2.91.0 | `pip install azure-cli` num venv em `/opt/azcli` |
-| kubectl | 1.37.2 | `az aks install-cli` |
-| kubelogin | 0.2.22 | idem |
-| Terraform | 1.9.8 | binário de releases.hashicorp.com |
-
-O instalador oficial do .NET (`dot.net`) está bloqueado na saída de rede desta
-máquina; o pacote do Ubuntu 24.04 resolve e entrega as duas versões que o
-projeto usa.
-
-### O que ainda depende de você
-
-- **Login no Azure.** O `az` está instalado mas sem credencial. Um
-  `az login --use-device-code` resolve: eu gero o código, você autentica.
-- **Contas de terceiros.** Atlas, CloudAMQP, SonarCloud e Mercado Pago precisam
-  de cadastro com os seus dados.
-- **Criação dos repositórios.** Nome, visibilidade e dono são decisão sua.
+- **⏳ no dia** — só acontece com o ambiente no ar, perto da gravação
 
 ---
 
-## Secrets dos repositórios
+## Pendências
 
-Levantado lendo os `secrets.*` de cada workflow. **Eu não consigo criar nem ler
-secret do GitHub**: não há ferramenta para isso na integração, e secret do
-GitHub é write-only por definição. O *valor* dos três `AZURE_*`, porém, eu
-recuperei do próprio Azure pela CLI — eles não ficam guardados só no GitHub.
+### 👤 Gustavo (o que só você consegue fazer)
 
-### Já configurados
+**Agora**
 
-| Repositório | Secrets | Como sei |
-| --- | --- | --- |
-| `postech-app` | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `SENHA_FUNCIONARIO` | pipeline verde na Fase 3 |
-| `postech-auth-function` | os três `AZURE_*` | idem |
-| `postech-infra-db` | os três `AZURE_*` | idem |
-| `postech-infra-k8s` | os três `AZURE_*`, `DD_API_KEY`, `DD_APP_KEY` | idem |
+- [ ] **Nomes e RMs dos participantes** — entram no PDF de entrega
+- [ ] **Alerta de orçamento na Azure** — portal → *Gerenciamento de Custos → Orçamentos → Adicionar*, US$ 50, alertas em 50% e 80%. Antes de qualquer `apply`
+- [ ] **Proteger a `main`** dos quatro repositórios de serviço — *Settings → Branches → Add rule*: branch `main`, *Require a pull request before merging*, *Require status checks to pass* com **Build, testes e cobertura**
+- [ ] **Renovar os dois tokens do Mercado Pago** (vendedor e comprador de teste) — apareceram no chat. O do vendedor, renovado, é o que vai para o Key Vault
+- [ ] **Conferir se a conta do Datadog ainda está ativa** — o `postech-infra-k8s` precisa das chaves (`DD_API_KEY`, `DD_APP_KEY`) que estão nos secrets dele; se o trial acabou, o dashboard e o rastreamento do vídeo ficam sem destino
+- [ ] **SonarCloud, Identidade:** marcar como *Accept* o S6781 (chave JWT lida da configuração). É falso positivo: a chave vem do Secret do Kubernetes, alimentado pelo Key Vault, e não de arquivo versionado
+- [ ] **Revisar e aprovar** as branches `fase4/regiao-canadacentral` do `postech-infra-db` e do `postech-infra-k8s` (não mergear antes do dia: o merge na `main` dispara `apply`)
 
-### Faltando
+**⏳ No dia de subir o ambiente**
 
-| Repositório | Secrets | Situação |
-| --- | --- | --- |
-| `postech-os-service` | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` | **confirmado**: o job de deploy falhou no login OIDC |
-| `postech-os-service` | `SONAR_TOKEN` | opcional por ora: sem ele o job se pula sozinho |
-| `postech-billing-service` | os mesmos | quando o serviço for publicado |
-| `postech-execucao-service` | os mesmos | idem |
-| `postech-identidade-service` | os mesmos | idem |
+- [ ] **Gravar no Key Vault os quatro segredos de fora da Azure**, depois do `apply` do `postech-infra-db` (o comando lê o valor sem ele aparecer na tela; passo a passo no dia):
+  - `billing-mongo-connection-string` — usuário `billing-svc` do Atlas
+  - `execucao-mongo-connection-string` — usuário `execucao-svc` do Atlas
+  - `rabbitmq-connection-string` — AMQP URL do CloudAMQP
+  - `mercadopago-access-token` — o token do vendedor de teste, **já renovado**
+- [ ] **Webhook do Mercado Pago** — na aplicação de teste: *Configuração de webhooks*, tópico **Order**, URL `https://<apim>.azure-api.net/billing/api/v1/pagamentos/webhook`
+- [ ] **Gravar o vídeo** seguindo `postech-os-service/docs/roteiro-do-video.md`
+- [ ] **Publicar o vídeo** no YouTube ou Vimeo (público ou não listado)
+- [ ] **Enviar o PDF** no portal
 
-Os três `AZURE_*` não são segredos de verdade — são identificadores. Saem de
-`az account show` e de `az ad app list`, e estão no portal em
-`Microsoft Entra ID → Registros de aplicativo`. Os valores foram passados no
-chat em vez de versionados aqui: repositório público não é lugar de id de
-assinatura, mesmo quando ele não abre porta nenhuma sozinho.
+**Depois da entrega**
 
-Esses secrets só importam quando o job de **deploy** roda, isto é, quando
-existir um ambiente na Azure. Build, teste e gate de cobertura passam sem eles.
+- [ ] **Confirmar o teardown** — eu rodo, mas o "pode destruir" é seu
 
-### A pegadinha do OIDC, e o limite que ela esbarrou
+### 🤖 Claude
 
-Copiar os secrets **não basta**. A credencial federada no Entra ID é amarrada ao
-repositório, no formato `repo:Gustavollier/postech-app:ref:refs/heads/main`. Um
-repositório novo precisa de uma credencial federada nova, senão o login falha
-com as variáveis certas e a mensagem não diz o motivo.
+**Agora**
 
-E há um teto: **20 credenciais federadas por registro de aplicativo**. O app da
-Fase 3 (`postech-13soat-github-oidc`) chegou nele com 18 em uso mais 2 que
-foram criadas para o OS Service. As antigas não podem ser apagadas — os
-workflows da Fase 3 usam GitHub Environments, e nesse caso o `subject` muda para
-`...:environment:NOME`, então cada ambiente consome uma credencial própria.
+- [ ] **Rascunho do PDF de entrega** — participantes (com os dados do Gustavo), links dos repositórios e do vídeo, diagrama, estratégia da Saga, justificativa da divisão e das tecnologias
+- [ ] **Dashboard do Datadog** — os widgets de eventos ainda procuram nomes do monólito (`OrdemServicoCriada`, `TransicaoStatusOrdemServico`); trocar pelos eventos da saga
+- [ ] **Pipelines dos repositórios de infra e da Auth Function** — usam o app OIDC antigo (`postech-13soat-github-oidc`), que ficou **sem papel nenhum** quando a assinatura foi recriada. Decidir com o Gustavo: dar papel a ele ou fazer o `apply` daqui, com o login de Owner (mais simples para uma vez só)
 
-Por isso a Fase 4 ganhou um registro separado: **`postech-13soat-fase4-oidc`**.
-Separar por fase é desenho melhor de qualquer jeito, e deixa os pipelines
-antigos intactos. O que falta nele:
+**⏳ No dia de subir o ambiente** (cerca de 1h, metade esperando o APIM)
 
-- [ ] **⛔ Credenciais federadas dos 4 repositórios novos** — depende de decidir
-      se os deploys ficam neste app ou no antigo
-- [ ] **⛔ Papel de Contributor no grupo de recursos** — não há grupo de
-      recursos para atribuir enquanto a assinatura estiver vazia
+- [ ] `apply` do `postech-infra-db` — e conceder *Key Vault Secrets Officer* a quem roda, logo depois de o cofre existir (sem isso o Terraform não grava os segredos)
+- [ ] Rodar a criação dos usuários contidos `os_app` e `identidade_app` (`sql/usuario-do-servico.sql`)
+- [ ] `apply` do `postech-infra-k8s` (APIM **Developer**, ~40 min para subir)
+- [ ] Publicar a imagem da Auth Function no ACR
+- [ ] Deploy dos quatro serviços (os pipelines detectam o ambiente e deixam de pular)
+- [ ] Criar o primeiro funcionário (pasta 0 da coleção, por port-forward)
+- [ ] Rodar a coleção do Postman inteira contra o APIM
+- [ ] **Verificar no Datadog se o trace atravessa a fila** e liga os quatro serviços — depende do agente instrumentar o cliente do RabbitMQ; se não ligar, o vídeo usa os logs por `correlationId`, que já funcionam
 
----
+**Depois da entrega**
 
-## Etapa 0 — Decidir e abrir contas
+- [ ] `terraform destroy` dos dois repositórios de infra
 
-Meta: sair do zero com as decisões fechadas, as contas gratuitas criadas e a
-queima da Azure em repouso.
+### Opcional, se sobrar tempo
 
-- [x] Levantar os requisitos da Fase 4 e pontuar criticidade
-- [x] Desenhar a arquitetura alvo com os recursos e onde cada um mora
-- [x] Decidir a divisão em serviços: Identidade, Ordem de Serviço, Billing, Execução
-- [x] Decidir a estratégia da Saga: orquestrada, com o orquestrador no OS Service
-- [x] Decidir onde fica o NoSQL: Billing e Execução em MongoDB
-- [x] Decidir o broker: RabbitMQ gerenciado, fora do cluster
-- [x] Registrar a decisão da Saga em ADR — `fase4/adr/ADR-0006-saga-orquestrada.md`
-- [x] Registrar a decisão de bancos por serviço em ADR — `fase4/adr/ADR-0007-banco-por-servico.md`
-- [ ] **⛔ Criar alerta de orçamento na Azure em US$ 50 e US$ 80** — precisa do portal
-- [ ] **⛔ Pedir aumento de quota de vCPU** — precisa do portal, e a aprovação leva dias
-- [ ] **⛔ Confirmar o cluster AKS parado** — precisa de `az`
-- [ ] **⛔ Deletar o APIM para parar a queima de US$ 1,70/dia** — precisa de `az`
-- [ ] **⛔ Abrir conta MongoDB Atlas e criar o cluster M0** — precisa de cadastro
-- [ ] **⛔ Abrir conta CloudAMQP no plano Little Lemur** — precisa de cadastro
-- [ ] **⛔ Abrir conta SonarCloud e ligar nos repositórios** — precisa de cadastro
-- [ ] **⛔ Abrir conta Mercado Pago e pegar credenciais de sandbox** — precisa de cadastro
-- [x] Criar o repositório `postech-identidade-service`
-- [x] Criar o repositório `postech-os-service`
-- [x] Criar o repositório `postech-billing-service`
-- [x] Criar o repositório `postech-execucao-service`
-- [ ] **⛔ Proteger a `main` dos quatro repositórios novos** — exige permissão de admin no repositório
+- [ ] Code smells que o SonarCloud aponta (4 a 8 por serviço, nenhum afeta o quality gate)
+- [ ] Billing chamar o estorno de verdade no Mercado Pago (`POST /v1/orders/{id}/refund`) — hoje o estorno é o evento de domínio
 
 ---
 
-## Etapa 1 — Um evento atravessando dois serviços
+## O que já está pronto
 
-Meta: provar a decisão mais cara da fase enquanto ela ainda é barata de mudar.
-Tudo local, custo zero.
+### Contas e acessos
 
-- [x] Definir o envelope de mensagem com `X-Correlation-ID` propagado — `fase4/contratos/Envelope.cs`
-- [x] Definir os contratos dos eventos de domínio — `fase4/contratos/Eventos.cs`
-- [x] Definir a topologia do RabbitMQ: exchange, filas e assinaturas — `fase4/contratos/Eventos.cs`
-- [x] Generalizar o `EmailOutbox` para um outbox transacional de eventos — `fase4/outbox/`
-- [x] Tabela de idempotência do consumidor (`EventoProcessado`) — `fase4/outbox/schema-mensageria.sql`
-- [x] `docker-compose` local com RabbitMQ, MongoDB e SQL Server — `fase4/docker-compose.fase4.yml`, validado com `docker compose config`
-- [x] Solução `fase4/PosTech.Fase4.slnx` compilando, 0 erros e 0 warnings
-- [x] Publicador que lê o outbox e publica no RabbitMQ — `PublicadorRabbitMq`, com confirmação do broker ligada
-- [x] Declaração idempotente da topologia: exchange, filas, dead letters e bindings
-- [x] Consumidor base com idempotência, retry em memória e dead letter — `ConsumidorDeEventos`
-- [x] Processador do outbox com backoff exponencial e limite de tentativas
-- [x] 26 testes unitários de contrato e de outbox
-- [x] **Teste de integração provando o evento ponta a ponta** — 3 testes contra um RabbitMQ real via Testcontainers
-- [x] **OS Service completo**: API, 3 background services, Dockerfile, manifestos k8s e pipeline
-- [x] **Billing Service completo**: API, 3 background services, Dockerfile, manifestos k8s e pipeline
+- [x] Repositórios criados: `postech-os-service`, `postech-billing-service`, `postech-execucao-service`, `postech-identidade-service`
+- [x] Azure: login, resource providers registrados, resource group `pos-tech-fiap` e storage do state do Terraform, em **`canadacentral`** (a assinatura passou a aceitar só brazilsouth, canadacentral, francecentral, italynorth e belgiumcentral)
+- [x] OIDC da Fase 4: app `postech-13soat-fase4-oidc` com 12 credenciais federadas (4 repositórios × `main`, `develop`, PR) e **Contributor** no resource group — o login dos pipelines funciona
+- [x] Secrets `AZURE_*` e `SONAR_TOKEN` nos quatro repositórios de serviço
+- [x] SonarCloud: organização `postech4` (plano Free), os quatro projetos públicos, branch principal `main`, análise no CI com cobertura
+- [x] MongoDB Atlas: projeto `postech-fase4`, cluster M0, `0.0.0.0/0` liberado, usuários `billing-svc` (`readWrite` só em `billing-db`) e `execucao-svc` (`readWrite` só em `execucao-db`)
+- [x] CloudAMQP: instância criada
+- [x] Mercado Pago: aplicação `postech-oficina`, contas de teste vendedor e comprador, **pedido Pix criado com sucesso pela API de Orders**
 
-**Marco da Etapa 1 atingido.** `dotnet test` em `fase4/`: 29 passando, 0 falhas.
-O `OrdemAberta` sai do outbox, atravessa um RabbitMQ de verdade e chega no
-consumidor com o `correlationId` intacto; a entrega repetida é descartada; e a
-mensagem que falha sempre termina na dead letter.
+### Serviços
 
----
+| Serviço | Banco | Testes | Cobertura | Pipeline |
+| --- | --- | --- | --- | --- |
+| OS (orquestrador da saga) | Azure SQL | 96, incluindo 5 cenários BDD | 92% | verde |
+| Billing | MongoDB | 91 | 88% | verde |
+| Execução | MongoDB | 120 | 94% | verde |
+| Identidade | Azure SQL | 95 | 95% | verde |
 
-## Etapa 2 — Decompor o domínio
+Coberturas como o SonarCloud mede; todos com o quality gate OK.
 
-Meta: quatro serviços, quatro bancos, nenhum join atravessando fronteira.
+- [x] Saga orquestrada no OS Service: caminho feliz e as três compensações (orçamento rejeitado, pagamento recusado volta um passo, execução que não assume no prazo estorna e cancela)
+- [x] Outbox transacional, idempotência e dead letter nos três serviços que usam a fila
+- [x] **BDD com Reqnroll** — o fluxo da saga em Gherkin, em português, contra SQL Server e RabbitMQ reais
+- [x] Execução: reserva de peça **por ordem**, atômica no Mongo (corrigiu o defeito do laboratório, em que uma devolução repetida consumia a reserva de outra ordem)
+- [x] Identidade: UNIQUE em CPF, CNPJ e placa, CHECK de um documento só, bloqueio de login após 5 erros — as lacunas que a Fase 3 tinha deixado anotadas
+- [x] Billing: **cobrança pela API de Orders do Mercado Pago** — a de pagamentos recusava a credencial de teste. Com `MercadoPago__NomeDoPagadorDeTeste=APRO`, o Pix de teste é aprovado sozinho e o webhook chega como num pagamento real
+- [x] Webhook do Billing só consulta pedido que nós criamos (corrige a vulnerabilidade S7044 apontada pelo SonarCloud)
+- [x] OS e Identidade aplicam o próprio schema na partida — banco novo não tem passo manual
 
-- [x] Mapear o schema atual por dono (qual tabela vai para qual serviço) — `fase4/mapa-do-schema.md`
-- [x] Listar todo join que hoje cruza contextos e definir o substituto de cada um — só dois, e os dois somem
-- [x] OS Service: ordem, status e histórico, com schema idempotente
-- [x] OS Service: 88 testes, 94% de cobertura — 8 de ponta a ponta assíncronos e 18 com a API no ar
-- [x] **Identidade: value objects de CPF e CNPJ, cópia única do contexto** — `PosTech.Identidade`
-- [x] Schema do `identidade-db` com Cliente, Veiculo, Funcionario e Seguranca
-- [x] **UNIQUE em `Cliente.CPF`, `Cliente.CNPJ` e `Funcionario.CPF`** — fecha a lacuna apontada na Fase 3
-- [x] CHECK garantindo exatamente um documento por cliente
-- [x] 22 testes de documento, incluindo a trava de divergência com a Auth Function
-- [ ] **⛔ Apontar a Auth Function para o `identidade-db`** — precisa do repositório criado
-- [x] **Billing: orçamento como documento no MongoDB** — `PosTech.Billing`, com outbox embutido no agregado
-- [x] Regra de montagem do orçamento, pura e testada: o valor sai da soma dos subtotais, com o preço do dia
-- [x] Índice único por ordem, para uma OS não ter dois orçamentos
-- [x] 73 testes do Billing, 90% de cobertura — 27 deles com o serviço inteiro no ar, contra MongoDB e RabbitMQ reais
-- [x] **Billing: pagamento e integração com o Mercado Pago** — gateway, webhook e estorno, com um dublê de adquirente nos testes. O token de sandbox só é necessário para cobrar de verdade; sem ele o serviço sobe com a cobrança indisponível
-- [x] **Execução: fila, itens e peças** — `PosTech.Execucao`, documentos com outbox embutido
-- [x] Transições da oficina puras e testadas: receber, diagnosticar, liberar, finalizar, cancelar
-- [x] Reserva de peças no diagnóstico, para dois orçamentos não prometerem a mesma peça
-- [x] Formato do fio fixado por teste: acentuação legível e enum por nome
-- [x] 24 testes do Execução e do estoque
-- [ ] **⛔ Fluxo feliz rodando ponta a ponta no compose local** — precisa do daemon do Docker
+### Qualidade e CI/CD
 
----
+- [x] Pipeline por serviço: build, testes com Testcontainers, **gate de 80%**, SonarCloud com cobertura, imagem e deploy no AKS
+- [x] Deploy se pula com aviso quando o ambiente não existe (e reprova em erro de permissão ou rede)
+- [x] Actions de terceiros fixadas por hash; pods sem token de service account montado
+- [x] **Fluxo completo validado de ponta a ponta com os quatro serviços reais** (local, com proxy no lugar do APIM e adquirente falso no formato da API de Orders): a saga conclui pelo webhook. Achou e corrigiu um defeito de configuração no Billing que ignorava a URL do Mercado Pago
 
-## Etapa 3 — Saga e Mercado Pago
+### Infraestrutura (branches `fase4/regiao-canadacentral`, ainda sem `apply`)
 
-Meta: a saga completa, com as compensações testadas.
+- [x] `postech-infra-db`: `os-db` e `identidade-db` com usuário contido cada, Key Vault, sem `prevent_destroy`. `plan`: **15 a criar**
+- [x] `postech-infra-k8s`: uma API no APIM por serviço, um Service público e um Secret por serviço, APIM criado pelo Terraform, Auth Function lendo o `identidade-db`. Tier **Developer** (o Consumption não tem `rate-limit-by-key` nem logs para o Datadog). `plan` parcial: AKS 2× `D2as_v4` e ACR
+- [x] Custo estimado com tudo ligado: **~US$ 7,50/dia** (~US$ 4–5 com o AKS parado à noite)
 
-- [x] Desenhar a máquina da saga a partir do `OrdemServicoDomainService` existente — `fase4/adr/ADR-0006-saga-orquestrada.md`
-- [x] Corrigir a ordem dos passos: o diagnóstico entra entre abertura e orçamento
-- [x] Decidir o uso de CQRS — `fase4/adr/ADR-0008-cqrs-sem-infraestrutura-nova.md`
-- [x] **Orquestrador da saga como máquina pura, testável sem banco e sem broker** — `PosTech.Saga`
-- [x] Caminho feliz: abrir, diagnosticar, orçar, aprovar, pagar, executar, fechar
-- [x] Compensação: orçamento rejeitado
-- [x] Compensação: pagamento recusado (volta um passo, não cancela)
-- [x] Compensação: execução não assume no prazo (estorna e cancela)
-- [x] Compensação só desfaz o que de fato aconteceu (não inventa estorno)
-- [x] 11 testes do orquestrador, incluindo evento fora de ordem e repetido
-- [x] Frame "Saga" do board no Miro atualizado para os seis passos
-- [x] **Persistência real da saga em Azure SQL** — `SagaRepositorio`, com o estado e os eventos de compensação na mesma transação
-- [x] Outbox e idempotência em Dapper/Azure SQL — `OutboxRepositorio`, `IdempotenciaRepositorio`
-- [x] Tabela `SagaOrdemServico` no schema idempotente, com índice para o varredor de timeout
-- [x] Varredor de sagas paradas além do prazo — `ObterParadasAsync`
-- [x] 8 testes de integração contra um SQL Server real, incluindo a atomicidade do outbox
-- [x] Read model descartado por decisão do líder técnico (ADR-0008 revisado): tabela nova está fora
-- [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
-- [x] Estado da saga persistido em `os-db`, na mesma transação da ordem
-- [x] Caminho feliz rodando sozinho pela fila, com RabbitMQ e SQL Server reais
-- [x] Compensação: pagamento recusado volta um passo e a segunda tentativa passa
-- [x] Compensação: timeout pela varredura, com estorno fechando a saga
-- [x] Compensação: outbox segura o evento com o publicador parado e entrega quando volta
-- [ ] **⛔ Integração com o Mercado Pago em sandbox** — precisa das credenciais
-- [ ] **⛔ Webhook de confirmação de pagamento** — precisa de URL pública (ngrok local)
-- [x] Teste que força a recusa e verifica a compensação
+### Documentação e entrega
+
+- [x] ADRs: Saga orquestrada, banco por serviço, CQRS sem infraestrutura nova
+- [x] `docs/arquitetura.md` nos quatro repositórios, com diagrama de componentes e da saga (PNG para o PDF)
+- [x] READMEs com selos de quality gate, cobertura e CI (evidência de cobertura)
+- [x] Swagger em cada serviço e **coleção do Postman** com o fluxo completo (`postech-os-service/docs/postman`)
+- [x] **Roteiro do vídeo** (`postech-os-service/docs/roteiro-do-video.md`): sete blocos em 15 minutos, checklist do dia e plano B para cada risco
 
 ---
 
-## Etapa 4 — Qualidade e pipelines
+## Decisões registradas
 
-Meta: quatro pipelines verdes com build, teste, qualidade e deploy.
-
-- [ ] **⛔ BDD do fluxo da saga com Reqnroll** — precisa dos repositórios e de `dotnet`
-- [x] Gate de cobertura de 80% no OS Service, confirmado verde no runner — e **reprovou de verdade** uma vez, a 76%, quando a camada HTTP ainda estava sem teste
-- [x] Gate de cobertura de 80% no Billing, verde no runner a 90%
-- [x] **Dois defeitos na própria pipeline**, achados ao ler um run: o job do SonarCloud se pulava sozinho para sempre (o `if: env.SONAR_TOKEN != ''` morava no mesmo step que declarava aquele env, e o GitHub resolve a condição antes de montar o ambiente do step), e o deploy reprovava por falta de ambiente na Azure em vez de se pular
-- [ ] **⛔ Gate de cobertura no Execução e no Identidade** — precisa dos dois serviços montados
-- [ ] **⛔ SonarCloud no CI de cada serviço** — precisa da conta SonarCloud
-- [ ] **⛔ Pipeline do Identidade: build, teste, qualidade, imagem, deploy** — precisa do repositório
-- [x] Pipeline do OS Service, verde no runner do GitHub (build, testes e gate de cobertura)
-- [x] Pipeline do Billing, mesma estrutura do OS Service (build, testes, gate de 80%, imagem e deploy)
-- [ ] **⛔ Pipeline do Execução** — idem
-
-### Ensaio de infraestrutura (1 dia ligado, cerca de US$ 5)
-
-- [ ] **⛔ Subir um deployment de teste e confirmar que 4 serviços cabem em 4 vCPU** — precisa de `kubectl`
-- [ ] **⛔ Desligar o cluster no fim do ensaio** — precisa de `az`
-
----
-
-## Etapa 5 — Azure de verdade
-
-Meta: o ambiente publicado, com o trace atravessando os serviços.
-Aqui o crédito começa a sair. Parar o cluster toda noite.
-
-**A assinatura está vazia.** Os recursos da Fase 3 foram deletados de propósito
-para parar de queimar crédito — `az group list` e `az resource list` devolvem
-vazio. A queima hoje é zero, e esta etapa deixou de ser "religar" para ser
-"recriar do zero", uma vez, perto da gravação. Duas consequências no Terraform:
-
-1. **O state foi embora com o resto** (a storage `postechtfstate13soat` também
-   era um recurso). O primeiro `apply` precisa de um backend novo.
-2. **Os blocos `import` de `apim.tf` têm que sair.** Eles importavam o APIM, a
-   política e as duas operações de health que existiam no portal; importar o
-   que não existe falha o plan.
-
-- [ ] **⛔ Recriar o backend de state do Terraform** — storage account nova
-- [ ] **⛔ Tirar os `import` e o `prevent_destroy` de `apim.tf`** — o
-      `prevent_destroy` existia porque recriar um Developer leva 40 min; com
-      Consumption o motivo deixa de valer, e queremos `destroy` funcionando
-- [ ] **⛔ Recriar o APIM como Consumption** — ~US$ 50/mês de Developer é a
-      maior linha do orçamento e não se pode parar; Consumption é por chamada,
-      com 1 milhão grátis por mês, e sobe em minutos. As políticas que já temos
-      usam `cors`, `validate-jwt` e `rate-limit-by-key`, todas suportadas lá
-- [ ] **⛔ Terraform dos bancos `os-db` e `identidade-db`** — precisa de `terraform`
-- [ ] **⛔ Ingress único no AKS com rota por caminho para os quatro serviços** —
-      um IP público em vez de quatro
-- [ ] **⛔ Uma API do APIM por microsserviço** (`/os`, `/billing`, `/execucao`,
-      `/identidade`, `/auth`), cada uma com a sua política e o seu limite
-- [ ] **⛔ Guardar os segredos do Atlas e do CloudAMQP no Key Vault** — precisa de `az`
-- [ ] **⛔ Deploy dos quatro serviços no AKS** — precisa de `kubectl`
-- [ ] **⛔ Propagar o contexto de trace dentro da mensagem** — precisa de `dotnet`
-- [ ] **⛔ Confirmar no Datadog um trace cruzando os quatro serviços** — precisa do ambiente no ar
-
----
-
-## Etapa 6 — Vídeo e entrega
-
-- [ ] Roteiro do vídeo de 15 minutos
-- [ ] Documentação de arquitetura por serviço
-- [ ] PDF de entrega com participantes, links, diagrama e justificativas
-- [ ] **⛔ Ensaiar a falha da saga antes de gravar** — precisa do ambiente no ar
-- [ ] **⛔ Gravar o vídeo** — idem
-- [ ] **⛔ Teardown total depois da entrega** — precisa de `az`
+| Decisão | Por quê |
+| --- | --- |
+| Quatro serviços: Identidade, OS, Execução, Billing | Cada um muda por motivo próprio; Identidade é consultada, não coordenada |
+| Saga **orquestrada**, orquestrador no OS Service | Um lugar só para o estado da saga e para a compensação (ADR-0006) |
+| SQL no OS e no Identidade, MongoDB no Billing e na Execução | Transação local onde a consistência é transacional; documento onde o agregado é lido inteiro (ADR-0007) |
+| RabbitMQ gerenciado (CloudAMQP), fora do cluster | Plano gratuito, e o broker não disputa a quota de 4 vCPU |
+| Região `canadacentral` | Política da assinatura; mais barata que brazilsouth |
+| APIM **Developer** | Mantém o rate limit por IP e os logs no Datadog, que o Consumption não tem |
+| Ambiente só perto da entrega | Crédito de estudante; ~US$ 7,50/dia ligado |
+| Mercado Pago pela **API de Orders** | A credencial de teste das contas novas só funciona nela |
