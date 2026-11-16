@@ -3,75 +3,74 @@
 Checklist da Fase 4 (microsserviços, Saga, mensageria). Atualizado conforme as
 tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 
-**Início:** 01/11/2026 · **Última atualização:** 03/11/2026
-**Decisão de calendário:** o ambiente na Azure só sobe perto do dia da entrega.
-Até lá, tudo que não depende dele está pronto.
+**Início:** 01/11/2026 · **Última atualização:** 16/11/2026
+**Estado:** ambiente no ar na Azure, fluxo completo validado pelo painel e pelo Postman.
 
 ## Legenda
 
 - `[x]` concluída
 - `[ ]` pendente
-- **⏳ no dia** — só acontece com o ambiente no ar, perto da gravação
 
 ---
 
-## Pendências
+## O que falta
 
-### 👤 Gustavo (o que só você consegue fazer)
+### Para gravar o vídeo
 
-**Agora**
-
-- [ ] **Nomes e RMs dos participantes** — entram no PDF de entrega
-- [ ] **Alerta de orçamento na Azure** — portal → *Gerenciamento de Custos → Orçamentos → Adicionar*, US$ 50, alertas em 50% e 80%. Antes de qualquer `apply`
-- [ ] **Proteger a `main`** dos quatro repositórios de serviço — *Settings → Branches → Add rule*: branch `main`, *Require a pull request before merging*, *Require status checks to pass* com **Build, testes e cobertura**
-- [ ] **Renovar os dois tokens do Mercado Pago** (vendedor e comprador de teste) — apareceram no chat. O do vendedor, renovado, é o que vai para o Key Vault
-- [ ] **Conferir se a conta do Datadog ainda está ativa** — o `postech-infra-k8s` precisa das chaves (`DD_API_KEY`, `DD_APP_KEY`) que estão nos secrets dele; se o trial acabou, o dashboard e o rastreamento do vídeo ficam sem destino
-- [ ] **SonarCloud, Identidade:** marcar como *Accept* o S6781 (chave JWT lida da configuração). É falso positivo: a chave vem do Secret do Kubernetes, alimentado pelo Key Vault, e não de arquivo versionado
-- [ ] **Revisar e aprovar** as branches `fase4/regiao-canadacentral` do `postech-infra-db` e do `postech-infra-k8s` (não mergear antes do dia: o merge na `main` dispara `apply`)
-
-**⏳ No dia de subir o ambiente**
-
-- [ ] **Gravar no Key Vault os quatro segredos de fora da Azure**, depois do `apply` do `postech-infra-db` (o comando lê o valor sem ele aparecer na tela; passo a passo no dia):
-  - `billing-mongo-connection-string` — usuário `billing-svc` do Atlas
-  - `execucao-mongo-connection-string` — usuário `execucao-svc` do Atlas
-  - `rabbitmq-connection-string` — AMQP URL do CloudAMQP
-  - `mercadopago-access-token` — o token do vendedor de teste, **já renovado**
-- [ ] **Webhook do Mercado Pago** — na aplicação de teste: *Configuração de webhooks*, tópico **Order**, URL `https://<apim>.azure-api.net/billing/api/v1/pagamentos/webhook`
-- [ ] **Gravar o vídeo** seguindo `postech-os-service/docs/roteiro-do-video.md`
+- [ ] **Limpar os dados de teste**, se quiserem a base enxuta na gravação — os testes de ponta a ponta deixaram cerca de 20 ordens e vários clientes, peças e funcionários "E2E" e "Demonstração"
+- [ ] **Conferir o Datadog** — os agentes estão rodando no cluster; falta abrir a conta e confirmar que logs e traces estão chegando (buscar por um Correlation ID da tela Demonstração). Se o trial venceu, o bloco de monitoramento fica sem destino
+- [ ] **Preparar o PR pequeno** no `postech-execucao-service` para o cenário de deploy
+- [ ] **Ensaiar uma vez** seguindo `postech-os-service/docs/cenarios-do-video.md`
+- [ ] **Gravar** (`roteiro-do-video.md` para a ordem e o tempo, `cenarios-do-video.md` para o que mostrar e falar)
 - [ ] **Publicar o vídeo** no YouTube ou Vimeo (público ou não listado)
+
+### Para a entrega
+
+- [ ] **Nomes e RMs dos participantes** — entram no PDF
+- [ ] **PDF de entrega** — participantes, links dos repositórios e do vídeo, diagrama, estratégia da Saga, justificativa da divisão e das tecnologias
 - [ ] **Enviar o PDF** no portal
 
-**Depois da entrega**
+### Infraestrutura como código (o repositório não reproduz o que está no ar)
 
-- [ ] **Confirmar o teardown** — eu rodo, mas o "pode destruir" é seu
+- [ ] **Dar push do Terraform do ingress** — o ambiente tem `helm_release.ingress_nginx` e os Ingress no state, mas a branch `fase4/regiao-canadacentral` do `postech-infra-k8s` não tem esse código. Está na máquina de quem aplicou
+- [ ] **Levar para esse Terraform as duas correções feitas direto no cluster**, senão o próximo `apply` as desfaz:
+  - sonda do load balancer em TCP (anotações `service.beta.kubernetes.io/port_80_health-probe_protocol: Tcp` e `port_443_...`) — sem ela o APIM não alcança nenhum serviço
+  - `loadBalancerSourceRanges` com o IP do APIM (`4.248.250.243/32`) — sem ela o cluster responde direto da internet, sem passar pelo gateway
+- [ ] **Mergear as branches `fase4/regiao-canadacentral`** do `postech-infra-db` e do `postech-infra-k8s` na `main`, depois de incluir o item acima (o merge dispara `apply`)
 
-### 🤖 Claude
+### Higiene
 
-**Agora**
+- [ ] **Proteger a `main`** dos quatro repositórios de serviço e do `postech-front` — *Settings → Branches*: exigir PR e o check **Build, testes e cobertura**. Hoje nenhuma está protegida
+- [ ] **Confirmar que os tokens do Mercado Pago foram renovados** depois de terem aparecido no chat (o que está no Key Vault é válido e é do vendedor de teste)
+- [ ] **SonarCloud, Identidade:** marcar como *Accept* o S6781 (chave JWT lida da configuração; é falso positivo)
 
-- [ ] **Rascunho do PDF de entrega** — participantes (com os dados do Gustavo), links dos repositórios e do vídeo, diagrama, estratégia da Saga, justificativa da divisão e das tecnologias
-- [ ] **Dashboard do Datadog** — os widgets de eventos ainda procuram nomes do monólito (`OrdemServicoCriada`, `TransicaoStatusOrdemServico`); trocar pelos eventos da saga
-- [ ] **Pipelines dos repositórios de infra e da Auth Function** — usam o app OIDC antigo (`postech-13soat-github-oidc`), que ficou **sem papel nenhum** quando a assinatura foi recriada. Decidir com o Gustavo: dar papel a ele ou fazer o `apply` daqui, com o login de Owner (mais simples para uma vez só)
+### Depois da entrega
 
-**⏳ No dia de subir o ambiente** (cerca de 1h, metade esperando o APIM)
-
-- [ ] `apply` do `postech-infra-db` — e conceder *Key Vault Secrets Officer* a quem roda, logo depois de o cofre existir (sem isso o Terraform não grava os segredos)
-- [ ] Rodar a criação dos usuários contidos `os_app` e `identidade_app` (`sql/usuario-do-servico.sql`)
-- [ ] `apply` do `postech-infra-k8s` (APIM **Developer**, ~40 min para subir)
-- [ ] Publicar a imagem da Auth Function no ACR
-- [ ] Deploy dos quatro serviços (os pipelines detectam o ambiente e deixam de pular)
-- [ ] Criar o primeiro funcionário (pasta 0 da coleção, por port-forward)
-- [ ] Rodar a coleção do Postman inteira contra o APIM
-- [ ] **Verificar no Datadog se o trace atravessa a fila** e liga os quatro serviços — depende do agente instrumentar o cliente do RabbitMQ; se não ligar, o vídeo usa os logs por `correlationId`, que já funcionam
-
-**Depois da entrega**
-
-- [ ] `terraform destroy` dos dois repositórios de infra
+- [ ] **`terraform destroy`** dos dois repositórios de infra — o "pode destruir" é do Gustavo. O ambiente custa cerca de US$ 7,50 por dia ligado
 
 ### Opcional, se sobrar tempo
 
-- [ ] Code smells que o SonarCloud aponta (4 a 8 por serviço, nenhum afeta o quality gate)
 - [ ] Billing chamar o estorno de verdade no Mercado Pago (`POST /v1/orders/{id}/refund`) — hoje o estorno é o evento de domínio
+- [ ] Validar a assinatura (`x-signature`) do webhook do Mercado Pago — hoje o Billing se protege consultando o pedido no adquirente
+- [ ] Code smells que o SonarCloud aponta (nenhum afeta o quality gate)
+
+---
+
+## Feito em 15 e 16/11
+
+- [x] Ambiente aplicado na Azure: APIM Developer, AKS, SQL, Key Vault, ACR, Auth Function; os quatro serviços com deploy pela pipeline
+- [x] Os quatro segredos de fora da Azure gravados no Key Vault
+- [x] Alerta de orçamento de US$ 50 criado
+- [x] Webhook do Mercado Pago configurado e chegando sozinho — o pagamento do Pix de teste confirma sem intervenção
+- [x] APIM voltou a alcançar os serviços (a sonda do load balancer recebia 404 e derrubava os nós)
+- [x] Billing manda itens e descrição do extrato no pedido (Qualidade da Integração do Mercado Pago)
+- [x] **Autorização por perfil e posse nos quatro serviços** — antes, um token de cliente lia ordens, orçamentos e o cadastro da oficina inteira. Tabela por rota no README de cada serviço, em *Quem pode o quê*
+- [x] **Cluster fechado para tráfego que não venha do APIM** — o IP do ingress respondia direto da internet, sem token
+- [x] Painel (`postech-front`) revisado e publicado: lista de clientes, tela de Demonstração, ordem cancelada, peça do estoque no diagnóstico, trilha da saga, rótulos legíveis
+- [x] Teste de ponta a ponta pela interface (`postech-front/e2e/fluxo.mjs`, 16 passos) e coleção do Postman verdes contra o ambiente real
+- [x] `docs/cenarios-do-video.md`: o que mostrar e o que falar em cada cenário
+
+Testes por serviço hoje: OS 122, Billing 117, Execução 141, Identidade 122.
 
 ---
 
