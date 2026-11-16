@@ -17,11 +17,9 @@ tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 
 ### Para gravar o vídeo
 
-- [ ] **Limpar os dados de teste**, se quiserem a base enxuta na gravação — os testes de ponta a ponta deixaram cerca de 20 ordens e vários clientes, peças e funcionários "E2E" e "Demonstração"
-- [ ] **Conferir o Datadog** — os agentes estão rodando no cluster; falta abrir a conta e confirmar que logs e traces estão chegando (buscar por um Correlation ID da tela Demonstração). Se o trial venceu, o bloco de monitoramento fica sem destino
-- [ ] **Preparar o PR pequeno** no `postech-execucao-service` para o cenário de deploy
-- [ ] **Ensaiar uma vez** seguindo `postech-os-service/docs/cenarios-do-video.md`
-- [ ] **Gravar** (`roteiro-do-video.md` para a ordem e o tempo, `cenarios-do-video.md` para o que mostrar e falar)
+- [ ] **Ensaiar uma vez** seguindo `postech-os-service/docs/cenarios-do-video.md`, com os dados de `docs/massa-de-testes.md`
+- [ ] **Abrir o Datadog e conferir os traces** — os quatro serviços passaram a enviar (antes só chegavam logs). O que só dá para ver na tela: se um trace liga os serviços através da fila. Se não ligar, o vídeo usa os logs pelo Correlation ID
+- [ ] **Gravar** — o [PR #4 do `postech-execucao-service`](https://github.com/Gustavollier/postech-execucao-service/pull/4) está pronto para ser mergeado ao vivo no cenário de deploy. **Não mergear antes**
 - [ ] **Publicar o vídeo** no YouTube ou Vimeo (público ou não listado)
 
 ### Para a entrega
@@ -30,13 +28,10 @@ tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 - [ ] **PDF de entrega** — participantes, links dos repositórios e do vídeo, diagrama, estratégia da Saga, justificativa da divisão e das tecnologias
 - [ ] **Enviar o PDF** no portal
 
-### Infraestrutura como código (o repositório não reproduz o que está no ar)
+### Pipelines dos repositórios de infra
 
-- [ ] **Dar push do Terraform do ingress** — o ambiente tem `helm_release.ingress_nginx` e os Ingress no state, mas a branch `fase4/regiao-canadacentral` do `postech-infra-k8s` não tem esse código. Está na máquina de quem aplicou
-- [ ] **Levar para esse Terraform as duas correções feitas direto no cluster**, senão o próximo `apply` as desfaz:
-  - sonda do load balancer em TCP (anotações `service.beta.kubernetes.io/port_80_health-probe_protocol: Tcp` e `port_443_...`) — sem ela o APIM não alcança nenhum serviço
-  - `loadBalancerSourceRanges` com o IP do APIM (`4.248.250.243/32`) — sem ela o cluster responde direto da internet, sem passar pelo gateway
-- [ ] **Mergear as branches `fase4/regiao-canadacentral`** do `postech-infra-db` e do `postech-infra-k8s` na `main`, depois de incluir o item acima (o merge dispara `apply`)
+- [ ] **Estão sem funcionar, e não é pelo código.** Os secrets `AZURE_SUBSCRIPTION_ID` do `postech-infra-k8s` e do `postech-infra-db` ainda apontam para a assinatura antiga (o plano falha com `SubscriptionNotFound`), e o app `postech-13soat-github-oidc` não tem papel nenhum na assinatura nova. Para religar: atualizar o secret, dar *Contributor* no resource group e acesso aos segredos do Key Vault a esse app, e conferir se `DD_API_KEY` e `DD_APP_KEY` são as chaves em uso — se forem antigas, um `apply` pela pipeline troca as chaves do cluster e derruba o envio ao Datadog
+- Enquanto isso, mudança de infra é `terraform apply` local com login de Owner, como foi feito em 16/11
 
 ### Higiene
 
@@ -69,6 +64,10 @@ tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 - [x] Painel (`postech-front`) revisado e publicado: lista de clientes, tela de Demonstração, ordem cancelada, peça do estoque no diagnóstico, trilha da saga, rótulos legíveis
 - [x] Teste de ponta a ponta pela interface (`postech-front/e2e/fluxo.mjs`, 16 passos) e coleção do Postman verdes contra o ambiente real
 - [x] `docs/cenarios-do-video.md`: o que mostrar e o que falar em cada cenário
+- [x] **Terraform do `postech-infra-k8s` reproduz o ambiente** — reconstruído a partir do state (ingress controller, nós ARM64, Auth Function), com a sonda TCP e a restrição ao IP do APIM no código. `terraform plan` nos dois repositórios de infra: *No changes*. Branches `fase4/regiao-canadacentral` mergeadas na `main`
+- [x] **Base limpa e massa de testes** — 5 funcionários, 7 clientes, 9 peças e 7 ordens em pontos diferentes da saga (`postech-os-service/docs/massa-de-testes.md`, criada por `docs/massa/semear.py`)
+- [x] **APM no Datadog** — os pods não recebiam o tracer .NET por falta de um rótulo; os quatro serviços agora enviam traces
+- [x] PR do cenário de deploy preparado no `postech-execucao-service`
 
 Testes por serviço hoje: OS 122, Billing 117, Execução 141, Identidade 122.
 
