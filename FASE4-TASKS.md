@@ -3,8 +3,8 @@
 Checklist da Fase 4 (microsserviços, Saga, mensageria). Atualizado conforme as
 tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 
-**Início:** 01/11/2026 · **Última atualização:** 16/11/2026
-**Estado:** ambiente no ar na Azure, fluxo completo validado pelo painel e pelo Postman.
+**Início:** 01/11/2026 · **Última atualização:** 17/11/2026
+**Estado:** vídeo gravado e ambiente destruído em 17/11. Falta a entrega (PDF e envio).
 
 ## Legenda
 
@@ -39,9 +39,11 @@ tarefas fecham, para o time ver onde estamos sem precisar perguntar.
 - [ ] **Confirmar que os tokens do Mercado Pago foram renovados** depois de terem aparecido no chat (o que está no Key Vault é válido e é do vendedor de teste)
 - [ ] **SonarCloud, Identidade:** marcar como *Accept* o S6781 (chave JWT lida da configuração; é falso positivo)
 
-### Depois da entrega
+### Ambiente
 
-- [ ] **`terraform destroy`** dos dois repositórios de infra — o "pode destruir" é do Gustavo. O ambiente custa cerca de US$ 7,50 por dia ligado
+- [x] **Destruído em 17/11/2026**, depois do vídeo gravado: `terraform destroy` do `postech-infra-k8s` (68 recursos) e do `postech-infra-db` (15). Não há mais APIM, AKS, SQL, Key Vault, registro de imagens nem Auth Function. Ficaram só o resource group `pos-tech-fiap` e o storage do state (`postechtfstate13soat`), que custam centavos
+- O painel publicado continua abrindo, mas não funciona: a API não existe mais
+- Para subir de novo: `terraform apply` no `postech-infra-db`, gravar os quatro segredos de fora no Key Vault, `apply` no `postech-infra-k8s` (uns 40 min pelo APIM), deploy dos serviços, e `docs/massa/semear.py` para a massa. O IP do APIM e o do ingress mudam; o webhook do Mercado Pago continua o mesmo se o nome do APIM for o mesmo
 
 ### Opcional, se sobrar tempo
 
